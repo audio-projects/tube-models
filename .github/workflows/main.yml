@@ -2,10 +2,8 @@ name: Angular Build
 
 on:
   push:
-    branches-ignore:
+    branches:
       - main
-  pull_request:
-    types: [opened, reopened, synchronize]
 
 jobs:
   build:
