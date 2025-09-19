@@ -1,0 +1,16 @@
+// Remove any unwanted spacing
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+// Ensure navbar is at the very top
+.navbar {
+  margin: 0;
+  border-radius: 0;
+}
+
+// Main content area
+main {
+  flex: 1;
+}

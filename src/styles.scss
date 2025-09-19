@@ -1,0 +1,560 @@
+/* Using Bootstrap SCSS with modern @use syntax. */
+@use 'bootstrap/scss/bootstrap';
+
+* {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: "Trebuchet MS", "Helvetica", "Arial", "Verdana", "sans-serif";
+    font-size: 62.5%;
+    width: 100%;
+    color: #04394f;
+    background-image: url('background.jpg');
+    min-width: 76em;
+    margin: 0;
+  }
+
+  input {
+    border: 1px solid #cccccc;
+    font-family: "Trebuchet MS", "Helvetica", "Arial", "Verdana", "sans-serif";
+    font-size: 100%;
+    padding: 2px;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    padding: 2px;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    width: 100%;
+    text-align: right;
+  }
+
+  textarea {
+    border: 1px solid #cccccc;
+    font-family: "Trebuchet MS", "Helvetica", "Arial", "Verdana", "sans-serif";
+    font-size: 100%;
+    width: 100%;
+    padding: 2px;
+  }
+
+  table {
+    width: 100%;
+  }
+
+  td {
+    vertical-align: top;
+  }
+
+  fieldset {
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 1em;
+  }
+
+  fieldset > legend {
+    font-weight: bold;
+    padding-left: 0.3em;
+    padding-right: 0.3em;
+    position: relative;
+  }
+
+  fieldset > div {
+    width: 100%;
+    padding: 0;
+    margin: 0.5em 0;
+    min-height: 1.8em;
+  }
+
+  fieldset > div > label {
+    float: left;
+    width: 50%;
+    margin-right: 0.5em;
+    padding-top: 0.2em;
+    text-align: left;
+    font-weight: bold;
+  }
+
+  fieldset > div > input[type="text"] {
+    width: 47% !important;
+  }
+
+  fieldset > div > input[type="number"] {
+    width: 47% !important;
+  }
+
+  fieldset > div > textarea {
+    width: 47% !important;
+  }
+
+  fieldset > table {
+    width: 100%;
+  }
+
+  fieldset > table > tbody > tr > td:first-child {
+    width: 50%;
+  }
+
+  fieldset > table > tbody > tr > td:last-child {
+    width: 50%;
+  }
+
+  fieldset > table > tbody > tr > td > div {
+    width: 100%;
+    padding: 0;
+    margin: 0.5em 0;
+    min-height: 1.8em;
+  }
+
+  fieldset > table > tbody > tr > td > div > label {
+    float: left;
+    width: 50%;
+    margin-right: 0.5em;
+    padding-top: 0.2em;
+    text-align: left;
+    font-weight: bold;
+  }
+
+  fieldset > table > tbody > tr > td > div > input[type="text"] {
+    width: 47% !important;
+  }
+
+  fieldset > table > tbody > tr > td > div > input[type="number"] {
+    width: 47% !important;
+  }
+
+  fieldset > table > tbody > tr > td > div > textarea {
+    width: 47% !important;
+  }
+
+  /* algorithm-results */
+  .algorithm-results {
+    display: inline-block;
+  }
+
+  .algorithm-results > div > span.ui-icon {
+    margin-top: -8px;
+    position: absolute;
+    top: 50%;
+  }
+
+  .algorithm-results > div > a > span.ui-icon {
+    margin-top: -8px;
+    position: absolute;
+    top: 50%;
+  }
+
+  /* general classes */
+  .ui-widget-header h3 {
+    padding: 0;
+    margin: 0.3em;
+  }
+
+  .ui-widget-header h4 {
+    padding: 0;
+    margin: 0.2em;
+    position: relative;
+  }
+
+  .ui-widget-header h4 span.ui-icon {
+    margin-top: -8px;
+    position: absolute;
+    top: 50%;
+  }
+
+  .ui-widget-content td {
+    padding: 0.5em;
+    margin: 0.3em;
+    vertical-align: top;
+  }
+
+  table.ui-widget {
+    margin-bottom: 1em;
+  }
+
+  .ui-widget-content tbody.table-body-data-entry tr td {
+    padding: 0.5em;
+    margin: 0.3em;
+    vertical-align: top;
+  }
+
+  .ui-widget-content tbody.table-body-data-entry tr td:first-child {
+    width: 23em;
+    font-weight: bold;
+  }
+
+  .ui-widget-content tbody.table-body-data-entry tr td:last-child {
+    font-weight: bold;
+  }
+
+  /* application classes */
+  .center {
+    width: 110em;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .user-information {
+    float: right;
+  }
+
+  .sign-in-out {
+    text-align: right;
+    color: #044c6b;
+    font-size: 1.5em;
+    font-weight: bold;
+  }
+
+  .header {
+    margin-bottom: 3em;
+  }
+
+  .logo {
+    width: 8.6em;
+    height: 8.6em;
+    float: left;
+    margin-right: 1.5em;
+    font-family: Georgia, serif;
+  }
+
+  .logo img {
+    width: 100%;
+    height: 100%;
+    border: 0 none;
+  }
+
+  .headline {
+    float: left;
+  }
+
+  .headline h1 {
+    color: #044c6b;
+    font-size: 4em;
+    font-weight: bold;
+    line-height: 100%;
+    margin-top: 0;
+    margin-bottom: 0.25em;
+    text-shadow: 0 0 0.1em white, 0 0 0.2em rgba(0, 0, 0, 0.5);
+    -moz-text-shadow: 0 0 0.1em white, 0 0 0.2em rgba(0, 0, 0, 0.5);
+    -webkit-text-shadow: 0 0 0.1em white, 0 0 0.2em rgba(0, 0, 0, 0.5);
+  }
+
+  .headline h2 {
+    color: #4c5b7c;
+    font-size: 1.5em;
+    font-weight: bold;
+    line-height: 120%;
+    margin: 0;
+    text-shadow: 0 0 0.15em white;
+    -moz-text-shadow: 0 0 0.15em white;
+    -webkit-text-shadow: 0 0 0.15em white;
+  }
+
+  .breadcrumb {
+    clear: both;
+    padding-top: 1em;
+  }
+
+  .breadcrumb ul {
+    list-style: none;
+    color: #044c6b;
+    font-size: 1.5em;
+    font-weight: bold;
+    padding-left: 0.5em;
+    padding-top: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-top: 0;
+  }
+
+  .breadcrumb ul li {
+    display: inline;
+  }
+
+  .content {
+    padding: 0;
+    clear: both;
+  }
+
+  /* panel */
+  .panel-header {
+    display: block;
+    cursor: pointer;
+    position: relative;
+    margin-top: 2px;
+    padding: 0.5em 0.5em 0.5em 0.7em;
+    min-height: 0;
+  }
+
+  .panel-content {
+    padding: 1em 2.2em;
+    border-top: 0;
+    overflow: auto;
+    margin-bottom: 0.5em;
+  }
+
+  /* ng classes */
+  [ng\:cloak],
+  [ng-cloak],
+  [data-ng-cloak],
+  [x-ng-cloak],
+  .ng-cloak,
+  .x-ng-cloak {
+    display: none !important;
+  }
+
+  .ng-invalid-required {
+    border-color: #e9322d;
+  }
+
+  .math-jax-document {
+    display: none;
+  }
+
+  /* tube */
+  .tube {
+    padding: 0;
+  }
+
+  .tube-toolbar {
+    width: 100%;
+    margin-top: 1em;
+    padding: 0;
+  }
+
+  .tube-toolbar div:first-child {
+    float: left;
+    width: 50%;
+    padding-left: 0.5em;
+  }
+
+  .tube-toolbar div:first-child h1 {
+    margin: 0;
+  }
+
+  .tube-toolbar div:last-child {
+    text-align: right;
+    padding-right: 0.5em;
+  }
+
+  .tube-last-updated {
+    text-align: right;
+    padding-right: 1em;
+    margin: 0;
+  }
+
+  /* triode */
+  .triode {
+    padding: 0;
+  }
+
+  .triode-toolbar {
+    width: 100%;
+    margin-top: 1em;
+    padding: 0;
+  }
+
+  .triode-toolbar div:first-child {
+    float: left;
+    width: 50%;
+    padding-left: 0.5em;
+  }
+
+  .triode-toolbar div:first-child h1 {
+    margin: 0;
+  }
+
+  .triode-toolbar div:last-child {
+    text-align: right;
+    padding-right: 0.5em;
+  }
+
+  .triode-last-updated {
+    text-align: right;
+    padding-right: 1em;
+    margin: 0;
+  }
+
+  .norman-koren-triode-model {
+    width: 100%;
+  }
+
+  /* pentode */
+  .pentode {
+    padding: 0;
+  }
+
+  .pentode-toolbar {
+    width: 100%;
+    margin-top: 1em;
+    padding: 0;
+  }
+
+  .pentode-toolbar div:first-child {
+    float: left;
+    width: 50%;
+    padding-left: 0.5em;
+  }
+
+  .pentode-toolbar div:first-child h1 {
+    margin: 0;
+  }
+
+  .pentode-toolbar div:last-child {
+    text-align: right;
+    padding-right: 0.5em;
+  }
+
+  .pentode-last-updated {
+    text-align: right;
+    padding-right: 1em;
+    margin: 0;
+  }
+
+  .norman-koren-pentode-model {
+    width: 100%;
+  }
+
+  /* u-tracer-data-viewer */
+  .u-tracer-data-viewer {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .u-tracer-data-viewer-dialog table tr th {
+    padding-top: 0.1em;
+    padding-bottom: 0.1em;
+    padding-left: 0.5em;
+  }
+
+  .u-tracer-data-viewer-dialog table tr td {
+    padding-top: 0.1em;
+    padding-bottom: 0.1em;
+    padding-left: 0.5em;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  /* spice-model */
+  .spice-model {
+    display: inline-block;
+  }
+
+  .spice-model-dialog pre {
+    display: block;
+    font-size: 1.5em;
+    font-family: monospace;
+    white-space: pre;
+    margin: 0;
+    padding: 0;
+    font-weight: bold;
+  }
+
+  /* triode-spice-parameters */
+  .triode-spice-parameters {
+    .form-control-plaintext {
+      font-family: 'Courier New', monospace;
+      font-size: 1.1em;
+      background-color: var(--bs-light);
+      border: 1px solid var(--bs-border-color);
+      border-radius: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    .parameter-label {
+      font-size: 0.9em;
+      color: var(--bs-primary);
+    }
+  }
+
+  /* pentode-spice-parameters */
+  .pentode-spice-parameters {
+    .form-control-plaintext {
+      font-family: 'Courier New', monospace;
+      font-size: 1.1em;
+      background-color: var(--bs-light);
+      border: 1px solid var(--bs-border-color);
+      border-radius: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    .parameter-label {
+      font-size: 0.9em;
+      color: var(--bs-info);
+    }
+  }
+
+  /* tetrode-spice-parameters */
+  .tetrode-spice-parameters {
+    .form-control-plaintext {
+      font-family: 'Courier New', monospace;
+      font-size: 1.1em;
+      background-color: var(--bs-light);
+      border: 1px solid var(--bs-border-color);
+      border-radius: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    .parameter-label {
+      font-size: 0.9em;
+      color: var(--bs-warning);
+    }
+  }
+
+  /* spinning animation for loading states */
+  .spin {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* pentode-spice-model */
+  .pentode-spice-model {
+    display: inline-block;
+  }
+
+  .pentode-spice-model-dialog pre {
+    display: block;
+    font-size: 1.5em;
+    font-family: monospace;
+    white-space: pre;
+    margin: 0;
+    padding: 0;
+    font-weight: bold;
+  }
+
+  /* triodes */
+  .triodes div.toolbar {
+    margin-top: 1em;
+    margin-bottom: 0.3em;
+    margin-left: 0.5em;
+  }
+
+  /* pentodes */
+  .pentodes div.toolbar {
+    margin-top: 1em;
+    margin-bottom: 0.3em;
+    margin-left: 0.5em;
+  }

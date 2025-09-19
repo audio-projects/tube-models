@@ -1,0 +1,39 @@
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+    <div *ngFor="let toast of toasts" 
+         class="toast show border-3 shadow-lg" 
+         [ngClass]="getToastClass(toast.type)"
+         role="alert" 
+         aria-live="assertive" 
+         aria-atomic="true">
+        
+        <div class="toast-header" [ngClass]="getHeaderClass(toast.type)">
+            <i class="bi me-2" [ngClass]="toast.icon" aria-hidden="true"></i>
+            <strong class="me-auto">{{ toast.title }}</strong>
+            <button *ngIf="toast.type !== 'confirm'" 
+                    type="button" 
+                    class="btn-close" 
+                    [ngClass]="toast.type === 'warning' ? 'btn-close-black' : 'btn-close-white'"
+                    (click)="removeToast(toast.id)"
+                    aria-label="Close">
+            </button>
+        </div>
+        
+        <div class="toast-body bg-light">
+            {{ toast.message }}
+            
+            <!-- Confirmation buttons for confirm type toasts -->
+            <div *ngIf="toast.type === 'confirm'" class="mt-3 d-flex gap-2 justify-content-end">
+                <button type="button" 
+                        class="btn btn-sm btn-outline-secondary" 
+                        (click)="cancelAction(toast.id)">
+                    {{ toast.cancelText || 'Cancel' }}
+                </button>
+                <button type="button" 
+                        class="btn btn-sm btn-danger" 
+                        (click)="confirmAction(toast.id)">
+                    {{ toast.confirmText || 'Confirm' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
