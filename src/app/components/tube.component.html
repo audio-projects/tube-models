@@ -1,0 +1,460 @@
+<div class="tube-detail-page">
+  <!-- Header Section -->
+  <div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-start">
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+              <a routerLink="/tubes" class="text-decoration-none"> <i class="bi bi-collection me-1"></i>Tubes </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+              {{ tube?.name || "New Tube" }}
+            </li>
+          </ol>
+        </nav>
+        <h1 class="display-6 mb-1">
+          <i class="bi bi-cpu me-2 text-primary"></i>
+          {{ tube?.name || "New Tube" }}
+        </h1>
+        <p class="text-muted mb-0" *ngIf="tube?.manufacturer">Manufactured by {{ tube?.manufacturer }}</p>
+      </div>
+      <div class="btn-group" role="group">
+        <a class="btn btn-outline-primary" routerLink="/tubes" title="Back to Tubes List"> <i class="bi bi-arrow-left me-1"></i>Back to Tubes </a>
+        <button type="button" class="btn btn-outline-secondary" (click)="resetForm()" [disabled]="!tube" title="Reset Changes"><i class="bi bi-arrow-clockwise me-1"></i>Reset</button>
+        <button type="button" class="btn btn-success" (click)="saveTube()" [disabled]="!tube || !isFormValid()" title="Save Tube"><i class="bi bi-check-lg me-1"></i>Save</button>
+        <button type="button" class="btn btn-outline-danger" (click)="deleteTube()" [disabled]="!tube?.id" title="Delete Tube"><i class="bi bi-trash me-1"></i>Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="row" *ngIf="tube">
+    <!-- Left Column - Basic Information -->
+    <div class="col-lg-8">
+      <!-- Basic Information Card -->
+      <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+          <h5 class="card-title mb-0"><i class="bi bi-info-circle me-2"></i>Basic Information</h5>
+        </div>
+        <div class="card-body">
+          <form>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="tubeName" class="form-label fw-bold"> <i class="bi bi-tag me-1"></i>Tube Name * </label>
+                  <input type="text" class="form-control" id="tubeName" [(ngModel)]="tube.name" name="tubeName" required placeholder="Enter tube designation (e.g., ECC83, 12AX7)" />
+                  <div class="form-text">Standard tube designation or model number</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="tubeManufacturer" class="form-label fw-bold"> <i class="bi bi-building me-1"></i>Manufacturer </label>
+                  <input type="text" class="form-control" id="tubeManufacturer" [(ngModel)]="tube.manufacturer" name="tubeManufacturer" placeholder="Enter manufacturer name" />
+                  <div class="form-text">Tube manufacturer or brand</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="tubeType" class="form-label fw-bold"> <i class="bi bi-cpu me-1"></i>Tube Type * </label>
+                  <select class="form-select" id="tubeType" [(ngModel)]="tube.type" name="tubeType" required>
+                    <option value="Triode">Triode</option>
+                    <option value="Pentode">Pentode</option>
+                    <option value="Tetrode">Tetrode</option>
+                  </select>
+                  <div class="form-text">Select the tube's electron configuration</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="lastUpdated" class="form-label fw-bold"> <i class="bi bi-calendar me-1"></i>Last Updated </label>
+                  <input type="date" class="form-control" id="lastUpdated" [(ngModel)]="tube.lastUpdatedOn" name="lastUpdated" />
+                  <div class="form-text">Date when information was last modified</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="tubeComments" class="form-label fw-bold"> <i class="bi bi-chat-text me-1"></i>Comments & Notes </label>
+              <textarea class="form-control" id="tubeComments" rows="4" [(ngModel)]="tube.comments" name="tubeComments" placeholder="Enter any additional notes, specifications, or observations about this tube..."></textarea>
+              <div class="form-text">Additional information, specifications, or usage notes</div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Electrical Specifications Card -->
+      <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+          <h5 class="card-title mb-0"><i class="bi bi-lightning me-2"></i>Electrical Specifications</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="maxPlateVoltage" class="form-label fw-bold"> Maximum Plate Voltage (V) </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="maxPlateVoltage" [(ngModel)]="tube.maximumPlateVoltage" name="maxPlateVoltage" placeholder="e.g., 300" />
+                  <span class="input-group-text">V</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="maxPlateDissipation" class="form-label fw-bold"> Maximum Plate Dissipation (W) </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="maxPlateDissipation" [(ngModel)]="tube.maximumPlateDissipation" name="maxPlateDissipation" step="0.1" placeholder="e.g., 2.5" />
+                  <span class="input-group-text">W</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="maxPlateCurrent" class="form-label fw-bold"> Maximum Plate Current (mA) </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="maxPlateCurrent" [(ngModel)]="tube.maximumPlateCurrent" name="maxPlateCurrent" placeholder="e.g., 10" />
+                  <span class="input-group-text">mA</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="heaterVoltage" class="form-label fw-bold"> Heater Voltage (V) </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="heaterVoltage" [(ngModel)]="tube.minimumHeaterVoltage" name="heaterVoltage" step="0.1" placeholder="e.g., 6.3" />
+                  <span class="input-group-text">V</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Files Card -->
+      <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0"><i class="bi bi-file-earmark-data me-2"></i>Data Files</h5>
+            <ul class="nav nav-pills nav-sm">
+              <li class="nav-item">
+                <button class="nav-link btn-sm" [class.active]="isTabActive('upload')" (click)="setActiveTab('upload')" type="button"><i class="bi bi-upload me-1"></i>Upload</button>
+              </li>
+              <li class="nav-item">
+                <button class="nav-link btn-sm" [class.active]="isTabActive('plot')" [disabled]="!tube.files || tube.files.length === 0" (click)="setActiveTab('plot')" type="button"><i class="bi bi-graph-up me-1"></i>Plot</button>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Upload Tab Content -->
+          <div *ngIf="isTabActive('upload')">
+            <div class="mb-3">
+              <label for="dataFiles" class="form-label fw-bold"> <i class="bi bi-upload me-1"></i>Upload UTD Files </label>
+              <!-- Multiple file upload with direct change handler -->
+              <input 
+                type="file" 
+                class="form-control" 
+                id="dataFiles" 
+                accept=".utd" 
+                multiple 
+                #fileInput 
+              />
+              <button type="button" class="btn btn-primary mt-2" (click)="triggerFileUpload()">
+                <i class="bi bi-upload me-1"></i>Select Files
+              </button>
+              <div class="form-text">Select one or more UTD (tube test data) files to upload. Multiple files can be selected at once.</div>
+            </div>
+
+            <!-- Upload Progress -->
+            <div *ngIf="uploadProgress > 0 && uploadProgress < 100" class="mb-3">
+              <div class="progress">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" [style.width.%]="uploadProgress" role="progressbar">{{ uploadProgress }}%</div>
+              </div>
+            </div>
+
+            <!-- Uploaded Files List -->
+            <div *ngIf="tube.files && tube.files.length > 0" class="mb-3">
+              <h6 class="fw-bold"><i class="bi bi-files me-1"></i>Uploaded Files ({{ tube.files.length }})</h6>
+              <div class="list-group">
+                <div *ngFor="let file of tube.files; let i = index" class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <i class="bi bi-file-earmark-text me-2 text-primary"></i>
+                    <strong>{{ file.name }}</strong>
+                    <br />
+                    <small class="text-muted">
+                      {{ getMeasurementTypeDescription(file.measurementType) }}
+                      <span *ngIf="file.series.length > 0"> • {{ file.series.length }} series • {{ getTotalPointsCount(file) }} points </span>
+                    </small>
+                  </div>
+                  <div class="btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-success btn-sm me-1" (click)="plotFile(file)" title="Plot file data" [disabled]="file.measurementType === 'UNKNOWN'">
+                      <i class="bi bi-graph-up"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-info btn-sm me-1" (click)="viewFileData(file)" title="View file data">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeFile(i)" title="Remove file">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- No Files Message -->
+            <div *ngIf="!tube.files || tube.files.length === 0" class="text-center py-4">
+              <i class="bi bi-file-earmark-plus display-6 text-muted"></i>
+              <p class="text-muted mt-2 mb-0">No data files uploaded yet</p>
+              <small class="text-muted">Upload UTD files to analyze tube characteristics</small>
+            </div>
+          </div>
+
+          <!-- Plot Tab Content -->
+          <div *ngIf="isTabActive('plot')">
+            <!-- File Selection for Plotting -->
+            <div *ngIf="tube.files && tube.files.length > 0" class="mb-4">
+              <div *ngIf="selectedFileForPlot" class="alert alert-info">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <i class="bi bi-graph-up me-2"></i>
+                    <strong>Plotting:</strong> {{ selectedFileForPlot.name }}
+                    <br />
+                    <small>{{ getMeasurementTypeDescription(selectedFileForPlot.measurementType) }}</small>
+                  </div>
+                  <button type="button" class="btn btn-outline-secondary btn-sm" (click)="clearSelectedFile()"><i class="bi bi-x"></i> Clear Selection</button>
+                </div>
+              </div>
+
+              <div *ngIf="!selectedFileForPlot" class="mb-3">
+                <h6 class="fw-bold">Select a file to plot:</h6>
+                <div class="list-group">
+                  <button *ngFor="let file of tube.files" type="button" class="list-group-item list-group-item-action" [disabled]="file.measurementType === 'UNKNOWN'" (click)="selectFileForPlot(file)">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div>
+                        <i class="bi bi-file-earmark-text me-2 text-primary"></i>
+                        <strong>{{ file.name }}</strong>
+                        <br />
+                        <small class="text-muted">
+                          {{ getMeasurementTypeDescription(file.measurementType) }}
+                          <span *ngIf="file.series.length > 0"> • {{ file.series.length }} series • {{ getTotalPointsCount(file) }} points </span>
+                        </small>
+                      </div>
+                      <div *ngIf="file.measurementType !== 'UNKNOWN'">
+                        <i class="bi bi-graph-up text-success"></i>
+                      </div>
+                      <div *ngIf="file.measurementType === 'UNKNOWN'">
+                        <small class="text-muted">Cannot plot</small>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Plot Component -->
+            <app-tube-plot *ngIf="selectedFileForPlot" [file]="selectedFileForPlot" [tube]="tube"> </app-tube-plot>
+
+            <div *ngIf="!tube.files || tube.files.length === 0" class="text-center py-4">
+              <i class="bi bi-graph-up display-6 text-muted"></i>
+              <p class="text-muted mt-2 mb-0">No data files to plot</p>
+              <small class="text-muted">Upload UTD files first to view characteristic curves</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column - Summary & Actions -->
+    <div class="col-lg-4">
+      <!-- Tube Summary Card -->
+      <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+          <h5 class="card-title mb-0"><i class="bi bi-clipboard-data me-2"></i>Tube Summary</h5>
+        </div>
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-sm-5">Name:</dt>
+            <dd class="col-sm-7">{{ tube.name || "Not specified" }}</dd>
+
+            <dt class="col-sm-5">Type:</dt>
+            <dd class="col-sm-7">
+              <span class="badge" [ngClass]="getTypeBadgeClass(tube.type)">
+                {{ tube.type }}
+              </span>
+            </dd>
+
+            <dt class="col-sm-5">Manufacturer:</dt>
+            <dd class="col-sm-7">{{ tube.manufacturer || "Not specified" }}</dd>
+
+            <dt class="col-sm-5">Last Updated:</dt>
+            <dd class="col-sm-7">{{ formatDate(tube.lastUpdatedOn) }}</dd>
+
+            <dt class="col-sm-5">Status:</dt>
+            <dd class="col-sm-7">
+              <span class="badge bg-{{ isNewTube ? 'warning' : 'primary' }}">
+                {{ isNewTube ? "New" : "Existing" }}
+              </span>
+            </dd>
+          </dl>
+        </div>
+      </div>
+
+      <!-- Triode SPICE Model Parameters Card -->
+      <div class="card mb-4" *ngIf="tube.type === 'Triode' || tube.type === 'Pentode'">
+        <div class="card-header bg-success text-white">
+          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Triode SPICE Model Parameters</h5>
+        </div>
+        <div class="card-body triode-spice-parameters">
+          <div *ngIf="!tube.triodeModelParameters?.calculated && !isCalculatingSpiceParameters" class="text-center">
+            <p class="text-muted mb-3">
+              <i class="bi bi-info-circle me-1"></i>
+              SPICE model parameters have not been calculated yet.
+            </p>
+            <button 
+              type="button" 
+              class="btn btn-outline-success" 
+              (click)="calculateSpiceModelParameters()" 
+              [disabled]="!tube.files || tube.files.length === 0">
+              <i class="bi bi-calculator me-1"></i>Calculate SPICE Parameters
+            </button>
+            <div class="form-text mt-2">
+              Requires triode measurement data files to calculate Norman Koren model parameters
+            </div>
+          </div>
+
+          <div *ngIf="isCalculatingSpiceParameters" class="text-center">
+            <div class="spinner-border text-success mb-3" role="status">
+              <span class="visually-hidden">Calculating...</span>
+            </div>
+            <p class="text-muted mb-0">
+              <i class="bi bi-gear-fill me-1 text-success"></i>
+              Calculating SPICE model parameters using optimization algorithms...
+            </p>
+            <small class="text-muted d-block mt-1">This may take a few moments</small>
+          </div>
+          
+          <div *ngIf="tube.triodeModelParameters?.calculated">
+            <div class="alert alert-success mb-3">
+              <i class="bi bi-check-circle me-1"></i>
+              SPICE model parameters successfully calculated
+              <small class="d-block mt-1">
+                Last calculated: {{ tube.triodeModelParameters?.lastCalculated | date:'medium' }}
+              </small>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label fw-bold"><i class="bi bi-arrow-up-right me-1"></i>μ (Amplification Factor)</label>
+                  <div class="form-control-plaintext fw-bold text-primary">
+                    {{ tube.triodeModelParameters?.mu | number:'1.3-3' }}
+                  </div>
+                  <div class="form-text">Voltage amplification factor</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label fw-bold"><i class="bi bi-lightning me-1"></i>EX (Exponent)</label>
+                  <div class="form-control-plaintext fw-bold text-primary">
+                    {{ tube.triodeModelParameters?.ex | number:'1.3-3' }}
+                  </div>
+                  <div class="form-text">Current law exponent</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label fw-bold"><i class="bi bi-gear me-1"></i>KG1 (Grid Scaling)</label>
+                  <div class="form-control-plaintext fw-bold text-primary">
+                    {{ tube.triodeModelParameters?.kg1 | number:'1.3-3' }}
+                  </div>
+                  <div class="form-text">Grid current scaling factor</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label fw-bold"><i class="bi bi-sliders me-1"></i>KP (Plate Scaling)</label>
+                  <div class="form-control-plaintext fw-bold text-primary">
+                    {{ tube.triodeModelParameters?.kp | number:'1.3-3' }}
+                  </div>
+                  <div class="form-text">Plate current scaling factor</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label fw-bold"><i class="bi bi-diagram-3 me-1"></i>KVB (Knee Voltage)</label>
+                  <div class="form-control-plaintext fw-bold text-primary">
+                    {{ tube.triodeModelParameters?.kvb | number:'1.3-3' }}
+                  </div>
+                  <div class="form-text">Knee voltage parameter</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="text-center">
+                  <button 
+                    type="button" 
+                    class="btn btn-outline-success btn-sm me-2" 
+                    (click)="calculateSpiceModelParameters()"
+                    [disabled]="isCalculatingSpiceParameters"
+                    title="Recalculate SPICE Parameters">
+                    <i class="bi bi-arrow-clockwise me-1" [class.spin]="isCalculatingSpiceParameters"></i>Recalculate
+                  </button>
+                  <button 
+                    type="button" 
+                    class="btn btn-outline-primary btn-sm" 
+                    (click)="copySpiceModel()"
+                    title="Copy SPICE Model to Clipboard">
+                    <i class="bi bi-clipboard me-1"></i>Copy SPICE Model
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- SPICE Model Code Display -->
+            <div class="mt-4">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0"><i class="bi bi-code-square me-1"></i>SPICE Model Code</h6>
+                <small class="text-muted">Ready for use in SPICE simulations</small>
+              </div>
+              <pre class="bg-dark text-light p-3 rounded-3" style="font-size: 0.85em; overflow-x: auto;">{{ generateSpiceModelText() }}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pentode SPICE Model Parameters Component -->
+      <app-pentode-spice-parameters 
+        [tube]="tube" 
+        (tubeChange)="tube = $event">
+      </app-pentode-spice-parameters>
+
+      <!-- Tetrode SPICE Model Parameters Component -->
+      <app-tetrode-spice-parameters 
+        [tube]="tube" 
+        (tubeChange)="tube = $event">
+      </app-tetrode-spice-parameters>
+
+      <!-- Help Card -->
+      <div class="card">
+        <div class="card-header bg-light">
+          <h6 class="card-title mb-0"><i class="bi bi-question-circle me-2"></i>Need Help?</h6>
+        </div>
+        <div class="card-body">
+          <p class="card-text small mb-2"><strong>Required fields</strong> are marked with an asterisk (*).</p>
+          <p class="card-text small mb-0">Fill in the tube specifications to maintain accurate records for your vacuum tube database.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

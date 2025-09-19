@@ -1,0 +1,74 @@
+// Custom styles for the tubes component
+
+.card {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  
+  &:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    transition: box-shadow 0.15s ease-in-out;
+  }
+}
+
+.table {
+  tbody tr {
+    &:hover {
+      background-color: rgba(13, 110, 253, 0.05);
+    }
+  }
+}
+
+.btn-group .btn {
+  &:hover {
+    transform: translateY(-1px);
+    transition: transform 0.15s ease-in-out;
+  }
+}
+
+.badge {
+  font-size: 0.75em;
+  font-weight: 600;
+}
+
+// Statistics cards animation
+.card.bg-primary,
+.card.bg-success,
+.card.bg-info,
+.card.bg-warning {
+  transition: transform 0.2s ease-in-out;
+  
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+// Search input focus effect
+.input-group {
+  .form-control:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+}
+
+// Empty state styling
+.text-center {
+  .display-1 {
+    opacity: 0.3;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .d-flex.justify-content-between {
+    flex-direction: column;
+    align-items: stretch !important;
+    
+    .btn-group {
+      margin-top: 1rem;
+    }
+  }
+  
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+}

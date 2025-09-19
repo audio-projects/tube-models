@@ -1,0 +1,17 @@
+Test UTD File 3
+# Tube Test Data File
+# Test file for multiple upload testing
+# Measurement Type: Triode Plate Characteristics  
+Va	Vg	Ia
+0	0	0.0012
+50	0	0.006
+100	0	0.012
+150	0	0.018
+200	0	0.024
+250	0	0.030
+0	-0.5	0.0008
+50	-0.5	0.003
+100	-0.5	0.006
+150	-0.5	0.010
+200	-0.5	0.016
+250	-0.5	0.024

@@ -1,0 +1,16 @@
+.pentode-spice-parameters {
+  .form-control-plaintext {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1em;
+    background-color: var(--bs-light);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .parameter-label {
+    font-size: 0.9em;
+    color: var(--bs-info);
+  }
+}

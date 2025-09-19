@@ -1,0 +1,52 @@
+{
+	"name": "Node.js & TypeScript",
+
+	"image": "mcr.microsoft.com/devcontainers/typescript-node:22-bullseye",
+
+	"remoteEnv": {
+		"CHROME_BIN": "/usr/bin/chromium"
+	},
+
+	"forwardPorts": [4000, 4200, 4433, 5000, 8080, 9876, 9222],
+
+	"portsAttributes": {
+		"4200": {
+			"label": "Application",
+			"onAutoForward": "notify"
+		},
+		"9876": {
+			"label": "Test",
+			"onAutoForward": "notify"
+		},
+		"9222": {
+			"label": "Test",
+			"onAutoForward": "ignore"
+		},
+		"9976": {
+			"label": "Test",
+			"onAutoForward": "ignore"
+		},
+		"9999": {
+			"label": "Test",
+			"onAutoForward": "ignore"
+		}
+	},
+
+	"postCreateCommand": "/workspaces/tube-models/.devcontainer/post-create.sh",
+
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"Angular.ng-template",
+				"github.vscode-github-actions",
+				"esbenp.prettier-vscode",
+				"dbaeumer.vscode-eslint",
+				"miclo.sort-typescript-imports",
+				"donjayamanne.githistory",
+				"lucono.karma-test-explorer"
+			]
+		}
+	},
+
+	"remoteUser": "node"
+}

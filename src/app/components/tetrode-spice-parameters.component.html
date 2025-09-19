@@ -1,0 +1,125 @@
+<div class="card mb-4" *ngIf="tube?.type === 'Tetrode'">
+  <div class="card-header bg-warning text-dark">
+    <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Tetrode SPICE Model Parameters</h5>
+  </div>
+  <div class="card-body tetrode-spice-parameters">
+    <div *ngIf="!tube?.tetrodeSpiceModelParameters?.calculated && !isCalculatingSpiceParameters" class="text-center">
+      <p class="text-muted mb-3">
+        <i class="bi bi-info-circle me-1"></i>
+        SPICE model parameters for tetrode (beam power) configuration not calculated yet.
+      </p>
+      <button 
+        type="button" 
+        class="btn btn-warning" 
+        (click)="calculateSpiceModelParameters()"
+        [disabled]="isCalculatingSpiceParameters">
+        <i class="bi bi-play-circle me-1"></i>
+        Calculate Tetrode Parameters
+      </button>
+    </div>
+
+    <div *ngIf="isCalculatingSpiceParameters" class="text-center">
+      <div class="spinner-border text-warning me-2" role="status" aria-hidden="true"></div>
+      <span>Optimizing tetrode parameters...</span>
+    </div>
+
+    <div *ngIf="tube?.tetrodeSpiceModelParameters?.calculated" class="parameters-display">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label fw-bold"><i class="bi bi-arrow-up-right me-1"></i>μ (Amplification Factor)</label>
+            <div class="form-control-plaintext fw-bold text-warning">
+              {{ tube?.tetrodeSpiceModelParameters?.mu | number:'1.3-3' }}
+            </div>
+            <div class="form-text">Voltage amplification factor (typically low for beam tetrodes)</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label fw-bold"><i class="bi bi-lightning me-1"></i>EX (Exponent)</label>
+            <div class="form-control-plaintext fw-bold text-warning">
+              {{ tube?.tetrodeSpiceModelParameters?.ex | number:'1.3-3' }}
+            </div>
+            <div class="form-text">Current law exponent (higher for beam tubes)</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label fw-bold"><i class="bi bi-gear me-1"></i>KG1 (Control Grid Scaling)</label>
+            <div class="form-control-plaintext fw-bold text-warning">
+              {{ tube?.tetrodeSpiceModelParameters?.kg1 | number:'1.3-3' }}
+            </div>
+            <div class="form-text">Control grid current scaling factor</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label fw-bold"><i class="bi bi-gear-wide me-1"></i>KG2 (Screen Grid Scaling)</label>
+            <div class="form-control-plaintext fw-bold text-warning">
+              {{ tube?.tetrodeSpiceModelParameters?.kg2 | number:'1.3-3' }}
+            </div>
+            <div class="form-text">Screen grid current scaling factor (beam forming)</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label class="form-label fw-bold"><i class="bi bi-sliders me-1"></i>KP (Plate Scaling)</label>
+            <div class="form-control-plaintext fw-bold text-warning">
+              {{ tube?.tetrodeSpiceModelParameters?.kp | number:'1.3-3' }}
+            </div>
+            <div class="form-text">Plate current scaling factor</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label class="form-label fw-bold"><i class="bi bi-diagram-3 me-1"></i>KVB (Knee Voltage)</label>
+            <div class="form-control-plaintext fw-bold text-warning">
+              {{ tube?.tetrodeSpiceModelParameters?.kvb | number:'1.3-3' }}
+            </div>
+            <div class="form-text">Knee voltage parameter (higher for power tubes)</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="text-center">
+            <button 
+              type="button" 
+              class="btn btn-outline-warning btn-sm me-2" 
+              (click)="calculateSpiceModelParameters()"
+              [disabled]="isCalculatingSpiceParameters">
+              <i class="bi bi-arrow-clockwise me-1"></i>
+              Recalculate
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <h6 class="fw-bold text-warning mb-3">
+          <i class="bi bi-code-square me-1"></i>
+          Generated SPICE Model
+        </h6>
+        <div class="position-relative">
+          <pre class="bg-dark text-light p-3 rounded-3 border border-warning spice-code">{{ generateSpiceModelText() }}</pre>
+          <button 
+            type="button" 
+            class="btn btn-outline-warning btn-sm position-absolute top-0 end-0 m-2" 
+            (click)="copySpiceModel()"
+            title="Copy SPICE model to clipboard">
+            <i class="bi bi-clipboard me-1"></i>
+            Copy
+          </button>
+        </div>
+        <div class="form-text mt-2">
+          <i class="bi bi-info-circle me-1"></i>
+          Use this model in your SPICE simulator (LTSpice, ngspice, etc.)
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

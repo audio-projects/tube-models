@@ -1,0 +1,135 @@
+<div class="card mb-4" *ngIf="tube?.type === 'Pentode'">
+  <div class="card-header bg-info text-white">
+    <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Pentode SPICE Model Parameters</h5>
+  </div>
+  <div class="card-body pentode-spice-parameters">
+    <div *ngIf="!tube?.pentodeSpiceModelParameters?.calculated && !isCalculatingSpiceParameters" class="text-center">
+      <p class="text-muted mb-3">
+        <i class="bi bi-info-circle me-1"></i>
+        Pentode SPICE model parameters have not been calculated yet.
+      </p>
+      <button 
+        type="button" 
+        class="btn btn-outline-info" 
+        (click)="calculateSpiceModelParameters()" 
+        [disabled]="!tube?.files || tube?.files?.length === 0">
+        <i class="bi bi-calculator me-1"></i>Calculate Pentode SPICE Parameters
+      </button>
+      <div class="form-text mt-2">
+        Requires pentode measurement data files to calculate Norman Koren model parameters
+      </div>
+    </div>
+
+    <div *ngIf="isCalculatingSpiceParameters" class="text-center">
+      <div class="spinner-border text-info mb-3" role="status">
+        <span class="visually-hidden">Calculating...</span>
+      </div>
+      <p class="text-muted mb-0">
+        <i class="bi bi-gear-fill me-1 text-info"></i>
+        Calculating pentode SPICE model parameters using optimization algorithms...
+      </p>
+      <small class="text-muted d-block mt-1">This may take a few moments</small>
+    </div>
+    
+    <div *ngIf="tube?.pentodeSpiceModelParameters?.calculated">
+      <div class="alert alert-info mb-3">
+        <i class="bi bi-check-circle me-1"></i>
+        Pentode SPICE model parameters successfully calculated
+        <small class="d-block mt-1">
+          Last calculated: {{ tube?.pentodeSpiceModelParameters?.lastCalculated | date:'medium' }}
+        </small>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label fw-bold"><i class="bi bi-arrow-up-right me-1"></i>μ (Amplification Factor)</label>
+            <div class="form-control-plaintext fw-bold text-info">
+              {{ tube?.pentodeSpiceModelParameters?.mu | number:'1.3-3' }}
+            </div>
+            <div class="form-text">Voltage amplification factor</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label fw-bold"><i class="bi bi-lightning me-1"></i>EX (Exponent)</label>
+            <div class="form-control-plaintext fw-bold text-info">
+              {{ tube?.pentodeSpiceModelParameters?.ex | number:'1.3-3' }}
+            </div>
+            <div class="form-text">Current law exponent</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label fw-bold"><i class="bi bi-gear me-1"></i>KG1 (Control Grid Scaling)</label>
+            <div class="form-control-plaintext fw-bold text-info">
+              {{ tube?.pentodeSpiceModelParameters?.kg1 | number:'1.3-3' }}
+            </div>
+            <div class="form-text">Control grid current scaling factor</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label fw-bold"><i class="bi bi-gear-wide me-1"></i>KG2 (Screen Grid Scaling)</label>
+            <div class="form-control-plaintext fw-bold text-info">
+              {{ tube?.pentodeSpiceModelParameters?.kg2 | number:'1.3-3' }}
+            </div>
+            <div class="form-text">Screen grid current scaling factor</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label class="form-label fw-bold"><i class="bi bi-sliders me-1"></i>KP (Plate Scaling)</label>
+            <div class="form-control-plaintext fw-bold text-info">
+              {{ tube?.pentodeSpiceModelParameters?.kp | number:'1.3-3' }}
+            </div>
+            <div class="form-text">Plate current scaling factor</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label class="form-label fw-bold"><i class="bi bi-diagram-3 me-1"></i>KVB (Knee Voltage)</label>
+            <div class="form-control-plaintext fw-bold text-info">
+              {{ tube?.pentodeSpiceModelParameters?.kvb | number:'1.3-3' }}
+            </div>
+            <div class="form-text">Knee voltage parameter</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="text-center">
+            <button 
+              type="button" 
+              class="btn btn-outline-info btn-sm me-2" 
+              (click)="calculateSpiceModelParameters()"
+              [disabled]="isCalculatingSpiceParameters"
+              title="Recalculate Pentode SPICE Parameters">
+              <i class="bi bi-arrow-clockwise me-1" [class.spin]="isCalculatingSpiceParameters"></i>Recalculate
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-outline-primary btn-sm" 
+              (click)="copySpiceModel()"
+              title="Copy Pentode SPICE Model to Clipboard">
+              <i class="bi bi-clipboard me-1"></i>Copy SPICE Model
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- SPICE Model Code Display -->
+      <div class="mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="mb-0"><i class="bi bi-code-square me-1"></i>Pentode SPICE Model Code</h6>
+          <small class="text-muted">Ready for use in SPICE simulations</small>
+        </div>
+        <pre class="bg-dark text-light p-3 rounded-3" style="font-size: 0.85em; overflow-x: auto;">{{ generateSpiceModelText() }}</pre>
+      </div>
+    </div>
+  </div>
+</div>
