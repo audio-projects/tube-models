@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ToastService } from '../services/toast.service';
-import { TubeDataService } from '../services/tube-data.service';
+import { FirebaseTubeService } from '../services/firebase-tube.service';
+import { AuthService } from '../services/auth.service';
 import { TubeInformation } from './tube-information';
 
 @Component({
@@ -24,13 +25,23 @@ export class TubesComponent implements OnInit, OnDestroy {
 
     private tubesSubscription?: Subscription;
 
-    constructor(private tubeDataService: TubeDataService, private toastService: ToastService) {}
+    constructor(
+        private firebaseTubeService: FirebaseTubeService,
+        public authService: AuthService,
+        private toastService: ToastService
+    ) {}
 
     ngOnInit() {
-        // Subscribe to tubes data changes
-        this.tubesSubscription = this.tubeDataService.tubes$.subscribe(tubes => {
-            this.tubes = tubes;
-            this.filterTubes();
+        // Subscribe to tubes data changes from Firebase
+        this.tubesSubscription = this.firebaseTubeService.getTubes().subscribe({
+            next: (tubes: TubeInformation[]) => {
+                this.tubes = tubes;
+                this.filterTubes();
+            },
+            error: (error: unknown) => {
+                console.error('Error loading tubes from Firebase:', error);
+                this.toastService.error('Error loading tubes from database. Please check your connection.');
+            }
         });
     }
 
@@ -41,12 +52,20 @@ export class TubesComponent implements OnInit, OnDestroy {
     }
 
     refreshTubes() {
-        console.log('Refreshing tubes...');
-        this.tubeDataService.refreshTubes().subscribe({
-            next: (tubes) => {
+        console.log('Refreshing tubes from Firebase...');
+        // Re-subscribe to get fresh data from Firebase
+        if (this.tubesSubscription) {
+            this.tubesSubscription.unsubscribe();
+        }
+
+        this.tubesSubscription = this.firebaseTubeService.getTubes().subscribe({
+            next: (tubes: TubeInformation[]) => {
+                this.tubes = tubes;
+                this.filterTubes();
                 console.log('Tubes refreshed successfully', tubes.length);
+                this.toastService.success(`Loaded ${tubes.length} tubes from database`);
             },
-            error: (error) => {
+            error: (error: unknown) => {
                 console.error('Error refreshing tubes:', error);
                 this.toastService.error('Error refreshing tubes. Please try again.');
             }
@@ -106,6 +125,12 @@ export class TubesComponent implements OnInit, OnDestroy {
     }
 
     confirmDelete(tube: TubeInformation) {
+        // Check if user is authenticated for delete operations
+        if (!this.authService.isAuthenticated()) {
+            this.toastService.error('You must be signed in to delete tubes.');
+            return;
+        }
+
         this.toastService.confirm(
             `Are you sure you want to delete "${tube.name}"? This action cannot be undone.`,
             () => {
@@ -117,16 +142,8 @@ export class TubesComponent implements OnInit, OnDestroy {
     }
 
     private deleteTube(tube: TubeInformation) {
-        this.tubeDataService.deleteTube(tube.id).subscribe({
-            next: (success) => {
-                if (success) {
-                    console.log(`Deleted tube: ${tube.name}`);
-                }
-            },
-            error: (error) => {
-                console.error('Error deleting tube:', error);
-                this.toastService.error('Error deleting tube. Please try again.');
-            }
-        });
+        // TODO: Implement delete functionality in FirebaseTubeService
+        console.log(`Delete requested for tube: ${tube.name}`);
+        this.toastService.info('Delete functionality will be implemented in future updates.');
     }
 }
