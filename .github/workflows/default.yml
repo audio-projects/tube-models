@@ -1,4 +1,4 @@
-name: Angular Build
+name: Default Workflow
 
 on:
   push:
