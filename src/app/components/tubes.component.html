@@ -37,105 +37,57 @@
               <h4 class="mb-0">{{ tubes.length }}</h4>
             </div>
             <div class="align-self-center">
-              <i class="bi bi-collection fs-1"></i>
+              <i class="bi bi-lightning-charge fs-1"></i>
             </div>
           </div>
         </div>
       </div>
     </div>
-    @if (authService.isAuthenticated()) {
-      <div class="col-md-3">
-        <div class="card bg-secondary text-white">
-          <div class="card-body">
-            <div class="d-flex justify-content-between">
-              <div>
-                <h6 class="card-title">My Tubes</h6>
-                <h4 class="mb-0">{{ getMyTubesCount() }}</h4>
-              </div>
-              <div class="align-self-center">
-                <i class="bi bi-person-check fs-1"></i>
-              </div>
+    <div class="col-md-3">
+      <div class="card bg-success text-white">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h6 class="card-title">Triodes</h6>
+              <h4 class="mb-0">{{ getCountByType('Triode') }}</h4>
+            </div>
+            <div class="align-self-center">
+              <img src="icons/triode-symbol.svg" alt="Triode Symbol" width="48" height="48" style="filter: brightness(0) invert(1);">
             </div>
           </div>
         </div>
       </div>
-      <div class="col-md-3">
-        <div class="card bg-success text-white">
-          <div class="card-body">
-            <div class="d-flex justify-content-between">
-              <div>
-                <h6 class="card-title">Triodes</h6>
-                <h4 class="mb-0">{{ getCountByType('Triode') }}</h4>
-              </div>
-              <div class="align-self-center">
-                <i class="bi bi-cpu fs-1"></i>
-              </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-warning text-white">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h6 class="card-title">Tetrodes</h6>
+              <h4 class="mb-0">{{ getCountByType('Tetrode') }}</h4>
+            </div>
+            <div class="align-self-center">
+              <img src="icons/tetrode-symbol.svg" alt="Tetrode Symbol" width="48" height="48" style="filter: brightness(0) invert(1);">
             </div>
           </div>
         </div>
       </div>
-      <div class="col-md-3">
-        <div class="card bg-info text-white">
-          <div class="card-body">
-            <div class="d-flex justify-content-between">
-              <div>
-                <h6 class="card-title">Pentodes</h6>
-                <h4 class="mb-0">{{ getCountByType('Pentode') }}</h4>
-              </div>
-              <div class="align-self-center">
-                <i class="bi bi-cpu-fill fs-1"></i>
-              </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-info text-white">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h6 class="card-title">Pentodes</h6>
+              <h4 class="mb-0">{{ getCountByType('Pentode') }}</h4>
+            </div>
+            <div class="align-self-center">
+              <img src="icons/pentode-symbol.svg" alt="Pentode Symbol" width="48" height="48" style="filter: brightness(0) invert(1);">
             </div>
           </div>
         </div>
       </div>
-    } @else {
-      <div class="col-md-3">
-        <div class="card bg-success text-white">
-          <div class="card-body">
-            <div class="d-flex justify-content-between">
-              <div>
-                <h6 class="card-title">Triodes</h6>
-                <h4 class="mb-0">{{ getCountByType('Triode') }}</h4>
-              </div>
-              <div class="align-self-center">
-                <i class="bi bi-cpu fs-1"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card bg-info text-white">
-          <div class="card-body">
-            <div class="d-flex justify-content-between">
-              <div>
-                <h6 class="card-title">Pentodes</h6>
-                <h4 class="mb-0">{{ getCountByType('Pentode') }}</h4>
-              </div>
-              <div class="align-self-center">
-                <i class="bi bi-cpu-fill fs-1"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card bg-warning text-white">
-          <div class="card-body">
-            <div class="d-flex justify-content-between">
-              <div>
-                <h6 class="card-title">Tetrodes</h6>
-                <h4 class="mb-0">{{ getCountByType('Tetrode') }}</h4>
-              </div>
-              <div class="align-self-center">
-                <i class="bi bi-motherboard fs-1"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    }
+    </div>
   </div>
 
   <!-- Search and Filter Section -->

@@ -39,6 +39,7 @@ jobs:
       - name: Create deployment directory structure
         run: |
           mv ./dist/tube-models/browser ./dist/tube-models/tube-models
+          cp ./dist/tube-models/tube-models/index.html ./dist/tube-models/tube-models/404.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

@@ -77,14 +77,6 @@ export class TubesComponent implements OnInit, OnDestroy {
         return this.tubes.filter(tube => tube.type === type).length;
     }
 
-    getMyTubesCount(): number {
-        if (!this.authService.isAuthenticated()) {
-            return 0;
-        }
-        const currentUserUid = this.authService.getCurrentUser()?.uid;
-        return this.tubes.filter(tube => tube.owner === currentUserUid).length;
-    }
-
     isMyTube(tube: TubeInformation): boolean {
         if (!this.authService.isAuthenticated()) {
             return false;
