@@ -8,6 +8,7 @@ export interface TubeInformation {
     comments: string;
     lastUpdatedOn: string;
     type: 'Triode' | 'Pentode' | 'Tetrode';
+    owner?: string; // Firebase user UID who owns this tube
 
     maximumPlateVoltage?: number;
     maximumPlateDissipation?: number;
@@ -40,6 +41,7 @@ export interface TubeInformation {
         mu?: number;
         ex?: number;
         kg1?: number;
+        kg2?: number;
         kp?: number;
         kvb?: number;
         calculated?: boolean;

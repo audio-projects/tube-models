@@ -1,6 +1,9 @@
 /* Using Bootstrap SCSS with modern @use syntax. */
 @use 'bootstrap/scss/bootstrap';
 
+/* Bootstrap Icons */
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+
 * {
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;

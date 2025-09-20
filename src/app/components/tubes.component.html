@@ -3,14 +3,25 @@
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
       <h2 class="mb-0">Tube Models</h2>
-      <p class="text-muted mb-0">Manage your vacuum tube database</p>
+      <p class="text-muted mb-0">
+        @if (authService.isAuthenticated()) {
+          Manage your vacuum tube database
+        } @else {
+          Browse and experiment with tube models (Sign in to save changes)
+        }
+      </p>
     </div>
     <div class="btn-group" role="group">
       <button type="button" class="btn btn-outline-secondary" (click)="refreshTubes()">
         <i class="bi bi-arrow-clockwise me-1"></i>Refresh
       </button>
       <a class="btn btn-primary" routerLink="/tube/new">
-        <i class="bi bi-plus-lg me-1"></i>New Tube
+        <i class="bi bi-plus-lg me-1"></i>
+        @if (authService.isAuthenticated()) {
+          New Tube
+        } @else {
+          Try New Tube
+        }
       </a>
     </div>
   </div>
@@ -32,51 +43,99 @@
         </div>
       </div>
     </div>
-    <div class="col-md-3">
-      <div class="card bg-success text-white">
-        <div class="card-body">
-          <div class="d-flex justify-content-between">
-            <div>
-              <h6 class="card-title">Triodes</h6>
-              <h4 class="mb-0">{{ getCountByType('Triode') }}</h4>
-            </div>
-            <div class="align-self-center">
-              <i class="bi bi-cpu fs-1"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card bg-info text-white">
-        <div class="card-body">
-          <div class="d-flex justify-content-between">
-            <div>
-              <h6 class="card-title">Pentodes</h6>
-              <h4 class="mb-0">{{ getCountByType('Pentode') }}</h4>
-            </div>
-            <div class="align-self-center">
-              <i class="bi bi-cpu-fill fs-1"></i>
+    @if (authService.isAuthenticated()) {
+      <div class="col-md-3">
+        <div class="card bg-secondary text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="card-title">My Tubes</h6>
+                <h4 class="mb-0">{{ getMyTubesCount() }}</h4>
+              </div>
+              <div class="align-self-center">
+                <i class="bi bi-person-check fs-1"></i>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card bg-warning text-white">
-        <div class="card-body">
-          <div class="d-flex justify-content-between">
-            <div>
-              <h6 class="card-title">Tetrodes</h6>
-              <h4 class="mb-0">{{ getCountByType('Tetrode') }}</h4>
-            </div>
-            <div class="align-self-center">
-              <i class="bi bi-motherboard fs-1"></i>
+      <div class="col-md-3">
+        <div class="card bg-success text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="card-title">Triodes</h6>
+                <h4 class="mb-0">{{ getCountByType('Triode') }}</h4>
+              </div>
+              <div class="align-self-center">
+                <i class="bi bi-cpu fs-1"></i>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+      <div class="col-md-3">
+        <div class="card bg-info text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="card-title">Pentodes</h6>
+                <h4 class="mb-0">{{ getCountByType('Pentode') }}</h4>
+              </div>
+              <div class="align-self-center">
+                <i class="bi bi-cpu-fill fs-1"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    } @else {
+      <div class="col-md-3">
+        <div class="card bg-success text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="card-title">Triodes</h6>
+                <h4 class="mb-0">{{ getCountByType('Triode') }}</h4>
+              </div>
+              <div class="align-self-center">
+                <i class="bi bi-cpu fs-1"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-info text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="card-title">Pentodes</h6>
+                <h4 class="mb-0">{{ getCountByType('Pentode') }}</h4>
+              </div>
+              <div class="align-self-center">
+                <i class="bi bi-cpu-fill fs-1"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-warning text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="card-title">Tetrodes</h6>
+                <h4 class="mb-0">{{ getCountByType('Tetrode') }}</h4>
+              </div>
+              <div class="align-self-center">
+                <i class="bi bi-motherboard fs-1"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
   </div>
 
   <!-- Search and Filter Section -->
@@ -98,7 +157,7 @@
               (input)="filterTubes()">
           </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
           <label for="typeFilter" class="form-label">Filter by Type</label>
           <select 
             class="form-select" 
@@ -111,7 +170,7 @@
             <option value="Tetrode">Tetrode</option>
           </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
           <label for="manufacturerFilter" class="form-label">Filter by Manufacturer</label>
           <select 
             class="form-select" 
@@ -123,6 +182,22 @@
               <option value="{{ manufacturer }}">{{ manufacturer }}</option>
             }
           </select>
+        </div>
+        <div class="col-md-2">
+          @if (authService.isAuthenticated()) {
+            <label class="form-label">Ownership</label>
+            <div class="form-check">
+              <input 
+                class="form-check-input" 
+                type="checkbox" 
+                id="myRecordsFilter"
+                [(ngModel)]="showMyRecordsOnly"
+                (change)="filterTubes()">
+              <label class="form-check-label" for="myRecordsFilter">
+                <i class="bi bi-person-check me-1"></i>My Records Only
+              </label>
+            </div>
+          }
         </div>
         <div class="col-md-2 d-flex align-items-end">
           <button type="button" class="btn btn-outline-secondary w-100" (click)="clearFilters()">
@@ -161,9 +236,16 @@
                 <tr>
                   <th scope="row" class="text-muted">{{ i + 1 }}</th>
                   <td>
-                    <a routerLink="/tube/{{ tube.id }}" class="text-decoration-none fw-bold">
-                      {{ tube.name }}
-                    </a>
+                    <div class="d-flex align-items-center">
+                      <a routerLink="/tube/{{ tube.id }}" class="text-decoration-none fw-bold me-2">
+                        {{ tube.name }}
+                      </a>
+                      @if (authService.isAuthenticated() && isMyTube(tube)) {
+                        <span class="badge bg-success bg-opacity-25 text-success" title="You own this tube">
+                          <i class="bi bi-person-check"></i>
+                        </span>
+                      }
+                    </div>
                   </td>
                   <td>
                     <span class="badge" [ngClass]="getTypeBadgeClass(tube.type)">
@@ -183,13 +265,19 @@
                   <td>
                     <div class="btn-group btn-group-sm" role="group">
                       <a class="btn btn-outline-primary btn-sm" routerLink="/tube/{{ tube.id }}" 
-                         title="Edit Tube">
-                        <i class="bi bi-pencil"></i>
+                         [title]="authService.isAuthenticated() ? 'Edit Tube' : 'View and Experiment with Tube'">
+                        @if (authService.isAuthenticated()) {
+                          <i class="bi bi-pencil"></i>
+                        } @else {
+                          <i class="bi bi-eye"></i>
+                        }
                       </a>
-                      <button type="button" class="btn btn-outline-danger btn-sm" 
-                              (click)="confirmDelete(tube)" title="Delete Tube">
-                        <i class="bi bi-trash"></i>
-                      </button>
+                      @if (authService.isAuthenticated() && isMyTube(tube)) {
+                        <button type="button" class="btn btn-outline-danger btn-sm" 
+                                (click)="confirmDelete(tube)" title="Delete Tube">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      }
                     </div>
                   </td>
                 </tr>
@@ -205,12 +293,21 @@
             @if (searchTerm || selectedType || selectedManufacturer) {
               Try adjusting your search criteria or <button type="button" class="btn btn-link p-0" (click)="clearFilters()">clear filters</button>
             } @else {
-              Get started by adding your first tube to the database
+              @if (authService.isAuthenticated()) {
+                Get started by adding your first tube to the database
+              } @else {
+                Get started by experimenting with tube models
+              }
             }
           </p>
           @if (!searchTerm && !selectedType && !selectedManufacturer) {
             <a class="btn btn-primary" routerLink="/tube/new">
-              <i class="bi bi-plus-lg me-1"></i>Add First Tube
+              <i class="bi bi-plus-lg me-1"></i>
+              @if (authService.isAuthenticated()) {
+                Add First Tube
+              } @else {
+                Try Creating a Tube
+              }
             </a>
           }
         </div>

@@ -22,8 +22,8 @@
       <div class="btn-group" role="group">
         <a class="btn btn-outline-primary" routerLink="/tubes" title="Back to Tubes List"> <i class="bi bi-arrow-left me-1"></i>Back to Tubes </a>
         <button type="button" class="btn btn-outline-secondary" (click)="resetForm()" [disabled]="!tube" title="Reset Changes"><i class="bi bi-arrow-clockwise me-1"></i>Reset</button>
-        <button type="button" class="btn btn-success" (click)="saveTube()" [disabled]="!tube || !isFormValid()" title="Save Tube"><i class="bi bi-check-lg me-1"></i>Save</button>
-        <button type="button" class="btn btn-outline-danger" (click)="deleteTube()" [disabled]="!tube?.id" title="Delete Tube"><i class="bi bi-trash me-1"></i>Delete</button>
+        <button type="button" class="btn btn-success" (click)="saveTube()" [disabled]="!tube || !isFormValid() || !canSave()" title="Save Tube"><i class="bi bi-check-lg me-1"></i>Save</button>
+        <button type="button" class="btn btn-outline-danger" (click)="deleteTube()" [disabled]="!canDelete()" title="Delete Tube"><i class="bi bi-trash me-1"></i>Delete</button>
       </div>
     </div>
   </div>

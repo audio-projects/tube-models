@@ -6,7 +6,8 @@ import { TubeInformation } from './tube-information';
 import { File as TubeFile, Series, measurementTypeDescription } from '../files';
 import { fileParserService } from '../services/file-parser-service';
 import { TubePlotComponent } from './tube-plot.component';
-import { TubeDataService } from '../services/tube-data.service';
+import { FirebaseTubeService } from '../services/firebase-tube.service';
+import { AuthService } from '../services/auth.service';
 import { PentodeSpiceParametersComponent } from './pentode-spice-parameters.component';
 import { TetrodeSpiceParametersComponent } from './tetrode-spice-parameters.component';
 import { ToastService } from '../services/toast.service';
@@ -31,7 +32,8 @@ export class TubeComponent implements OnInit, AfterViewInit {
     constructor(
         private route: ActivatedRoute,
         private router: Router,
-        private tubeDataService: TubeDataService,
+        private firebaseTubeService: FirebaseTubeService,
+        public authService: AuthService,
         private ngZone: NgZone,
         private toastService: ToastService
     ) {}
@@ -49,13 +51,8 @@ export class TubeComponent implements OnInit, AfterViewInit {
     }
 
     ngAfterViewInit() {
-        // Set up file input change listener to avoid Angular Language Service issues
         if (this.fileInput) {
-            this.fileInput.nativeElement.addEventListener('change', (event) => {
-                this.ngZone.run(() => {
-                    this.onFilesSelected(event);
-                });
-            });
+            this.fileInput.nativeElement.addEventListener('change', this.onFileSelected.bind(this));
         }
     }
 
@@ -67,35 +64,37 @@ export class TubeComponent implements OnInit, AfterViewInit {
             comments: '',
             lastUpdatedOn: new Date().toISOString().split('T')[0],
             type: 'Triode',
-            files: []
+            maximumPlateDissipation: 0,
+            maximumPlateVoltage: 0,
+            maximumPlateCurrent: 0,
+            maximumGrid1Voltage: 0,
+            egOffset: 0,
+            files: [],
+            owner: this.authService.getCurrentUser()?.uid // Set owner for new tubes
         };
     }
 
-    private loadTube(id: string | null) {
-        if (id) {
-            const loadedTube = this.tubeDataService.getTubeById(id);
-            if (loadedTube) {
-                this.tube = { ...loadedTube };
-
-                // Add test triode parameters for debugging if needed
-                if (!this.tube.triodeModelParameters?.calculated) {
-                    this.tube.triodeModelParameters = {
-                        mu: 100,
-                        ex: 1.4,
-                        kg1: 1060,
-                        kp: 600,
-                        kvb: 300,
-                        calculated: true,
-                        lastCalculated: new Date().toISOString()
-                    };
-                    console.log('Added test triode parameters for debugging');
+    private loadTube(tubeId: string | null) {
+        if (tubeId) {
+            console.log('Loading tube with ID:', tubeId);
+            this.firebaseTubeService.getTubeById(tubeId).subscribe({
+                next: (tube: TubeInformation | null) => {
+                    if (tube) {
+                        this.tube = tube;
+                        console.log('Tube loaded:', tube);
+                    }
+                    else {
+                        console.error('Tube not found');
+                        this.toastService.error('Tube not found');
+                        this.router.navigate(['/tubes']);
+                    }
+                },
+                error: (error: unknown) => {
+                    console.error('Error loading tube:', error);
+                    this.toastService.error('Error loading tube');
+                    this.router.navigate(['/tubes']);
                 }
-            }
-            else {
-                console.error(`Tube with ID ${id} not found`);
-                this.toastService.error(`Tube with ID ${id} not found. Redirecting to tubes list.`, 'Tube Not Found');
-                this.router.navigate(['/tubes']);
-            }
+            });
         }
         else {
             console.error('No tube ID provided');
@@ -108,30 +107,68 @@ export class TubeComponent implements OnInit, AfterViewInit {
             return;
         }
 
+        // Check if user is authenticated
+        if (!this.authService.isAuthenticated()) {
+            this.toastService.error('You must be signed in to save tubes.');
+            return;
+        }
+
+        // Validate required fields
+        if (!this.tube.name || this.tube.name.trim() === '') {
+            this.toastService.error('Tube name is required.');
+            return;
+        }
+
         console.log('Saving tube:', this.tube);
 
-        this.tubeDataService.saveTube(this.tube).subscribe({
-            next: (savedTube) => {
-                console.log('Tube saved successfully:', savedTube);
-                this.tube = savedTube;
-
-                if (this.isNewTube) {
+        if (this.isNewTube) {
+            // Create new tube - remove id field for new tubes
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { id, ...tubeData } = this.tube; // Remove ID for new tubes
+            this.firebaseTubeService.saveTube(tubeData).subscribe({
+                next: (savedTube: TubeInformation) => {
+                    console.log('Tube saved successfully:', savedTube);
+                    this.tube = savedTube;
+                    this.isNewTube = false;
+                    this.toastService.success(`Tube "${savedTube.name}" created successfully!`);
                     // Navigate to edit mode after saving new tube
                     this.router.navigate(['/tube', savedTube.id]);
+                },
+                error: (error: unknown) => {
+                    console.error('Error saving tube:', error);
+                    this.toastService.error('Error saving tube. Please try again.');
                 }
-                else {
+            });
+        }
+        else {
+            // Update existing tube
+            this.firebaseTubeService.updateTube(this.tube).subscribe({
+                next: (savedTube: TubeInformation) => {
+                    console.log('Tube updated successfully:', savedTube);
+                    this.tube = savedTube;
                     this.toastService.success(`Tube "${savedTube.name}" updated successfully!`);
+                },
+                error: (error: unknown) => {
+                    console.error('Error updating tube:', error);
+                    this.toastService.error('Error updating tube. Please try again.');
                 }
-            },
-            error: (error) => {
-                console.error('Error saving tube:', error);
-                this.toastService.error('Error saving tube. Please try again.');
-            }
-        });
+            });
+        }
     }
 
     deleteTube() {
         if (!this.tube || !this.tube.id) {
+            return;
+        }
+
+        // Check if user is authenticated and is the owner
+        if (!this.authService.isAuthenticated()) {
+            this.toastService.error('You must be signed in to delete tubes.');
+            return;
+        }
+
+        if (!this.firebaseTubeService.isOwner(this.tube)) {
+            this.toastService.error('You can only delete tubes that you created.');
             return;
         }
 
@@ -140,15 +177,15 @@ export class TubeComponent implements OnInit, AfterViewInit {
             () => {
                 console.log('Deleting tube:', this.tube);
 
-                this.tubeDataService.deleteTube(this.tube!.id).subscribe({
-                    next: (success) => {
+                this.firebaseTubeService.deleteTube(this.tube!).subscribe({
+                    next: (success: boolean) => {
                         if (success) {
                             console.log(`Tube "${this.tube!.name}" deleted successfully`);
                             this.toastService.success(`Tube "${this.tube!.name}" deleted successfully!`);
                             this.router.navigate(['/tubes']);
                         }
                     },
-                    error: (error) => {
+                    error: (error: unknown) => {
                         console.error('Error deleting tube:', error);
                         this.toastService.error('Error deleting tube. Please try again.');
                     }
@@ -195,24 +232,30 @@ export class TubeComponent implements OnInit, AfterViewInit {
         });
     }
 
+    /**
+     * Check if current user can save this tube
+     */
+    canSave(): boolean {
+        return this.authService.isAuthenticated();
+    }
+
+    /**
+     * Check if current user can delete this tube
+     */
+    canDelete(): boolean {
+        if (!this.authService.isAuthenticated() || !this.tube || this.isNewTube) {
+            return false;
+        }
+        return this.firebaseTubeService.isOwner(this.tube);
+    }
+
     duplicateTube() {
         if (!this.tube) {
             return;
         }
 
-        console.log('Duplicating tube:', this.tube);
-
-        this.tubeDataService.duplicateTube(this.tube).subscribe({
-            next: (duplicatedTube) => {
-                console.log('Tube duplicated successfully:', duplicatedTube);
-                // Navigate to the new duplicated tube
-                this.router.navigate(['/tube', duplicatedTube.id]);
-            },
-            error: (error) => {
-                console.error('Error duplicating tube:', error);
-                this.toastService.error('Error duplicating tube. Please try again.');
-            }
-        });
+        // TODO: Implement duplicate functionality with Firebase
+        this.toastService.info('Duplicate functionality will be implemented in future updates.');
     }
 
     exportTube() {
@@ -220,65 +263,56 @@ export class TubeComponent implements OnInit, AfterViewInit {
             const dataStr = JSON.stringify(this.tube, null, 2);
             const dataBlob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(dataBlob);
-
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `${this.tube.name || 'tube'}_data.json`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${this.tube.name || 'tube'}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
             URL.revokeObjectURL(url);
 
-            console.log('Exporting tube data');
+            this.toastService.success(`Tube "${this.tube.name}" exported successfully!`, 'Export Complete');
         }
     }
 
-    // File upload methods
-    triggerFileUpload(): void {
+    onFileSelected(event: Event) {
+        const target = event.target as HTMLInputElement;
+        const files = target.files;
+
+        if (files && files.length > 0) {
+            this.uploadFiles(Array.from(files));
+        }
+    }
+
+    triggerFileUpload() {
         if (this.fileInput) {
-            // Reset the input value to allow selecting the same files again
-            this.fileInput.nativeElement.value = '';
             this.fileInput.nativeElement.click();
         }
     }
 
-    onFilesSelected(event: Event): void {
-        const input = event.target as HTMLInputElement;
-
-        if (input && input.files && input.files.length > 0) {
-            this.uploadFiles(input.files);
-        }
-    }
-
-    async uploadFiles(files: FileList) {
-        if (!this.tube) return;
-
-        const fileArray = Array.from(files);
-        const validFiles = fileArray.filter(file => file.name.toLowerCase().endsWith('.utd'));
-
-        if (validFiles.length === 0) {
-            this.toastService.warning('Please select valid UTD files.', 'Invalid File Type');
+    async uploadFiles(files: File[]) {
+        if (!this.tube) {
             return;
         }
 
-        if (validFiles.length !== fileArray.length) {
-            this.toastService.warning(`Only ${validFiles.length} of ${fileArray.length} files are valid UTD files. Only valid files will be processed.`, 'Mixed File Types');
-        }
+        this.uploadProgress = 10;
+        const totalFiles = files.length;
+        let processedFiles = 0;
 
-        this.uploadProgress = 0;
-        const totalFiles = validFiles.length;
-
-        for (let i = 0; i < validFiles.length; i++) {
-            const file = validFiles[i];
+        for (const file of files) {
             try {
                 await this.processFile(file);
-                this.uploadProgress = Math.round(((i + 1) / totalFiles) * 100);
+                processedFiles++;
+                this.uploadProgress = 10 + (processedFiles / totalFiles) * 80;
             }
             catch (error) {
                 console.error(`Error processing file ${file.name}:`, error);
-                this.toastService.error(`Error processing file ${file.name}. Please check the file format.`, 'File Processing Error');
+                this.toastService.error(`Error processing file "${file.name}". Please check the file format.`);
             }
         }
+
+        this.uploadProgress = 100;
+        this.toastService.success(`Successfully processed ${processedFiles} of ${totalFiles} files.`);
 
         // Reset progress after a short delay
         setTimeout(() => {
@@ -300,19 +334,12 @@ export class TubeComponent implements OnInit, AfterViewInit {
                     const parsedFile = fileParserService(file.name, content);
 
                     if (parsedFile && this.tube) {
-                        // Check if file with same name already exists
-                        const existingIndex = this.tube.files.findIndex(f => f.name === parsedFile.name);
-                        if (existingIndex >= 0) {
-                            // Replace existing file
-                            this.tube.files[existingIndex] = parsedFile;
-                        }
-                        else {
-                            // Add new file
-                            this.tube.files.push(parsedFile);
-                        }
+                        this.tube.files.push(parsedFile);
+                        resolve();
                     }
-
-                    resolve();
+                    else {
+                        reject(new Error('Unable to parse file'));
+                    }
                 }
                 catch (error) {
                     reject(error);
@@ -401,91 +428,178 @@ export class TubeComponent implements OnInit, AfterViewInit {
             return;
         }
 
-        // Set loading state
+        // Validate that we have usable measurement data
+        let totalDataPoints = 0;
+        let validDataPoints = 0;
+        const maxPowerDissipation = this.tube.maximumPlateDissipation || 1000; // Default to 1000W if not specified
+
+        for (const file of this.tube.files) {
+            // Check if the measurement type is compatible
+            if (file.measurementType === 'IP_EG_EP_VH' ||
+                file.measurementType === 'IP_EG_EPES_VH' ||
+                file.measurementType === 'IP_EP_EG_VH' ||
+                file.measurementType === 'IP_EPES_EG_VH') {
+
+                for (const series of file.series) {
+                    for (const point of series.points) {
+                        totalDataPoints++;
+                        // Check if point meets criteria: positive current and within power limits
+                        if ((point.ip + (point.is ?? 0)) > 0 &&
+                            point.ep * (point.ip + (point.is ?? 0)) * 1e-3 <= maxPowerDissipation) {
+                            validDataPoints++;
+                        }
+                    }
+                }
+            }
+        }
+
+        console.log(`Data validation: ${validDataPoints} valid points out of ${totalDataPoints} total points`);
+
+        if (validDataPoints === 0) {
+            this.toastService.warning(
+                `No valid measurement data found. Checked ${totalDataPoints} data points but none meet the criteria (positive current, within power limits).`,
+                'Invalid Data'
+            );
+            return;
+        }
+
+        if (validDataPoints < 5) {
+            this.toastService.warning(
+                `Insufficient data for reliable calculation. Found only ${validDataPoints} valid points. At least 5 points recommended.`,
+                'Insufficient Data'
+            );
+            // Continue anyway but warn the user
+        }
+
         this.isCalculatingSpiceParameters = true;
 
-        // Create worker to calculate parameters
-        const worker = new Worker(new URL('../workers/optimize-norman-koren-triode-model-parameters.worker', import.meta.url));
+        try {
+            // Create a web worker for calculation
+            console.log('Creating worker...');
+            const worker = new Worker(new URL('../workers/optimize-norman-koren-triode-model-parameters.worker.ts', import.meta.url), { type: 'module' });
+            console.log('Worker created successfully:', worker);
 
-        // Handle worker messages
-        worker.onmessage = ({ data }) => {
-            if (data.type === 'succeeded' && data.parameters) {
-                // Store the calculated parameters
-                this.tube!.triodeModelParameters = {
-                    mu: data.parameters.mu,
-                    ex: data.parameters.ex,
-                    kg1: data.parameters.kg1,
-                    kp: data.parameters.kp,
-                    kvb: data.parameters.kvb,
-                    calculated: true,
-                    lastCalculated: new Date().toISOString()
-                };
-                console.log('SPICE model parameters calculated:', this.tube!.triodeModelParameters);
-                this.isCalculatingSpiceParameters = false;
-            }
-            else if (data.type === 'failed') {
-                console.error('Failed to calculate SPICE model parameters');
-                this.toastService.error('Failed to calculate SPICE model parameters. Please check the measurement data.', 'Calculation Failed');
-                this.isCalculatingSpiceParameters = false;
-            }
-            else if (data.type === 'log') {
-                console.log('Worker log:', data.text);
-            }
-        };
+            // Prepare initial parameters - use existing ones or defaults
+            const initialParameters = this.tube.triodeModelParameters || {
+                mu: 20,    // Default amplification factor
+                ex: 1.4,   // Default exponent
+                kg1: 1332, // Default grid constant
+                kg2: 0,    // Default kg2 (usually 0 for triodes)
+                kp: 600,   // Default plate constant
+                kvb: 300,  // Default bias constant
+                calculated: false
+            };
 
-        worker.onerror = (error) => {
-            console.error('Worker error:', error);
-            this.toastService.error('An error occurred while calculating SPICE model parameters.', 'Calculation Error');
+            worker.postMessage({
+                files: this.tube.files,
+                maximumPlateDissipation: this.tube.maximumPlateDissipation || 1000, // Default to 1000W if not specified
+                egOffset: this.tube.egOffset || 0,
+                initial: initialParameters,  // This is what the worker expects!
+                algorithm: 0,  // 0 = Levenberg-Marquardt, 1 = Powell
+                trace: undefined
+            });
+            console.log('Message posted to worker');
+
+            worker.onmessage = (e) => {
+                console.log('Worker message received:', e.data);
+                const result = e.data;
+
+                // Handle different message types from worker
+                if (result.type === 'succeeded') {
+                    // Extract parameters from the worker result
+                    const params = result.parameters;
+                    if (params) {
+                        this.tube!.triodeModelParameters = {
+                            mu: params.mu || 0,
+                            ex: params.ex || 0,
+                            kg1: params.kg1 || 0,
+                            kg2: params.kg2 || 0, // kg2 might not be used for triodes
+                            kp: params.kp || 0,
+                            kvb: params.kvb || 0,
+                            calculated: true
+                        };
+                        console.log('Triode model parameters calculated:', this.tube!.triodeModelParameters);
+                        this.isCalculatingSpiceParameters = false;
+                        this.toastService.success('SPICE model parameters calculated successfully!', 'Calculation Complete');
+                    }
+                    else {
+                        console.error('Parameters object is undefined');
+                        this.toastService.error('Failed to calculate SPICE model parameters. Invalid result.', 'Calculation Failed');
+                        this.isCalculatingSpiceParameters = false;
+                    }
+                    worker.terminate();
+                }
+                else if (result.type === 'failed') {
+                    console.error('Worker calculation failed:', result);
+                    this.toastService.error('Failed to calculate SPICE model parameters. Please check your measurement data.', 'Calculation Failed');
+                    this.isCalculatingSpiceParameters = false;
+                    worker.terminate();
+                }
+                else if (result.type === 'notification' || result.type === 'log') {
+                    // Handle progress notifications and logs
+                    console.log('Worker progress:', result.text);
+                    // Don't terminate worker for progress messages
+                }
+                // Ignore other message types (like notifications, logs)
+            };
+
+            worker.onerror = (error) => {
+                console.error('Worker error:', error);
+                this.toastService.error('An error occurred while calculating SPICE model parameters.', 'Calculation Error');
+                this.isCalculatingSpiceParameters = false;
+                worker.terminate();
+            };
+
+        }
+        catch (error) {
+            console.error('Error creating worker:', error);
+            this.toastService.error('Failed to initialize calculation worker.', 'Worker Error');
             this.isCalculatingSpiceParameters = false;
-        };
-
-        worker.postMessage({
-            initial: {},
-            files: this.tube.files,
-            maximumPlateDissipation: this.tube.maximumPlateDissipation || 10, // Default 10W if not specified
-            egOffset: this.tube.egOffset || 0,
-            algorithm: 1, // Use Powell algorithm (0 = Levenberg-Marquardt, 1 = Powell)
-            trace: { enabled: false }
-        });
+        }
     }
 
-    // Generate SPICE model text for copying
     generateSpiceModelText(): string {
         if (!this.tube?.triodeModelParameters?.calculated) {
-            return '';
+            return 'No SPICE model parameters calculated.';
         }
 
         const params = this.tube.triodeModelParameters;
         const tubeName = this.tube.name || 'TRIODE';
 
-        return `* ${tubeName} Triode Model - Norman Koren Parameters
-* Generated on ${new Date().toLocaleString()}
-.SUBCKT ${tubeName} A G C
-* Anode Grid Cathode
-E1 7 0 VALUE={V(A,C)/KP*LOG(1+EXP(KP*(1/MU+V(G,C)/SQRT(KVB+V(A,C)*V(A,C)))))}
+        return `.SUBCKT ${tubeName.toUpperCase().replace(/[^A-Z0-9]/g, '_')} P G K
+* ${this.tube.name} Triode Model (Norman Koren)
+* Calculated parameters
+* MU=${params.mu?.toFixed(3)} EX=${params.ex?.toFixed(3)} KG1=${params.kg1?.toFixed(6)}
+* KG2=${params.kg2?.toFixed(6)} KP=${params.kp?.toFixed(6)} KVB=${params.kvb?.toFixed(6)}
+
+E1 7 0 VALUE={V(P,K)/KP*LOG(1+EXP(KP*(1/MU+V(G,K)/SQRT(KVB+V(P,K)*V(P,K)))))}
 RE1 7 0 1G
-G1 A C VALUE={0.5*(PWR(V(7),EX)+PWRS(V(7),EX))/KG1}
-RCP A C 1G
-.PARAM MU=${params.mu?.toFixed(6)} EX=${params.ex?.toFixed(6)} KG1=${params.kg1?.toFixed(6)} KP=${params.kp?.toFixed(6)} KVB=${params.kvb?.toFixed(6)}
-.ENDS ${tubeName}`;
+G1 P K VALUE={(PWR(V(7),EX)+PWRS(V(7),EX))/KG1*ATAN(V(P,K)/KVB)}
+RCP P K 1G
+C1 G P {KG2*1E-12}
+.ENDS
+
+.PARAM MU=${params.mu?.toFixed(3)} EX=${params.ex?.toFixed(3)} KG1=${params.kg1?.toFixed(6)}
+.PARAM KG2=${params.kg2?.toFixed(6)} KP=${params.kp?.toFixed(6)} KVB=${params.kvb?.toFixed(6)}`;
     }
 
-    // Copy SPICE model to clipboard
     copySpiceModel() {
         const spiceText = this.generateSpiceModelText();
-        if (spiceText) {
+
+        if (navigator.clipboard && window.isSecureContext) {
             navigator.clipboard.writeText(spiceText).then(() => {
                 this.toastService.success('SPICE model copied to clipboard!', 'Copied');
-            }).catch(() => {
-                // Fallback for older browsers
-                const textArea = document.createElement('textarea');
-                textArea.value = spiceText;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                this.toastService.success('SPICE model copied to clipboard!', 'Copied');
             });
+        }
+        else {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = spiceText;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            this.toastService.success('SPICE model copied to clipboard!', 'Copied');
         }
     }
 

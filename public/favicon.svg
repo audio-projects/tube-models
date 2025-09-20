@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Tube envelope (circle) -->
+  <circle cx="32" cy="32" r="26" fill="none" stroke="#333" stroke-width="4"/>
+  
+  <!-- Cathode (heated filament) - zigzag line at bottom -->
+  <path d="M 16 46 L 20 42 L 24 46 L 28 42 L 32 46 L 36 42 L 40 46 L 44 42 L 48 46" 
+        fill="none" stroke="#ff4400" stroke-width="3"/>
+  
+  <!-- Grid (control grid) - dashed curved line -->
+  <path d="M 12 32 Q 32 18 52 32" 
+        fill="none" stroke="#666" stroke-width="3" 
+        stroke-dasharray="4,3"/>
+  
+  <!-- Plate (anode) - curved line at top -->
+  <path d="M 18 20 Q 32 12 46 20" 
+        fill="none" stroke="#333" stroke-width="4"/>
+  
+  <!-- Connection leads (simplified, no text for favicon) -->
+  <!-- Cathode lead -->
+  <line x1="32" y1="46" x2="32" y2="58" stroke="#ff4400" stroke-width="3"/>
+  
+  <!-- Grid lead -->
+  <line x1="12" y1="32" x2="6" y2="32" stroke="#666" stroke-width="3"/>
+  
+  <!-- Plate lead -->
+  <line x1="32" y1="16" x2="32" y2="6" stroke="#333" stroke-width="3"/>
+</svg>
