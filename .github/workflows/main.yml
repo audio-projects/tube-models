@@ -36,13 +36,17 @@ jobs:
       - name: Build Angular application
         run: npm run build -- --configuration=production
 
+      - name: Create deployment directory structure
+        run: |
+          mv ./dist/tube-models/browser ./dist/tube-models/tube-models
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: './dist/tube-models/browser/'
+          path: './dist/tube-models/'
 
   deploy:
     environment:

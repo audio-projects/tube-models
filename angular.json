@@ -59,7 +59,8 @@
                   "maximumError": "8kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "baseHref": "/tube-models/"
             },
             "development": {
               "optimization": false,
