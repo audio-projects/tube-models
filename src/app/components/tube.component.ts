@@ -69,7 +69,8 @@ export class TubeComponent implements OnInit, AfterViewInit {
             maximumPlateCurrent: 0,
             maximumGrid1Voltage: 0,
             egOffset: 0,
-            files: []
+            files: [],
+            owner: this.authService.getCurrentUser()?.uid // Set owner for new tubes
         };
     }
 
@@ -109,6 +110,12 @@ export class TubeComponent implements OnInit, AfterViewInit {
         // Check if user is authenticated
         if (!this.authService.isAuthenticated()) {
             this.toastService.error('You must be signed in to save tubes.');
+            return;
+        }
+
+        // Validate required fields
+        if (!this.tube.name || this.tube.name.trim() === '') {
+            this.toastService.error('Tube name is required.');
             return;
         }
 

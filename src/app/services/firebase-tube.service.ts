@@ -1,16 +1,16 @@
-import { Injectable } from '@angular/core';
 import {
-    Firestore,
+    addDoc,
     collection,
     collectionData,
+    deleteDoc,
     doc,
+    Firestore,
     getDoc,
-    addDoc,
-    updateDoc,
-    deleteDoc
+    updateDoc
 } from '@angular/fire/firestore';
 import { Auth } from '@angular/fire/auth';
-import { Observable, from } from 'rxjs';
+import { from, Observable } from 'rxjs';
+import { Injectable } from '@angular/core';
 import { TubeInformation } from '../components/tube-information';
 
 @Injectable({
@@ -76,15 +76,30 @@ export class FirebaseTubeService {
             throw new Error('Authentication required to save tubes');
         }
 
+        // Validate required fields
+        if (!tube.name || tube.name.trim() === '') {
+            throw new Error('Tube name is required');
+        }
+
+        console.log('Saving tube with user:', this.auth.currentUser.uid);
+
         const tubeData = {
             ...tube,
             owner: this.auth.currentUser.uid,
-            lastUpdatedOn: new Date().toISOString()
+            lastUpdatedOn: new Date().toISOString().split('T')[0] // Use date-only format for HTML date inputs
         };
+
+        console.log('Tube data to save:', tubeData);
 
         const tubesCollection = collection(this.firestore, 'tubes');
         return from(addDoc(tubesCollection, tubeData).then(docRef => {
+            console.log('Document successfully written with ID:', docRef.id);
             return { id: docRef.id, ...tubeData } as TubeInformation;
+        }).catch(error => {
+            console.error('Detailed Firebase error:', error);
+            console.error('Error code:', error.code);
+            console.error('Error message:', error.message);
+            throw error;
         }));
     }
 
@@ -102,11 +117,16 @@ export class FirebaseTubeService {
             throw new Error('Only the tube owner can update this tube');
         }
 
+        // Validate required fields
+        if (!tube.name || tube.name.trim() === '') {
+            throw new Error('Tube name is required');
+        }
+
         const tubeDoc = doc(this.firestore, 'tubes', tube.id);
         const { id, ...updateData } = tube; // Extract ID from tube data
         const dataToUpdate = {
             ...updateData,
-            lastUpdatedOn: new Date().toISOString()
+            lastUpdatedOn: new Date().toISOString().split('T')[0] // Use date-only format for HTML date inputs
         };
 
         return from(updateDoc(tubeDoc, dataToUpdate).then(() => {
