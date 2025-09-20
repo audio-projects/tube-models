@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Firestore } from '@angular/fire/firestore';
+import { Auth } from '@angular/fire/auth';
 import { FirebaseTubeService } from './firebase-tube.service';
 
 describe('FirebaseTubeService', () => {
@@ -7,11 +8,16 @@ describe('FirebaseTubeService', () => {
     let service: FirebaseTubeService;
 
     beforeEach(() => {
-        const spy = jasmine.createSpyObj('Firestore', ['collection']);
+        const firestoreSpy = jasmine.createSpyObj('Firestore', ['collection']);
+        const authSpy = jasmine.createSpyObj('Auth', [], {
+            currentUser: null,
+            app: { name: 'test-app', options: {} }
+        });
 
         TestBed.configureTestingModule({
             providers: [
-                { provide: Firestore, useValue: spy }
+                { provide: Firestore, useValue: firestoreSpy },
+                { provide: Auth, useValue: authSpy }
             ]
         });
         service = TestBed.inject(FirebaseTubeService);
