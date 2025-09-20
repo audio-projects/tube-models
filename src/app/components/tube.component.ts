@@ -421,47 +421,134 @@ export class TubeComponent implements OnInit, AfterViewInit {
             return;
         }
 
+        // Validate that we have usable measurement data
+        let totalDataPoints = 0;
+        let validDataPoints = 0;
+        const maxPowerDissipation = this.tube.maximumPlateDissipation || 1000; // Default to 1000W if not specified
+
+        for (const file of this.tube.files) {
+            // Check if the measurement type is compatible
+            if (file.measurementType === 'IP_EG_EP_VH' ||
+                file.measurementType === 'IP_EG_EPES_VH' ||
+                file.measurementType === 'IP_EP_EG_VH' ||
+                file.measurementType === 'IP_EPES_EG_VH') {
+
+                for (const series of file.series) {
+                    for (const point of series.points) {
+                        totalDataPoints++;
+                        // Check if point meets criteria: positive current and within power limits
+                        if ((point.ip + (point.is ?? 0)) > 0 &&
+                            point.ep * (point.ip + (point.is ?? 0)) * 1e-3 <= maxPowerDissipation) {
+                            validDataPoints++;
+                        }
+                    }
+                }
+            }
+        }
+
+        console.log(`Data validation: ${validDataPoints} valid points out of ${totalDataPoints} total points`);
+
+        if (validDataPoints === 0) {
+            this.toastService.warning(
+                `No valid measurement data found. Checked ${totalDataPoints} data points but none meet the criteria (positive current, within power limits).`,
+                'Invalid Data'
+            );
+            return;
+        }
+
+        if (validDataPoints < 5) {
+            this.toastService.warning(
+                `Insufficient data for reliable calculation. Found only ${validDataPoints} valid points. At least 5 points recommended.`,
+                'Insufficient Data'
+            );
+            // Continue anyway but warn the user
+        }
+
         this.isCalculatingSpiceParameters = true;
 
-        // Create a web worker for calculation
-        const worker = new Worker(new URL('../workers/optimize-norman-koren-triode-model-parameters.worker.ts', import.meta.url), { type: 'module' });
+        try {
+            // Create a web worker for calculation
+            console.log('Creating worker...');
+            const worker = new Worker(new URL('../workers/optimize-norman-koren-triode-model-parameters.worker.ts', import.meta.url), { type: 'module' });
+            console.log('Worker created successfully:', worker);
 
-        worker.postMessage({
-            files: this.tube.files,
-            maximumPlateDissipation: this.tube.maximumPlateDissipation || 0,
-            egOffset: this.tube.egOffset || 0,
-        });
+            // Prepare initial parameters - use existing ones or defaults
+            const initialParameters = this.tube.triodeModelParameters || {
+                mu: 20,    // Default amplification factor
+                ex: 1.4,   // Default exponent
+                kg1: 1332, // Default grid constant
+                kg2: 0,    // Default kg2 (usually 0 for triodes)
+                kp: 600,   // Default plate constant
+                kvb: 300,  // Default bias constant
+                calculated: false
+            };
 
-        worker.onmessage = (e) => {
-            const result = e.data;
-            if (result.success) {
-                this.tube!.triodeModelParameters = {
-                    mu: result.mu,
-                    ex: result.ex,
-                    kg1: result.kg1,
-                    kg2: result.kg2,
-                    kp: result.kp,
-                    kvb: result.kvb,
-                    calculated: true
-                };
-                console.log('Triode model parameters calculated:', this.tube!.triodeModelParameters);
+            worker.postMessage({
+                files: this.tube.files,
+                maximumPlateDissipation: this.tube.maximumPlateDissipation || 1000, // Default to 1000W if not specified
+                egOffset: this.tube.egOffset || 0,
+                initial: initialParameters,  // This is what the worker expects!
+                algorithm: 0,  // 0 = Levenberg-Marquardt, 1 = Powell
+                trace: undefined
+            });
+            console.log('Message posted to worker');
+
+            worker.onmessage = (e) => {
+                console.log('Worker message received:', e.data);
+                const result = e.data;
+
+                // Handle different message types from worker
+                if (result.type === 'succeeded') {
+                    // Extract parameters from the worker result
+                    const params = result.parameters;
+                    if (params) {
+                        this.tube!.triodeModelParameters = {
+                            mu: params.mu || 0,
+                            ex: params.ex || 0,
+                            kg1: params.kg1 || 0,
+                            kg2: params.kg2 || 0, // kg2 might not be used for triodes
+                            kp: params.kp || 0,
+                            kvb: params.kvb || 0,
+                            calculated: true
+                        };
+                        console.log('Triode model parameters calculated:', this.tube!.triodeModelParameters);
+                        this.isCalculatingSpiceParameters = false;
+                        this.toastService.success('SPICE model parameters calculated successfully!', 'Calculation Complete');
+                    }
+                    else {
+                        console.error('Parameters object is undefined');
+                        this.toastService.error('Failed to calculate SPICE model parameters. Invalid result.', 'Calculation Failed');
+                        this.isCalculatingSpiceParameters = false;
+                    }
+                    worker.terminate();
+                }
+                else if (result.type === 'failed') {
+                    console.error('Worker calculation failed:', result);
+                    this.toastService.error('Failed to calculate SPICE model parameters. Please check your measurement data.', 'Calculation Failed');
+                    this.isCalculatingSpiceParameters = false;
+                    worker.terminate();
+                }
+                else if (result.type === 'notification' || result.type === 'log') {
+                    // Handle progress notifications and logs
+                    console.log('Worker progress:', result.text);
+                    // Don't terminate worker for progress messages
+                }
+                // Ignore other message types (like notifications, logs)
+            };
+
+            worker.onerror = (error) => {
+                console.error('Worker error:', error);
+                this.toastService.error('An error occurred while calculating SPICE model parameters.', 'Calculation Error');
                 this.isCalculatingSpiceParameters = false;
-                this.toastService.success('SPICE model parameters calculated successfully!', 'Calculation Complete');
-            }
-            else {
-                console.error('Error calculating parameters:', result.error);
-                this.toastService.error('Failed to calculate SPICE model parameters. Please check your measurement data.', 'Calculation Failed');
-                this.isCalculatingSpiceParameters = false;
-            }
-            worker.terminate();
-        };
+                worker.terminate();
+            };
 
-        worker.onerror = (error) => {
-            console.error('Worker error:', error);
-            this.toastService.error('An error occurred while calculating SPICE model parameters.', 'Calculation Error');
+        }
+        catch (error) {
+            console.error('Error creating worker:', error);
+            this.toastService.error('Failed to initialize calculation worker.', 'Worker Error');
             this.isCalculatingSpiceParameters = false;
-            worker.terminate();
-        };
+        }
     }
 
     generateSpiceModelText(): string {

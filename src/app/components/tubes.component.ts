@@ -21,6 +21,7 @@ export class TubesComponent implements OnInit, OnDestroy {
     searchTerm = '';
     selectedType = '';
     selectedManufacturer = '';
+    showMyRecordsOnly = false; // New ownership filter
     filteredTubes: TubeInformation[] = [];
 
     private tubesSubscription?: Subscription;
@@ -76,6 +77,22 @@ export class TubesComponent implements OnInit, OnDestroy {
         return this.tubes.filter(tube => tube.type === type).length;
     }
 
+    getMyTubesCount(): number {
+        if (!this.authService.isAuthenticated()) {
+            return 0;
+        }
+        const currentUserUid = this.authService.getCurrentUser()?.uid;
+        return this.tubes.filter(tube => tube.owner === currentUserUid).length;
+    }
+
+    isMyTube(tube: TubeInformation): boolean {
+        if (!this.authService.isAuthenticated()) {
+            return false;
+        }
+        const currentUserUid = this.authService.getCurrentUser()?.uid;
+        return tube.owner === currentUserUid;
+    }
+
     getUniqueManufacturers(): string[] {
         const manufacturers = this.tubes.map(tube => tube.manufacturer);
         return [...new Set(manufacturers)].sort();
@@ -91,7 +108,12 @@ export class TubesComponent implements OnInit, OnDestroy {
             const matchesType = !this.selectedType || tube.type === this.selectedType;
             const matchesManufacturer = !this.selectedManufacturer || tube.manufacturer === this.selectedManufacturer;
 
-            return matchesSearch && matchesType && matchesManufacturer;
+            // Ownership filter - only apply if user is authenticated and filter is enabled
+            const matchesOwnership = !this.showMyRecordsOnly ||
+                !this.authService.isAuthenticated() ||
+                (tube.owner && tube.owner === this.authService.getCurrentUser()?.uid);
+
+            return matchesSearch && matchesType && matchesManufacturer && matchesOwnership;
         });
     }
 
@@ -99,7 +121,8 @@ export class TubesComponent implements OnInit, OnDestroy {
         this.searchTerm = '';
         this.selectedType = '';
         this.selectedManufacturer = '';
-        this.filteredTubes = [...this.tubes];
+        this.showMyRecordsOnly = false;
+        this.filterTubes();
     }
 
     getTypeBadgeClass(type: string): string {
@@ -142,8 +165,28 @@ export class TubesComponent implements OnInit, OnDestroy {
     }
 
     private deleteTube(tube: TubeInformation) {
-        // TODO: Implement delete functionality in FirebaseTubeService
+        // Check if user owns the tube
+        if (!this.isMyTube(tube)) {
+            this.toastService.error('You can only delete tubes that you created.');
+            return;
+        }
+
         console.log(`Delete requested for tube: ${tube.name}`);
-        this.toastService.info('Delete functionality will be implemented in future updates.');
+        this.firebaseTubeService.deleteTube(tube).subscribe({
+            next: (success: boolean) => {
+                if (success) {
+                    console.log(`Tube "${tube.name}" deleted successfully`);
+                    this.toastService.success(`Tube "${tube.name}" deleted successfully!`);
+                    // The tubes list will automatically update via the subscription
+                }
+                else {
+                    this.toastService.error('Failed to delete tube. Please try again.');
+                }
+            },
+            error: (error: unknown) => {
+                console.error('Error deleting tube:', error);
+                this.toastService.error('Error deleting tube. Please try again.');
+            }
+        });
     }
 }
