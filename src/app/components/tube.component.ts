@@ -10,13 +10,14 @@ import { FirebaseTubeService } from '../services/firebase-tube.service';
 import { AuthService } from '../services/auth.service';
 import { PentodeSpiceParametersComponent } from './pentode-spice-parameters.component';
 import { TetrodeSpiceParametersComponent } from './tetrode-spice-parameters.component';
+import { TriodeSpiceParametersComponent } from './triode-spice-parameters.component';
 import { ToastService } from '../services/toast.service';
 
 @Component({
     selector: 'app-tube',
     templateUrl: './tube.component.html',
     styleUrl: './tube.component.scss',
-    imports: [FormsModule, CommonModule, RouterLink, TubePlotComponent, PentodeSpiceParametersComponent, TetrodeSpiceParametersComponent],
+    imports: [FormsModule, CommonModule, RouterLink, TubePlotComponent, PentodeSpiceParametersComponent, TetrodeSpiceParametersComponent, TriodeSpiceParametersComponent],
 })
 export class TubeComponent implements OnInit, AfterViewInit {
     @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
@@ -555,51 +556,6 @@ export class TubeComponent implements OnInit, AfterViewInit {
             console.error('Error creating worker:', error);
             this.toastService.error('Failed to initialize calculation worker.', 'Worker Error');
             this.isCalculatingSpiceParameters = false;
-        }
-    }
-
-    generateSpiceModelText(): string {
-        if (!this.tube?.triodeModelParameters?.calculated) {
-            return 'No SPICE model parameters calculated.';
-        }
-
-        const params = this.tube.triodeModelParameters;
-        const tubeName = this.tube.name || 'TRIODE';
-
-        return `.SUBCKT ${tubeName.toUpperCase().replace(/[^A-Z0-9]/g, '_')} P G K
-* ${this.tube.name} Triode Model (Norman Koren)
-* Calculated parameters
-* MU=${params.mu?.toFixed(3)} EX=${params.ex?.toFixed(3)} KG1=${params.kg1?.toFixed(6)}
-* KG2=${params.kg2?.toFixed(6)} KP=${params.kp?.toFixed(6)} KVB=${params.kvb?.toFixed(6)}
-
-E1 7 0 VALUE={V(P,K)/KP*LOG(1+EXP(KP*(1/MU+V(G,K)/SQRT(KVB+V(P,K)*V(P,K)))))}
-RE1 7 0 1G
-G1 P K VALUE={(PWR(V(7),EX)+PWRS(V(7),EX))/KG1*ATAN(V(P,K)/KVB)}
-RCP P K 1G
-C1 G P {KG2*1E-12}
-.ENDS
-
-.PARAM MU=${params.mu?.toFixed(3)} EX=${params.ex?.toFixed(3)} KG1=${params.kg1?.toFixed(6)}
-.PARAM KG2=${params.kg2?.toFixed(6)} KP=${params.kp?.toFixed(6)} KVB=${params.kvb?.toFixed(6)}`;
-    }
-
-    copySpiceModel() {
-        const spiceText = this.generateSpiceModelText();
-
-        if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(spiceText).then(() => {
-                this.toastService.success('SPICE model copied to clipboard!', 'Copied');
-            });
-        }
-        else {
-            // Fallback for older browsers
-            const textArea = document.createElement('textarea');
-            textArea.value = spiceText;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-            this.toastService.success('SPICE model copied to clipboard!', 'Copied');
         }
     }
 
