@@ -6,8 +6,7 @@ export interface TriodeModelParameters {
     kg1?: number;
     kp?: number;
     kvb?: number;
-    calculated?: boolean;
-    lastCalculated?: string;
+    calculatedOn?: string; // ISO-8601 datetime string with timezone
 }
 
 export interface TubeInformation {
@@ -55,8 +54,7 @@ export interface TubeInformation {
         kg2?: number;
         kp?: number;
         kvb?: number;
-        calculated?: boolean;
-        lastCalculated?: string;
+        calculatedOn?: string; // ISO-8601 datetime string with timezone
     };
 
     // Tetrode SPICE Parameters (similar to pentode but without screen grid secondary emission)
@@ -67,7 +65,6 @@ export interface TubeInformation {
         kg2?: number;
         kp?: number;
         kvb?: number;
-        calculated?: boolean;
-        lastCalculated?: string;
+        calculatedOn?: string; // ISO-8601 datetime string with timezone
     };
 }

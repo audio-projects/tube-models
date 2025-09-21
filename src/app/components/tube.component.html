@@ -312,8 +312,7 @@
         </div>
         <div class="card-body triode-spice-parameters">
           <app-triode-spice-parameters 
-            [triodeModelParameters]="tube.triodeModelParameters"
-            [tubeName]="tube.name"
+            [tube]="tube"
             [isCalculating]="isCalculatingSpiceParameters"
             [canCalculate]="tube.files && tube.files.length > 0"
             (calculateRequested)="calculateSpiceModelParameters()">

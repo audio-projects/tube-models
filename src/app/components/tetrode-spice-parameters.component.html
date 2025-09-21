@@ -3,7 +3,7 @@
     <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Tetrode SPICE Model Parameters</h5>
   </div>
   <div class="card-body tetrode-spice-parameters">
-    <div *ngIf="!tube?.tetrodeSpiceModelParameters?.calculated && !isCalculatingSpiceParameters" class="text-center">
+    <div *ngIf="!tube?.tetrodeSpiceModelParameters?.calculatedOn && !isCalculatingSpiceParameters" class="text-center">
       <p class="text-muted mb-3">
         <i class="bi bi-info-circle me-1"></i>
         SPICE model parameters for tetrode (beam power) configuration not calculated yet.
@@ -23,7 +23,7 @@
       <span>Optimizing tetrode parameters...</span>
     </div>
 
-    <div *ngIf="tube?.tetrodeSpiceModelParameters?.calculated" class="parameters-display">
+    <div *ngIf="tube?.tetrodeSpiceModelParameters?.calculatedOn" class="parameters-display">
       <div class="row">
         <div class="col-md-6">
           <div class="mb-3">

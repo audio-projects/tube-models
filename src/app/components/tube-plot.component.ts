@@ -275,7 +275,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
 
         if (this.selectedModel === 'norman-koren-triode') {
             // Check if we have triode model parameters (could be on pentode tube operating in triode mode)
-            if (this.tube.triodeModelParameters?.calculated) {
+            if (this.tube.triodeModelParameters?.calculatedOn) {
                 console.log('✓ Triode parameters found and calculated');
                 console.log('File measurement type:', this.file!.measurementType);
                 console.log('Number of data series:', this.file!.series.length);                // Generate model curves for each series
@@ -341,7 +341,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
     private generatePlateCharacteristicCurve(series: Series): { x: number; y: number }[] {
         console.log('generatePlateCharacteristicCurve called for series:', series);
 
-        if (!this.tube?.triodeModelParameters?.calculated) {
+        if (!this.tube?.triodeModelParameters?.calculatedOn) {
             console.log('No calculated triode parameters available');
             return [];
         }
@@ -394,7 +394,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
     }
 
     private generateTransferCharacteristicCurve(series: Series): { x: number; y: number }[] {
-        if (!this.tube?.triodeModelParameters?.calculated) return [];
+        if (!this.tube?.triodeModelParameters?.calculatedOn) return [];
 
         const points: { x: number; y: number }[] = [];
         const params = this.tube.triodeModelParameters;
@@ -574,7 +574,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             console.log('Tube triode parameters:', this.tube.triodeModelParameters);
 
             // Add triode model if calculated
-            if (this.tube.triodeModelParameters?.calculated) {
+            if (this.tube.triodeModelParameters?.calculatedOn) {
                 console.log('Adding Norman Koren Triode Model to available models');
                 this.availableModels.push({
                     key: 'norman-koren-triode',
@@ -583,7 +583,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             }
 
             // Add pentode model if calculated
-            if (this.tube.pentodeSpiceModelParameters?.calculated) {
+            if (this.tube.pentodeSpiceModelParameters?.calculatedOn) {
                 this.availableModels.push({
                     key: 'norman-koren-pentode',
                     name: 'Norman Koren Pentode Model'
@@ -591,7 +591,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             }
 
             // Add tetrode model if calculated
-            if (this.tube.tetrodeSpiceModelParameters?.calculated) {
+            if (this.tube.tetrodeSpiceModelParameters?.calculatedOn) {
                 this.availableModels.push({
                     key: 'norman-koren-tetrode',
                     name: 'Norman Koren Tetrode Model'

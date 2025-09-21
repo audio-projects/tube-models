@@ -487,8 +487,7 @@ export class TubeComponent implements OnInit, AfterViewInit {
                 kg1: 1332, // Default grid constant
                 kg2: 0,    // Default kg2 (usually 0 for triodes)
                 kp: 600,   // Default plate constant
-                kvb: 300,  // Default bias constant
-                calculated: false
+                kvb: 300   // Default bias constant
             };
 
             worker.postMessage({
@@ -516,7 +515,7 @@ export class TubeComponent implements OnInit, AfterViewInit {
                             kg1: params.kg1 || 0,
                             kp: params.kp || 0,
                             kvb: params.kvb || 0,
-                            calculated: true
+                            calculatedOn: new Date().toISOString()
                         };
                         console.log('Triode model parameters calculated:', this.tube!.triodeModelParameters);
                         this.isCalculatingSpiceParameters = false;

@@ -3,7 +3,7 @@
     <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Pentode SPICE Model Parameters</h5>
   </div>
   <div class="card-body pentode-spice-parameters">
-    <div *ngIf="!tube?.pentodeSpiceModelParameters?.calculated && !isCalculatingSpiceParameters" class="text-center">
+    <div *ngIf="!tube?.pentodeSpiceModelParameters?.calculatedOn && !isCalculatingSpiceParameters" class="text-center">
       <p class="text-muted mb-3">
         <i class="bi bi-info-circle me-1"></i>
         Pentode SPICE model parameters have not been calculated yet.
@@ -31,12 +31,12 @@
       <small class="text-muted d-block mt-1">This may take a few moments</small>
     </div>
     
-    <div *ngIf="tube?.pentodeSpiceModelParameters?.calculated">
+    <div *ngIf="tube?.pentodeSpiceModelParameters?.calculatedOn">
       <div class="alert alert-info mb-3">
         <i class="bi bi-check-circle me-1"></i>
         Pentode SPICE model parameters successfully calculated
         <small class="d-block mt-1">
-          Last calculated: {{ tube?.pentodeSpiceModelParameters?.lastCalculated | date:'medium' }}
+          Last calculated: {{ tube?.pentodeSpiceModelParameters?.calculatedOn | date:'medium' }}
         </small>
       </div>
       
