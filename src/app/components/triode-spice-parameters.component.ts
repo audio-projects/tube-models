@@ -6,17 +6,7 @@ import {
     Output
 } from '@angular/core';
 import { ToastService } from '../services/toast.service';
-
-export interface TriodeModelParameters {
-    mu?: number;
-    ex?: number;
-    kg1?: number;
-    kg2?: number;
-    kp?: number;
-    kvb?: number;
-    calculated?: boolean;
-    lastCalculated?: string;
-}
+import { TriodeModelParameters } from './tube-information';
 
 @Component({
     selector: 'app-triode-spice-parameters',

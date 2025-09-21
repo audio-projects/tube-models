@@ -1,5 +1,14 @@
-
 import { File } from '../files';
+
+export interface TriodeModelParameters {
+    mu?: number;
+    ex?: number;
+    kg1?: number;
+    kp?: number;
+    kvb?: number;
+    calculated?: boolean;
+    lastCalculated?: string;
+}
 
 export interface TubeInformation {
     id: string;
@@ -36,17 +45,7 @@ export interface TubeInformation {
     files: File[];
     egOffset?: number;
 
-    // Norman Koren Triode Model SPICE Parameters
-    triodeModelParameters?: {
-        mu?: number;
-        ex?: number;
-        kg1?: number;
-        kg2?: number;
-        kp?: number;
-        kvb?: number;
-        calculated?: boolean;
-        lastCalculated?: string;
-    };
+    triodeModelParameters?: TriodeModelParameters;
 
     // Norman Koren Pentode Model SPICE Parameters
     pentodeSpiceModelParameters?: {

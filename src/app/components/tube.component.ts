@@ -514,7 +514,6 @@ export class TubeComponent implements OnInit, AfterViewInit {
                             mu: params.mu || 0,
                             ex: params.ex || 0,
                             kg1: params.kg1 || 0,
-                            kg2: params.kg2 || 0, // kg2 might not be used for triodes
                             kp: params.kp || 0,
                             kvb: params.kvb || 0,
                             calculated: true
