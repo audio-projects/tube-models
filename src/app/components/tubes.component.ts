@@ -1,11 +1,11 @@
+import { AuthService } from '../services/auth.service';
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { FirebaseTubeService } from '../services/firebase-tube.service';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ToastService } from '../services/toast.service';
-import { FirebaseTubeService } from '../services/firebase-tube.service';
-import { AuthService } from '../services/auth.service';
 import { TubeInformation } from './tube-information';
 
 @Component({
@@ -17,7 +17,7 @@ import { TubeInformation } from './tube-information';
 export class TubesComponent implements OnInit, OnDestroy {
     tubes: TubeInformation[] = [];
 
-    // Filter properties
+    // Filter properties
     searchTerm = '';
     selectedType = '';
     selectedManufacturer = '';
@@ -106,7 +106,8 @@ export class TubesComponent implements OnInit, OnDestroy {
                 const currentUserUid = this.authService.getCurrentUser()?.uid;
                 if (this.selectedOwnership === 'mine') {
                     matchesOwnership = tube.owner === currentUserUid;
-                } else if (this.selectedOwnership === 'others') {
+                }
+                else if (this.selectedOwnership === 'others') {
                     matchesOwnership = tube.owner !== currentUserUid;
                 }
             }
