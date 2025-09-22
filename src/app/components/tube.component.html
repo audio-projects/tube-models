@@ -333,26 +333,35 @@
         </div>
       </div>
 
-      <!-- Triode SPICE Model Parameters Card -->
+      <!-- Triode Model Parameters Card -->
       <div class="card mb-4" *ngIf="tube.type === 'Triode' || tube.type === 'Pentode'">
         <div class="card-header bg-success text-white">
-          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Triode SPICE Model Parameters</h5>
+          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Triode Model Parameters</h5>
         </div>
         <div class="card-body triode-model-parameters">
           <app-triode-model-parameters 
             [tube]="tube"
             [isCalculating]="isCalculatingSpiceParameters"
             [canCalculate]="tube.files && tube.files.length > 0"
-            (calculateRequested)="calculateSpiceModelParameters()">
+            (calculateRequested)="calculateTriodeModelParameters()">
           </app-triode-model-parameters>
         </div>
       </div>
 
-      <!-- Pentode SPICE Model Parameters Component -->
-      <app-pentode-model-parameters 
-        [tube]="tube" 
-        (tubeChange)="tube = $event">
-      </app-pentode-model-parameters>
+      <!-- Pentode Model Parameters Card -->
+      <div class="card mb-4" *ngIf="tube.type === 'Pentode'">
+        <div class="card-header bg-success text-white">
+          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Pentode Model Parameters</h5>
+        </div>
+        <div class="card-body pentode-model-parameters">
+          <app-pentode-model-parameters 
+            [tube]="tube"
+            [isCalculating]="isCalculatingSpiceParameters"
+            [canCalculate]="tube.files && tube.files.length > 0"
+            (calculateRequested)="calculatePentodeModelParameters()">
+          </app-pentode-model-parameters>
+        </div>
+      </div>
 
       <!-- Tetrode SPICE Model Parameters Component -->
       <app-tetrode-spice-parameters 

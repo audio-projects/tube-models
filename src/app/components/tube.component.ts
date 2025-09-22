@@ -1,17 +1,24 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, NgZone } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import { TubeInformation } from './tube-information';
-import { File as TubeFile, Series, measurementTypeDescription } from '../files';
-import { fileParserService } from '../services/file-parser-service';
-import { TubePlotComponent } from './tube-plot.component';
-import { FirebaseTubeService } from '../services/firebase-tube.service';
+import {
+    AfterViewInit,
+    Component,
+    ElementRef,
+    NgZone,
+    OnInit,
+    ViewChild
+} from '@angular/core';
 import { AuthService } from '../services/auth.service';
+import { CommonModule } from '@angular/common';
+import { File as TubeFile, measurementTypeDescription, Series } from '../files';
+import { fileParserService } from '../services/file-parser-service';
+import { FirebaseTubeService } from '../services/firebase-tube.service';
+import { FormsModule } from '@angular/forms';
 import { PentodeModelParametersComponent } from './pentode-model-parameters.component';
 import { TetrodeSpiceParametersComponent } from './tetrode-spice-parameters.component';
-import { TriodeModelParametersComponent } from './triode-model-parameters.component';
 import { ToastService } from '../services/toast.service';
+import { TriodeModelParametersComponent } from './triode-model-parameters.component';
+import { TubeInformation } from './tube-information';
+import { TubePlotComponent } from './tube-plot.component';
 
 @Component({
     selector: 'app-tube',
@@ -20,6 +27,7 @@ import { ToastService } from '../services/toast.service';
     imports: [FormsModule, CommonModule, RouterLink, TubePlotComponent, PentodeModelParametersComponent, TetrodeSpiceParametersComponent, TriodeModelParametersComponent],
 })
 export class TubeComponent implements OnInit, AfterViewInit {
+
     @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
     tubeId: string | null = null;
@@ -417,60 +425,90 @@ export class TubeComponent implements OnInit, AfterViewInit {
         this.selectedFileForPlot = null;
     }
 
-    // Calculate SPICE model parameters for triodes (and pentodes connected as triodes)
-    calculateSpiceModelParameters() {
-        if (!this.tube || (this.tube.type !== 'Triode' && this.tube.type !== 'Pentode') || !this.tube.files || this.tube.files.length === 0) {
+    // Calculate SPICE model parameters for pentodes
+    calculatePentodeModelParameters() {
+        // check files are available
+        if (!this.tube || this.tube.type !== 'Pentode' || !this.tube.files || this.tube.files.length === 0)
             return;
-        }
 
-        // Check if we have any measurement files
-        if (this.tube.files.length === 0) {
-            this.toastService.warning('No measurement files found for SPICE model parameter calculation.', 'Missing Data');
-            return;
-        }
+        this.isCalculatingSpiceParameters = true;
 
-        // Validate that we have usable measurement data
-        let totalDataPoints = 0;
-        let validDataPoints = 0;
-        const maxPowerDissipation = this.tube.maximumPlateDissipation || 1000; // Default to 1000W if not specified
+        try {
+            // Create a web worker for pentode calculation
+            console.log('Creating pentode worker...');
+            const worker = new Worker(new URL('../workers/optimize-norman-koren-pentode-model-parameters.worker.ts', import.meta.url), { type: 'module' });
+            console.log('Pentode worker created successfully:', worker);
 
-        for (const file of this.tube.files) {
-            // Check if the measurement type is compatible
-            if (file.measurementType === 'IP_EG_EP_VH' ||
-                file.measurementType === 'IP_EG_EPES_VH' ||
-                file.measurementType === 'IP_EP_EG_VH' ||
-                file.measurementType === 'IP_EPES_EG_VH') {
+            worker.postMessage({
+                files: this.tube.files,
+                maximumPlateDissipation: this.tube.maximumPlateDissipation || 20, // Default to 20W for pentodes
+                algorithm: 1,  // 0 = Levenberg-Marquardt, 1 = Powell
+                trace: undefined
+            });
+            console.log('Message posted to pentode worker');
 
-                for (const series of file.series) {
-                    for (const point of series.points) {
-                        totalDataPoints++;
-                        // Check if point meets criteria: positive current and within power limits
-                        if ((point.ip + (point.is ?? 0)) > 0 &&
-                            point.ep * (point.ip + (point.is ?? 0)) * 1e-3 <= maxPowerDissipation) {
-                            validDataPoints++;
-                        }
+            worker.onmessage = (e) => {
+                console.log('Pentode worker message received:', e.data);
+                const result = e.data;
+
+                // Handle different message types from worker
+                if (result.type === 'succeeded') {
+                    // Extract parameters from the worker result
+                    const params = result.parameters;
+                    if (params) {
+                        this.tube!.pentodeModelParameters = {
+                            mu: params.mu || 0,
+                            ex: params.ex || 0,
+                            kg1: params.kg1 || 0,
+                            kg2: params.kg2 || 0,
+                            kp: params.kp || 0,
+                            kvb: params.kvb || 0,
+                            calculatedOn: new Date().toISOString()
+                        };
+                        console.log('Pentode model parameters calculated:', this.tube!.pentodeModelParameters);
+                        this.isCalculatingSpiceParameters = false;
+                        this.toastService.success('Pentode SPICE model parameters calculated successfully!', 'Calculation Complete');
                     }
+                    else {
+                        console.error('Pentode parameters object is undefined');
+                        this.toastService.error('Failed to calculate pentode SPICE model parameters. Invalid result.', 'Calculation Failed');
+                        this.isCalculatingSpiceParameters = false;
+                    }
+                    worker.terminate();
                 }
-            }
+                else if (result.type === 'failed') {
+                    console.error('Pentode worker calculation failed:', result);
+                    this.toastService.error('Failed to calculate pentode SPICE model parameters. Please check your measurement data.', 'Calculation Failed');
+                    this.isCalculatingSpiceParameters = false;
+                    worker.terminate();
+                }
+                else if (result.type === 'notification' || result.type === 'log') {
+                    // Handle progress notifications and logs
+                    console.log('Pentode worker progress:', result.text);
+                    // Don't terminate worker for progress messages
+                }
+                // Ignore other message types (like notifications, logs)
+            };
+
+            worker.onerror = (error) => {
+                console.error('Pentode worker error:', error);
+                this.toastService.error('An error occurred while calculating pentode SPICE model parameters.', 'Calculation Error');
+                this.isCalculatingSpiceParameters = false;
+                worker.terminate();
+            };
+
         }
+        catch (error) {
+            console.error('Error creating pentode worker:', error);
+            this.toastService.error('Failed to initialize pentode calculation worker.', 'Worker Error');
+            this.isCalculatingSpiceParameters = false;
+        }
+    }
 
-        console.log(`Data validation: ${validDataPoints} valid points out of ${totalDataPoints} total points`);
-
-        if (validDataPoints === 0) {
-            this.toastService.warning(
-                `No valid measurement data found. Checked ${totalDataPoints} data points but none meet the criteria (positive current, within power limits).`,
-                'Invalid Data'
-            );
+    calculateTriodeModelParameters() {
+        // check files are available
+        if (!this.tube || this.tube.type !== 'Triode' || !this.tube.files || this.tube.files.length === 0)
             return;
-        }
-
-        if (validDataPoints < 5) {
-            this.toastService.warning(
-                `Insufficient data for reliable calculation. Found only ${validDataPoints} valid points. At least 5 points recommended.`,
-                'Insufficient Data'
-            );
-            // Continue anyway but warn the user
-        }
 
         this.isCalculatingSpiceParameters = true;
 

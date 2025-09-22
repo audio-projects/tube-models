@@ -9,6 +9,16 @@ export interface TriodeModelParameters {
     calculatedOn?: string; // ISO-8601 datetime string with timezone
 }
 
+export interface PentodeModelParameters {
+    mu?: number;
+    ex?: number;
+    kg1?: number;
+    kg2?: number;
+    kp?: number;
+    kvb?: number;
+    calculatedOn?: string; // ISO-8601 datetime string with timezone
+}
+
 export interface TubeInformation {
     id: string;
     name: string;
@@ -44,6 +54,7 @@ export interface TubeInformation {
     files: File[];
 
     triodeModelParameters?: TriodeModelParameters;
+    pentodeModelParameters?: PentodeModelParameters;
 
     // Norman Koren Pentode Model SPICE Parameters
     pentodeSpiceModelParameters?: {
