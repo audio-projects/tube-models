@@ -69,7 +69,6 @@ export class TubeComponent implements OnInit, AfterViewInit {
             maximumPlateVoltage: 0,
             maximumPlateCurrent: 0,
             maximumGrid1Voltage: 0,
-            egOffset: 0,
             files: [],
             owner: this.authService.getCurrentUser()?.uid // Set owner for new tubes
         };
@@ -382,7 +381,8 @@ export class TubeComponent implements OnInit, AfterViewInit {
         };
 
         console.log('File data:', data);
-        this.toastService.info(`File: ${file.name}\nType: ${this.getMeasurementTypeDescription(file.measurementType)}\nSeries: ${file.series.length}\nTotal Points: ${this.getTotalPointsCount(file)}`, 'File Information');
+        const egOffsetText = file.egOffset !== 0 ? `\nGrid Offset: ${file.egOffset}V` : '';
+        this.toastService.info(`File: ${file.name}\nType: ${this.getMeasurementTypeDescription(file.measurementType)}\nSeries: ${file.series.length}\nTotal Points: ${this.getTotalPointsCount(file)}${egOffsetText}`, 'File Information');
     }
 
     getMeasurementTypeDescription(measurementType: string): string {
@@ -493,7 +493,6 @@ export class TubeComponent implements OnInit, AfterViewInit {
             worker.postMessage({
                 files: this.tube.files,
                 maximumPlateDissipation: this.tube.maximumPlateDissipation || 1000, // Default to 1000W if not specified
-                egOffset: this.tube.egOffset || 0,
                 initial: initialParameters,  // This is what the worker expects!
                 algorithm: 0,  // 0 = Levenberg-Marquardt, 1 = Powell
                 trace: undefined

@@ -6,7 +6,7 @@
 // import { Initial } from '../initial';
 // import { Trace } from '../trace';
 
-// export const estimatePentodeParameters = function (files: File[], initial: Initial, maxW: number, egOffset: number, trace?: Trace): Initial {
+// export const estimatePentodeParameters = function (files: File[], initial: Initial, maxW: number, trace?: Trace): Initial {
 //     // initialize trace
 //     if (trace) {
 //         // estimates

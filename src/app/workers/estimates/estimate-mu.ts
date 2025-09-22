@@ -3,7 +3,7 @@ import { Trace } from '../trace';
 import { Initial } from '../initial';
 
 // estimateMu
-export const estimateMu = function (initial: Initial, files: File[], maxW: number, egOffset: number, trace?: Trace) {
+export const estimateMu = function (initial: Initial, files: File[], maxW: number, trace?: Trace) {
     // check we need to estimate mu
     if (!initial.mu) {
         // maximum plate current
@@ -57,7 +57,7 @@ export const estimateMu = function (initial: Initial, files: File[], maxW: numbe
                         upper = {
                             ip: s.points[m].ip + (s.points[m].is ?? 0),
                             ep: s.points[m].ep,
-                            eg: (s.eg ?? 0) + egOffset,
+                            eg: (s.eg ?? 0) + f.egOffset,
                         };
                     }
                     // check data is available

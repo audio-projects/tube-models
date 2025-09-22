@@ -54,16 +54,15 @@ export class TetrodeSpiceParametersComponent {
         const kp = 60; // Lower kp for beam tubes
         const kvb = 300; // Higher knee voltage for power tubes
 
-        const egOffset = this.tube?.egOffset || 0;
         const maximumPlateDissipation = this.tube?.maximumPlateDissipation || 30; // Default 30W for tetrodes
 
         // Simple parameter optimization using grid search
         const bestParameters = { mu, ex, kg1, kg2, kp, kvb };
-        let bestError = this.calculateError(files, mu, ex, kg1, kg2, kp, kvb, egOffset, maximumPlateDissipation);
+        let bestError = this.calculateError(files, mu, ex, kg1, kg2, kp, kvb, maximumPlateDissipation);
 
         // Optimize mu (amplification factor) - beam tetrodes typically have lower mu
         for (let testMu = 5; testMu <= 15; testMu += 1) {
-            const error = this.calculateError(files, testMu, ex, kg1, kg2, kp, kvb, egOffset, maximumPlateDissipation);
+            const error = this.calculateError(files, testMu, ex, kg1, kg2, kp, kvb, maximumPlateDissipation);
             if (error < bestError) {
                 bestError = error;
                 bestParameters.mu = testMu;
@@ -72,7 +71,7 @@ export class TetrodeSpiceParametersComponent {
 
         // Optimize ex (exponent) - beam tubes tend to have higher exponents
         for (let testEx = 1.3; testEx <= 1.8; testEx += 0.05) {
-            const error = this.calculateError(files, bestParameters.mu, testEx, kg1, kg2, kp, kvb, egOffset, maximumPlateDissipation);
+            const error = this.calculateError(files, bestParameters.mu, testEx, kg1, kg2, kp, kvb, maximumPlateDissipation);
             if (error < bestError) {
                 bestError = error;
                 bestParameters.ex = testEx;
@@ -81,7 +80,7 @@ export class TetrodeSpiceParametersComponent {
 
         // Optimize kg1 (control grid scaling)
         for (let testKg1 = 800; testKg1 <= 2500; testKg1 += 100) {
-            const error = this.calculateError(files, bestParameters.mu, bestParameters.ex, testKg1, kg2, kp, kvb, egOffset, maximumPlateDissipation);
+            const error = this.calculateError(files, bestParameters.mu, bestParameters.ex, testKg1, kg2, kp, kvb, maximumPlateDissipation);
             if (error < bestError) {
                 bestError = error;
                 bestParameters.kg1 = testKg1;
@@ -90,7 +89,7 @@ export class TetrodeSpiceParametersComponent {
 
         // Optimize kg2 (screen grid scaling) - beam tetrodes have different screen characteristics
         for (let testKg2 = 3000; testKg2 <= 8000; testKg2 += 500) {
-            const error = this.calculateError(files, bestParameters.mu, bestParameters.ex, bestParameters.kg1, testKg2, kp, kvb, egOffset, maximumPlateDissipation);
+            const error = this.calculateError(files, bestParameters.mu, bestParameters.ex, bestParameters.kg1, testKg2, kp, kvb, maximumPlateDissipation);
             if (error < bestError) {
                 bestError = error;
                 bestParameters.kg2 = testKg2;
@@ -116,9 +115,9 @@ export class TetrodeSpiceParametersComponent {
         console.log('Tetrode SPICE model parameters calculated:', this.tube!.tetrodeSpiceModelParameters);
     }
 
-    private calculateError(files: TubeFile[], mu: number, ex: number, kg1: number, kg2: number, kp: number, kvb: number, egOffset: number, maximumPlateDissipation: number): number {
+    private calculateError(files: TubeFile[], mu: number, ex: number, kg1: number, kg2: number, kp: number, kvb: number, maximumPlateDissipation: number): number {
         // Use the same error function as pentode but with tetrode-specific optimizations
-        return normanKorenPentodeModelError(files, mu, kp, kvb, ex, kg1, kg2, egOffset, maximumPlateDissipation);
+        return normanKorenPentodeModelError(files, mu, kp, kvb, ex, kg1, kg2, maximumPlateDissipation);
     }
 
     // Generate SPICE model text for copying

@@ -54,16 +54,15 @@ export class PentodeSpiceParametersComponent {
         const kp = 100;
         const kvb = 100; // Fixed for Norman Koren pentode model
 
-        const egOffset = this.tube?.egOffset || 0;
         const maximumPlateDissipation = this.tube?.maximumPlateDissipation || 20; // Default 20W for pentodes
 
         // Simple parameter optimization using grid search
         const bestParameters = { mu, ex, kg1, kg2, kp, kvb };
-        let bestError = this.calculateError(files, mu, ex, kg1, kg2, kp, kvb, egOffset, maximumPlateDissipation);
+        let bestError = this.calculateError(files, mu, ex, kg1, kg2, kp, kvb, maximumPlateDissipation);
 
         // Optimize mu (amplification factor)
         for (let testMu = 10; testMu <= 50; testMu += 5) {
-            const error = this.calculateError(files, testMu, ex, kg1, kg2, kp, kvb, egOffset, maximumPlateDissipation);
+            const error = this.calculateError(files, testMu, ex, kg1, kg2, kp, kvb, maximumPlateDissipation);
             if (error < bestError) {
                 bestError = error;
                 bestParameters.mu = testMu;
@@ -72,7 +71,7 @@ export class PentodeSpiceParametersComponent {
 
         // Optimize ex (exponent)
         for (let testEx = 1.2; testEx <= 1.6; testEx += 0.05) {
-            const error = this.calculateError(files, bestParameters.mu, testEx, kg1, kg2, kp, kvb, egOffset, maximumPlateDissipation);
+            const error = this.calculateError(files, bestParameters.mu, testEx, kg1, kg2, kp, kvb, maximumPlateDissipation);
             if (error < bestError) {
                 bestError = error;
                 bestParameters.ex = testEx;
@@ -81,7 +80,7 @@ export class PentodeSpiceParametersComponent {
 
         // Optimize kg1 (grid scaling)
         for (let testKg1 = 500; testKg1 <= 2000; testKg1 += 100) {
-            const error = this.calculateError(files, bestParameters.mu, bestParameters.ex, testKg1, kg2, kp, kvb, egOffset, maximumPlateDissipation);
+            const error = this.calculateError(files, bestParameters.mu, bestParameters.ex, testKg1, kg2, kp, kvb, maximumPlateDissipation);
             if (error < bestError) {
                 bestError = error;
                 bestParameters.kg1 = testKg1;
@@ -90,7 +89,7 @@ export class PentodeSpiceParametersComponent {
 
         // Optimize kg2 (screen grid scaling)
         for (let testKg2 = 2000; testKg2 <= 8000; testKg2 += 500) {
-            const error = this.calculateError(files, bestParameters.mu, bestParameters.ex, bestParameters.kg1, testKg2, kp, kvb, egOffset, maximumPlateDissipation);
+            const error = this.calculateError(files, bestParameters.mu, bestParameters.ex, bestParameters.kg1, testKg2, kp, kvb, maximumPlateDissipation);
             if (error < bestError) {
                 bestError = error;
                 bestParameters.kg2 = testKg2;
@@ -115,8 +114,8 @@ export class PentodeSpiceParametersComponent {
         console.log('Pentode SPICE model parameters calculated:', this.tube!.pentodeSpiceModelParameters);
     }
 
-    private calculateError(files: TubeFile[], mu: number, ex: number, kg1: number, kg2: number, kp: number, kvb: number, egOffset: number, maximumPlateDissipation: number): number {
-        return normanKorenPentodeModelError(files, mu, kp, kvb, ex, kg1, kg2, egOffset, maximumPlateDissipation);
+    private calculateError(files: TubeFile[], mu: number, ex: number, kg1: number, kg2: number, kp: number, kvb: number, maximumPlateDissipation: number): number {
+        return normanKorenPentodeModelError(files, mu, kp, kvb, ex, kg1, kg2, maximumPlateDissipation);
     }
 
     // Generate SPICE model text for copying

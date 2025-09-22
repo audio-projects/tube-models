@@ -315,6 +315,7 @@ export const fileParserService = function (name: string, text: string): File | u
             name: name,
             series: series,
             measurementType: 'UNKNOWN',
+            egOffset: 0 // Initialize egOffset to 0 for new files
         };
         // analyze file
         return fileAnalysis(file);

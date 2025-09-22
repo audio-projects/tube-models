@@ -3,7 +3,7 @@ import { File } from '../../files';
 import { Initial } from '../initial';
 import { Trace } from '../trace';
 
-export const estimateKp = function (initial: Initial, files: File[], maxW: number, egOffset: number, trace?: Trace) {
+export const estimateKp = function (initial: Initial, files: File[], maxW: number, trace?: Trace) {
     // check we need to estimate kp
     if (!initial.kp) {
         // mu must be initialized
@@ -48,13 +48,13 @@ export const estimateKp = function (initial: Initial, files: File[], maxW: numbe
                             // check point meets power criteria
                             if ((p.ip + (p.is ?? 0)) * p.ep * 1e-3 < maxW) {
                                 // check point meets criteria
-                                if (p.ep / mu > -(p.eg + egOffset)) {
+                                if (p.ep / mu > -(p.eg + file.egOffset)) {
                                     // calculate e1 estimate
                                     const e1 = Math.pow(((p.ip + (p.is ?? 0)) * kg1) / 2000, 1 / ex);
                                     // check e1
                                     if (e1 > 0) {
                                         // difference
-                                        const d = -Math.log(e1) + Math.log(p.ep) - Math.log(kp) + kp * (1 / mu + (p.eg + egOffset) / p.ep);
+                                        const d = -Math.log(e1) + Math.log(p.ep) - Math.log(kp) + kp * (1 / mu + (p.eg + file.egOffset) / p.ep);
                                         // update r
                                         r += d * d;
                                         // increment points used
@@ -82,7 +82,7 @@ export const estimateKp = function (initial: Initial, files: File[], maxW: numbe
                             trace.estimates.kp?.average.push({
                                 file: file.name,
                                 kp: Math.abs(result.x[0]),
-                                eg: (series.eg ?? 0) + egOffset,
+                                eg: (series.eg ?? 0) + file.egOffset,
                             });
                         }
                         // append to sum

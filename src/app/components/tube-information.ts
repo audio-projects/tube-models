@@ -42,7 +42,6 @@ export interface TubeInformation {
     cg3p?: number;
     ccp?: number;
     files: File[];
-    egOffset?: number;
 
     triodeModelParameters?: TriodeModelParameters;
 

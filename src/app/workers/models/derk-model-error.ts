@@ -2,7 +2,7 @@ import { derkModel } from './derk-model';
 import { File } from '../../files';
 
 // derkModelError
-export const derkModelError = function (files: File[], mu: number, kp: number, kvb: number, ex: number, kg1: number, kg2: number, a: number, alphaS: number, beta: number, secondaryEmission: boolean, s: number, alphaP: number, lambda: number, v: number, w: number, egOffset: number, maximumPlateDissipation: number) {
+export const derkModelError = function (files: File[], mu: number, kp: number, kvb: number, ex: number, kg1: number, kg2: number, a: number, alphaS: number, beta: number, secondaryEmission: boolean, s: number, alphaP: number, lambda: number, v: number, w: number, maximumPlateDissipation: number) {
     // result
     let r = 0;
     // calculate alpha
@@ -18,7 +18,7 @@ export const derkModelError = function (files: File[], mu: number, kp: number, k
                     // check we can use this point in calculations
                     if (point.ep * point.ip * 1e-3 <= maximumPlateDissipation) {
                         // calculate currents
-                        const c = derkModel(point.ep, point.eg + egOffset, point.es ?? 0, kp, mu, kvb, ex, kg1, kg2, a, alpha, alphaS, beta, secondaryEmission, s, alphaP, lambda, v, w);
+                        const c = derkModel(point.ep, point.eg + file.egOffset, point.es ?? 0, kp, mu, kvb, ex, kg1, kg2, a, alpha, alphaS, beta, secondaryEmission, s, alphaP, lambda, v, w);
                         // residuals
                         const ipr = c.ip - point.ip;
                         const isr = c.is - (point.is ?? 0);

@@ -182,26 +182,51 @@
             <div *ngIf="tube.files && tube.files.length > 0" class="mb-3">
               <h6 class="fw-bold"><i class="bi bi-files me-1"></i>Uploaded Files ({{ tube.files.length }})</h6>
               <div class="list-group">
-                <div *ngFor="let file of tube.files; let i = index" class="list-group-item d-flex justify-content-between align-items-center">
-                  <div>
-                    <i class="bi bi-file-earmark-text me-2 text-primary"></i>
-                    <strong>{{ file.name }}</strong>
-                    <br />
-                    <small class="text-muted">
-                      {{ getMeasurementTypeDescription(file.measurementType) }}
-                      <span *ngIf="file.series.length > 0"> • {{ file.series.length }} series • {{ getTotalPointsCount(file) }} points </span>
-                    </small>
-                  </div>
-                  <div class="btn-group-sm" role="group">
-                    <button type="button" class="btn btn-outline-success btn-sm me-1" (click)="plotFile(file)" title="Plot file data" [disabled]="file.measurementType === 'UNKNOWN'">
-                      <i class="bi bi-graph-up"></i>
-                    </button>
-                    <button type="button" class="btn btn-outline-info btn-sm me-1" (click)="viewFileData(file)" title="View file data">
-                      <i class="bi bi-eye"></i>
-                    </button>
-                    <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeFile(i)" title="Remove file">
-                      <i class="bi bi-trash"></i>
-                    </button>
+                <div *ngFor="let file of tube.files; let i = index" class="list-group-item">
+                  <div class="row align-items-center">
+                    <!-- File Information Column -->
+                    <div class="col-md-6">
+                      <div class="d-flex align-items-center">
+                        <i class="bi bi-file-earmark-text me-2 text-primary"></i>
+                        <div>
+                          <strong>{{ file.name }}</strong>
+                          <br />
+                          <small class="text-muted">
+                            {{ getMeasurementTypeDescription(file.measurementType) }}
+                            <span *ngIf="file.series.length > 0"> • {{ file.series.length }} series • {{ getTotalPointsCount(file) }} points </span>
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Grid Offset Column -->
+                    <div class="col-md-3">
+                      <label class="form-label small mb-1" for="egOffset_{{ i }}">Grid Offset (V)</label>
+                      <input 
+                        type="number" 
+                        class="form-control form-control-sm" 
+                        id="egOffset_{{ i }}"
+                        [(ngModel)]="file.egOffset" 
+                        name="egOffset_{{ i }}"
+                        step="0.1" 
+                        placeholder="0.0"
+                        title="Grid voltage offset for this file">
+                    </div>
+                    
+                    <!-- Actions Column -->
+                    <div class="col-md-3 text-end">
+                      <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-success btn-sm" (click)="plotFile(file)" title="Plot file data" [disabled]="file.measurementType === 'UNKNOWN'">
+                          <i class="bi bi-graph-up"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm" (click)="viewFileData(file)" title="View file data">
+                          <i class="bi bi-eye"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeFile(i)" title="Remove file">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -225,7 +250,9 @@
                     <i class="bi bi-graph-up me-2"></i>
                     <strong>Plotting:</strong> {{ selectedFileForPlot.name }}
                     <br />
-                    <small>{{ getMeasurementTypeDescription(selectedFileForPlot.measurementType) }}</small>
+                    <small>{{ getMeasurementTypeDescription(selectedFileForPlot.measurementType) }}
+                      <span *ngIf="selectedFileForPlot.egOffset !== 0"> • Grid offset: {{ selectedFileForPlot.egOffset }}V</span>
+                    </small>
                   </div>
                   <button type="button" class="btn btn-outline-secondary btn-sm" (click)="clearSelectedFile()"><i class="bi bi-x"></i> Clear Selection</button>
                 </div>
@@ -243,6 +270,7 @@
                         <small class="text-muted">
                           {{ getMeasurementTypeDescription(file.measurementType) }}
                           <span *ngIf="file.series.length > 0"> • {{ file.series.length }} series • {{ getTotalPointsCount(file) }} points </span>
+                          <span *ngIf="file.egOffset !== 0"> • Grid offset: {{ file.egOffset }}V </span>
                         </small>
                       </div>
                       <div *ngIf="file.measurementType !== 'UNKNOWN'">

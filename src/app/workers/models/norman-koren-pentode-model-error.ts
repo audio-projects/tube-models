@@ -2,7 +2,7 @@ import { File } from '../../files';
 import { normanKorenPentodeModel } from './norman-koren-pentode-model';
 
 // normanKorenPentodeModelError
-export const normanKorenPentodeModelError = function (files: File[], mu: number, kp: number, kvb: number, ex: number, kg1: number, kg2: number, egOffset: number, maximumPlateDissipation: number) {
+export const normanKorenPentodeModelError = function (files: File[], mu: number, kp: number, kvb: number, ex: number, kg1: number, kg2: number, maximumPlateDissipation: number) {
     // result
     let r = 0;
     // loop data files
@@ -16,7 +16,7 @@ export const normanKorenPentodeModelError = function (files: File[], mu: number,
                     // check we can use this point in calculations
                     if (point.ep * point.ip * 1e-3 <= maximumPlateDissipation) {
                         // calculate currents
-                        const c = normanKorenPentodeModel(point.ep, point.eg + egOffset, point.es ?? 0, kp, mu, kvb, ex, kg1, kg2);
+                        const c = normanKorenPentodeModel(point.ep, point.eg + file.egOffset, point.es ?? 0, kp, mu, kvb, ex, kg1, kg2);
                         // residuals
                         const ipr = c.ip - point.ip;
                         const isr = c.is - (point.is ?? 0);

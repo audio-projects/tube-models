@@ -6,7 +6,7 @@ import { File } from '../../files';
 import { Initial } from '../initial';
 import { Trace } from '../trace';
 
-export const estimateTriodeParameters = function (files: File[], initial: Initial, maxW: number, egOffset: number, trace?: Trace): Initial {
+export const estimateTriodeParameters = function (files: File[], initial: Initial, maxW: number, trace?: Trace): Initial {
     // initialize trace
     if (trace) {
         // estimates
@@ -25,13 +25,13 @@ export const estimateTriodeParameters = function (files: File[], initial: Initia
     // check we have at leat one file
     if (triodeFiles.length > 0) {
         // estimate mu (use all files)
-        estimateMu(initial, files, maxW, egOffset, trace);
+        estimateMu(initial, files, maxW, trace);
         // extimate ex and kg1
-        estimateExKg1(initial, triodeFiles, maxW, egOffset, trace);
+        estimateExKg1(initial, triodeFiles, maxW, trace);
         // estimate kp
-        estimateKp(initial, triodeFiles, maxW, egOffset, trace);
+        estimateKp(initial, triodeFiles, maxW, trace);
         // estimate kvb
-        estimateKvb(initial, triodeFiles, maxW, egOffset, trace);
+        estimateKvb(initial, triodeFiles, maxW, trace);
         // return estimates
         return initial;
     }

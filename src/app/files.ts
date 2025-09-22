@@ -22,6 +22,7 @@ export interface File {
     name: string;
     series: Series[];
     measurementType: string;
+    egOffset: number; // Grid voltage offset for this specific file, defaults to 0
 
     es?: number;
     eh?: number;

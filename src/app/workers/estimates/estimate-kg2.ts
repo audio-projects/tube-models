@@ -3,7 +3,7 @@ import { Initial } from '../initial';
 import { ipk } from '../models/ipk';
 import { Trace } from '../trace';
 
-export const estimateKg2 = function (initial: Initial, files: File[], maxW: number, egOffset: number, trace?: Trace) {
+export const estimateKg2 = function (initial: Initial, files: File[], maxW: number, trace?: Trace) {
     // check we need to estimate kg2
     if (!initial.kg2) {
         // mu, ex, kp and kvb must be initialized
@@ -38,7 +38,7 @@ export const estimateKg2 = function (initial: Initial, files: File[], maxW: numb
                         // check point meets power criteria and has a is
                         if (p.ip * p.ep / 1000 < maxW && is > 0) {
                             // IPk
-                            const ip = ipk(p.eg + egOffset, es, initial.kp, initial.mu, initial.kvb, initial.ex);
+                            const ip = ipk(p.eg + file.egOffset, es, initial.kp, initial.mu, initial.kvb, initial.ex);
                             // check we have IPk
                             if (ip > 0) {
                                 // estimate kg2

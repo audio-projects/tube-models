@@ -10,10 +10,10 @@ import {
 } from '@angular/core';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { File as TubeFile, Point, Series } from '../files';
-import { TubeInformation } from './tube-information';
+import { FormsModule } from '@angular/forms';
 import { normanKorenTriodeModel } from '../workers/models/norman-koren-triode-model';
+import { TubeInformation } from './tube-information';
 
 Chart.register(...registerables);
 
@@ -72,6 +72,7 @@ Chart.register(...registerables);
   `]
 })
 export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
+
     @Input() file: TubeFile | null = null;
     @Input() tube: TubeInformation | null = null;
     @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;

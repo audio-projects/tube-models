@@ -4,7 +4,7 @@ import { ipk } from '../models/ipk';
 import { Trace } from '../trace';
 
 // estimateA
-export const estimateA = function (initial: Initial, files: File[], maxW: number, egOffset: number, trace?: Trace) {
+export const estimateA = function (initial: Initial, files: File[], maxW: number, trace?: Trace) {
     // check we need to estimate a
     if (!initial.a) {
         // mu must be initialized
@@ -45,7 +45,7 @@ export const estimateA = function (initial: Initial, files: File[], maxW: number
                             // check we can use these points, make sure ip are different and with a positive slope (saturation)
                             if (l && u && l.ip > u.ip) {
                                 // IPk
-                                const ip = ipk(l.eg + egOffset, l.es ?? 0, initial.kp, initial.mu, initial.kvb, initial.ex);
+                                const ip = ipk(l.eg + file.egOffset, l.es ?? 0, initial.kp, initial.mu, initial.kvb, initial.ex);
                                 // estimate A
                                 const a = initial.kg1 * (u.ip - l.ip) * 1e-3 / (ip * (u.ep - l.ep));
                                 // update trace if needed
@@ -54,7 +54,7 @@ export const estimateA = function (initial: Initial, files: File[], maxW: number
                                     trace.estimates.a?.average.push({
                                         file: file.name,
                                         a: a,
-                                        eg: (series.eg ?? 0) + egOffset
+                                        eg: (series.eg ?? 0) + file.egOffset
                                     });
                                 }
                                 // average values
