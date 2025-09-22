@@ -15,7 +15,7 @@ describe('estimates / estimateMu', () => {
                     // initial
                     const initial: Initial = {};
                     // estimate mu
-                    estimateMu(initial, [file], 2.5, 0);
+                    estimateMu(initial, [file], 2.5);
                     // check result
                     expect(initial.mu).toBeCloseTo(41.50982026143785, 0.1);
                     // done
@@ -47,7 +47,7 @@ describe('estimates / estimateMu', () => {
                     // initial
                     const initial: Initial = {};
                     // estimate mu
-                    estimateMu(initial, [file], 2.5, 0);
+                    estimateMu(initial, [file], 2.5);
                     // check result
                     expect(initial.mu).toBeCloseTo(14.56, 0.1);
                     // done
@@ -79,7 +79,7 @@ describe('estimates / estimateMu', () => {
                     // initial
                     const initial: Initial = {};
                     // estimate mu
-                    estimateMu(initial, [file], 1, 0);
+                    estimateMu(initial, [file], 1);
                     // check result
                     expect(initial.mu).toBeCloseTo(93.8, 0.1);
                     // done
@@ -111,7 +111,7 @@ describe('estimates / estimateMu', () => {
                     // initial
                     const initial: Initial = {};
                     // estimate mu
-                    estimateMu(initial, [file], 1, 0);
+                    estimateMu(initial, [file], 1);
                     // check result
                     expect(initial.mu).toBeCloseTo(4.0, 0.1);
                     // done
@@ -143,7 +143,7 @@ describe('estimates / estimateMu', () => {
                     // initial
                     const initial: Initial = {};
                     // estimate mu
-                    estimateMu(initial, [file], 1, 0);
+                    estimateMu(initial, [file], 1);
                     // check result
                     expect(initial.mu).toBeCloseTo(33.5, 0.1);
                     // done

@@ -221,6 +221,7 @@ describe('services / fileParserService', () => {
             ],
             measurementType: 'IP_EP_EG_VH',
             eh: 6.29,
+            egOffset: 0,
         });
     });
 

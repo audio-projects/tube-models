@@ -9,7 +9,7 @@ describe('estimates / estimateKg2', () => {
         // initial
         const initial: Initial = { mu: 56, ex: 1.4, kp: 100, kvb: 1000 };
         // estimate kg2
-        estimateKg2(initial, [], 100, 2.5);
+        estimateKg2(initial, [], 100);
         // check result
         expect(initial.kg2).toBeCloseTo(1000, 0.1);
     });
@@ -33,7 +33,7 @@ describe('estimates / estimateKg2', () => {
                 // initial
                 const initial: Initial = { mu: 56, ex: 1.18, kp: 315, kvb: 4155 };
                 // estimate kg2
-                estimateKg2(initial, files, 100, 0);
+                estimateKg2(initial, files, 100);
                 // check result
                 expect(initial.kg2).toBeCloseTo(638.46, 0.1);
                 // done
@@ -60,13 +60,17 @@ describe('estimates / estimateKg2', () => {
                 for (let i = 0; i < data.length; i++) {
                     // parse file content
                     const file = fileParserService(fileNames[i], data[i]);
-                    if (file)
+                    if (file) {
+                        // update egOffset
+                        file.egOffset = -25;
+                        // add file
                         files.push(file);
+                    }
                 }
                 // initial
                 const initial: Initial = { mu: 5.5, ex: 1.59, kp: 54.05, kvb: 6122.6 };
                 // estimate kg2
-                estimateKg2(initial, files, 100, -25.0);
+                estimateKg2(initial, files, 100);
                 // check result
                 expect(initial.kg2).toBeCloseTo(11428.21, 0.1);
                 // done
