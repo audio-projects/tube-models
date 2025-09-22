@@ -227,10 +227,23 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
         const datasets = this.file.series.map((series, index) => {
             const data = series.points
                 .filter(point => this.getPointValue(point, xField) !== undefined && this.getPointValue(point, yField) !== undefined)
-                .map(point => ({
-                    x: this.getPointValue(point, xField) as number,
-                    y: this.getPointValue(point, yField) as number
-                }))
+                .map(point => {
+                    let xValue = this.getPointValue(point, xField) as number;
+                    let yValue = this.getPointValue(point, yField) as number;
+                    
+                    // Apply egOffset to grid voltage values when plotting
+                    if (xField === 'eg') {
+                        xValue += this.file!.egOffset;
+                    }
+                    if (yField === 'eg') {
+                        yValue += this.file!.egOffset;
+                    }
+                    
+                    return {
+                        x: xValue,
+                        y: yValue
+                    };
+                })
                 .sort((a, b) => a.x - b.x);
 
             const seriesLabel = this.getSeriesLabel(series, index);
@@ -358,8 +371,8 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             return [];
         }
 
-        // Use the grid voltage from the series
-        const gridVoltage = series.eg || 0;
+        // Use the grid voltage from the series and apply egOffset
+        const gridVoltage = (series.eg || 0) + (this.file?.egOffset || 0);
 
         // Generate points from 0 to a reasonable plate voltage
         const maxPlateVoltage = Math.max(300, ...series.points.map(p => p.ep || 0));
@@ -412,12 +425,13 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
         const minGridVoltage = Math.min(-10, ...series.points.map(p => p.eg || 0));
         const maxGridVoltage = Math.max(0, ...series.points.map(p => p.eg || 0));
         const stepSize = (maxGridVoltage - minGridVoltage) / 100;
+        const egOffset = this.file?.egOffset || 0;
 
         for (let gridVoltage = minGridVoltage; gridVoltage <= maxGridVoltage; gridVoltage += stepSize) {
             try {
                 const result = normanKorenTriodeModel(
                     plateVoltage,
-                    gridVoltage,
+                    gridVoltage + egOffset, // Apply egOffset to model calculation
                     params.kp,
                     params.mu,
                     params.kvb,
@@ -427,7 +441,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
 
                 if (result.ip >= 0 && isFinite(result.ip)) {
                     points.push({
-                        x: gridVoltage,
+                        x: gridVoltage + egOffset, // Apply egOffset to x-coordinate for display
                         y: result.ip
                     });
                 }
@@ -459,7 +473,9 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
     private getSeriesLabel(series: Series, index: number): string {
     // Try to determine the series label based on the measurement type
         if (series.eg !== undefined) {
-            return `Vg = ${series.eg}V`;
+            // Apply egOffset to grid voltage in series label
+            const effectiveGridVoltage = series.eg + (this.file?.egOffset || 0);
+            return `Vg = ${effectiveGridVoltage}V`;
         }
         if (series.ep !== undefined) {
             return `Va = ${series.ep}V`;
@@ -486,8 +502,16 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
         // Find the actual min/max values from all data points
         for (const series of this.file.series) {
             for (const point of series.points) {
-                const xValue = this.getPointValue(point, xField);
-                const yValue = this.getPointValue(point, yField);
+                let xValue = this.getPointValue(point, xField);
+                let yValue = this.getPointValue(point, yField);
+
+                // Apply egOffset to grid voltage values when calculating ranges
+                if (xField === 'eg' && xValue !== undefined) {
+                    xValue += this.file.egOffset;
+                }
+                if (yField === 'eg' && yValue !== undefined) {
+                    yValue += this.file.egOffset;
+                }
 
                 if (xValue !== undefined) {
                     xMin = Math.min(xMin, xValue);

@@ -8,6 +8,7 @@ import { normanKorenTriodeModel } from './models/norman-koren-triode-model';
 import { normanKorenTriodeModelError } from './models/norman-koren-triode-model-error';
 import { Trace } from './trace';
 import { numberValueAt, Vector } from './algorithms/vector';
+import { Initial } from './initial';
 
 // LM algorithm
 const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDissipation: number, mu: number, ex: number, kg1: number, kp: number, kvb: number, trace?: Trace) {
@@ -137,7 +138,6 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
 
 addEventListener('message', ({ data }) => {
     // get state
-    const initial = data.initial;
     const files = data.files;
     const maximumPlateDissipation = data.maximumPlateDissipation;
     const algorithm = data.algorithm;
@@ -147,6 +147,8 @@ addEventListener('message', ({ data }) => {
         type: 'notification',
         text: 'Estimating Triode Model Parameters',
     });
+    // initial parameters
+    const initial: Initial = {};
     // estimate parameters
     const estimates = estimateTriodeParameters(files, initial, maximumPlateDissipation, trace);
     // update parameters

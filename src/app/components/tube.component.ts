@@ -480,21 +480,10 @@ export class TubeComponent implements OnInit, AfterViewInit {
             const worker = new Worker(new URL('../workers/optimize-norman-koren-triode-model-parameters.worker.ts', import.meta.url), { type: 'module' });
             console.log('Worker created successfully:', worker);
 
-            // Prepare initial parameters - use existing ones or defaults
-            const initialParameters = this.tube.triodeModelParameters || {
-                mu: 20,    // Default amplification factor
-                ex: 1.4,   // Default exponent
-                kg1: 1332, // Default grid constant
-                kg2: 0,    // Default kg2 (usually 0 for triodes)
-                kp: 600,   // Default plate constant
-                kvb: 300   // Default bias constant
-            };
-
             worker.postMessage({
                 files: this.tube.files,
                 maximumPlateDissipation: this.tube.maximumPlateDissipation || 1000, // Default to 1000W if not specified
-                initial: initialParameters,  // This is what the worker expects!
-                algorithm: 0,  // 0 = Levenberg-Marquardt, 1 = Powell
+                algorithm: 1,  // 0 = Levenberg-Marquardt, 1 = Powell
                 trace: undefined
             });
             console.log('Message posted to worker');
