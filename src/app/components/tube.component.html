@@ -338,21 +338,21 @@
         <div class="card-header bg-success text-white">
           <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Triode SPICE Model Parameters</h5>
         </div>
-        <div class="card-body triode-spice-parameters">
-          <app-triode-spice-parameters 
+        <div class="card-body triode-model-parameters">
+          <app-triode-model-parameters 
             [tube]="tube"
             [isCalculating]="isCalculatingSpiceParameters"
             [canCalculate]="tube.files && tube.files.length > 0"
             (calculateRequested)="calculateSpiceModelParameters()">
-          </app-triode-spice-parameters>
+          </app-triode-model-parameters>
         </div>
       </div>
 
       <!-- Pentode SPICE Model Parameters Component -->
-      <app-pentode-spice-parameters 
+      <app-pentode-model-parameters 
         [tube]="tube" 
         (tubeChange)="tube = $event">
-      </app-pentode-spice-parameters>
+      </app-pentode-model-parameters>
 
       <!-- Tetrode SPICE Model Parameters Component -->
       <app-tetrode-spice-parameters 

@@ -9,12 +9,12 @@ import { ToastService } from '../services/toast.service';
 import { TubeInformation } from './tube-information';
 
 @Component({
-    selector: 'app-triode-spice-parameters',
-    templateUrl: './triode-spice-parameters.component.html',
-    styleUrl: './triode-spice-parameters.component.scss',
+    selector: 'app-triode-model-parameters',
+    templateUrl: './triode-model-parameters.component.html',
+    styleUrl: './triode-model-parameters.component.scss',
     imports: [CommonModule],
 })
-export class TriodeSpiceParametersComponent {
+export class TriodeModelParametersComponent {
 
     @Input() tube: TubeInformation | undefined = undefined;
     @Input() isCalculating = false;

@@ -230,7 +230,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                 .map(point => {
                     let xValue = this.getPointValue(point, xField) as number;
                     let yValue = this.getPointValue(point, yField) as number;
-                    
+
                     // Apply egOffset to grid voltage values when plotting
                     if (xField === 'eg') {
                         xValue += this.file!.egOffset;
@@ -238,7 +238,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                     if (yField === 'eg') {
                         yValue += this.file!.egOffset;
                     }
-                    
+
                     return {
                         x: xValue,
                         y: yValue

@@ -6,12 +6,12 @@ import { normanKorenPentodeModelError } from '../workers/models/norman-koren-pen
 import { ToastService } from '../services/toast.service';
 
 @Component({
-    selector: 'app-pentode-spice-parameters',
-    templateUrl: './pentode-spice-parameters.component.html',
-    styleUrl: './pentode-spice-parameters.component.scss',
+    selector: 'app-pentode-model-parameters',
+    templateUrl: './pentode-model-parameters.component.html',
+    styleUrl: './pentode-model-parameters.component.scss',
     imports: [CommonModule],
 })
-export class PentodeSpiceParametersComponent {
+export class PentodeModelParametersComponent {
     @Input() tube: TubeInformation | null = null;
     @Output() tubeChange = new EventEmitter<TubeInformation>();
 

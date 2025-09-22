@@ -8,16 +8,16 @@ import { fileParserService } from '../services/file-parser-service';
 import { TubePlotComponent } from './tube-plot.component';
 import { FirebaseTubeService } from '../services/firebase-tube.service';
 import { AuthService } from '../services/auth.service';
-import { PentodeSpiceParametersComponent } from './pentode-spice-parameters.component';
+import { PentodeModelParametersComponent } from './pentode-model-parameters.component';
 import { TetrodeSpiceParametersComponent } from './tetrode-spice-parameters.component';
-import { TriodeSpiceParametersComponent } from './triode-spice-parameters.component';
+import { TriodeModelParametersComponent } from './triode-model-parameters.component';
 import { ToastService } from '../services/toast.service';
 
 @Component({
     selector: 'app-tube',
     templateUrl: './tube.component.html',
     styleUrl: './tube.component.scss',
-    imports: [FormsModule, CommonModule, RouterLink, TubePlotComponent, PentodeSpiceParametersComponent, TetrodeSpiceParametersComponent, TriodeSpiceParametersComponent],
+    imports: [FormsModule, CommonModule, RouterLink, TubePlotComponent, PentodeModelParametersComponent, TetrodeSpiceParametersComponent, TriodeModelParametersComponent],
 })
 export class TubeComponent implements OnInit, AfterViewInit {
     @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
