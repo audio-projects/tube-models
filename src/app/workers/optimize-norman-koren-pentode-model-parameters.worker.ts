@@ -49,7 +49,7 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
     // log information
     self.postMessage({
         type: 'log',
-        text: 'Optimizing Pentode Model parameters using the Levenberg-Marquardt algorithm'
+        text: `Optimizing Pentode Model parameters using the Levenberg-Marquardt algorithm, Objective function value: ${(normanKorenPentodeModelError(files, mu, ex, kg1, kp, kvb, kg2, maximumPlateDissipation) * 1e-6).toExponential()}`
     });
     // optimize
     const result = levmar(R, [1, 1, 1, 1, 1, 1], {trace: trace, tolerance: 1e-4, kmax: 500});
@@ -69,7 +69,7 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
         // log values
         self.postMessage({
             type: 'log',
-            text: 'Pentode Model parameters: mu=' + parameters.mu + ', ex=' + parameters.ex + ', kg1=' + parameters.kg1 + ', kp=' + parameters.kp + ', kvb=' + parameters.kvb + ', kg2=' + parameters.kg2
+            text: `Pentode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, kg2=${parameters.kg2}, Objective function value: ${(normanKorenPentodeModelError(files, parameters.mu, parameters.ex, parameters.kg1, parameters.kp, parameters.kvb, parameters.kg2, maximumPlateDissipation) * 1e-6).toExponential()}, iterations: ${result.iterations}`,
         });
         // return model parameters
         return parameters;
@@ -79,17 +79,10 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
 
 // Powell algorithm
 const optimizeWithPowell = function (files: File[], maximumPlateDissipation: number, mu: number, ex: number, kg1: number, kp: number, kvb: number, kg2: number, trace?: Trace) {
-    // create variable vector
-    const x = [mu, ex, kg1, kp, kvb];
     // log information
     postMessage({
         type: 'log',
-        text: 'Optimizing Pentode Model parameters using the Powell algorithm',
-    });
-    // log initial function value
-    postMessage({
-        type: 'log',
-        text: 'Objective function value: ' + (normanKorenPentodeModelError(files, mu, ex, kg1, kp, kvb, kg2, maximumPlateDissipation) * 1e-6).toExponential(),
+        text: `Optimizing Pentode Model parameters using the Powell algorithm, Objective function value: ${(normanKorenPentodeModelError(files, mu, ex, kg1, kp, kvb, kg2, maximumPlateDissipation) * 1e-6).toExponential()}`,
     });
     // least square problem
     const leastSquares = function (x: number[]): number {
@@ -111,6 +104,8 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
         traceEnabled: true,
         trace: trace,
     };
+    // create variable vector
+    const x = [mu, ex, kg1, kp, kvb, kg2];
     // optimize f1
     const result = powell(x, leastSquares, options);
     // check result
@@ -127,12 +122,7 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
         // log values
         postMessage({
             type: 'log',
-            text: `Pentode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, kg2=${parameters.kg2}`,
-        });
-        // log function value
-        postMessage({
-            type: 'log',
-            text: 'Objective function value: ' + (normanKorenPentodeModelError(files, parameters.mu, parameters.ex, parameters.kg1, parameters.kp, parameters.kvb, parameters.kg2, maximumPlateDissipation) * 1e-6).toExponential(),
+            text: `Pentode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, kg2=${parameters.kg2}, Objective function value: ${(normanKorenPentodeModelError(files, parameters.mu, parameters.ex, parameters.kg1, parameters.kp, parameters.kvb, parameters.kg2, maximumPlateDissipation) * 1e-6).toExponential()}, iterations: ${result.iterations}`,
         });
         // return model parameters
         return parameters;
@@ -146,11 +136,6 @@ addEventListener('message', ({ data }) => {
     const maximumPlateDissipation = data.maximumPlateDissipation;
     const algorithm = data.algorithm;
     const trace = data.trace;
-    // notify ui
-    postMessage({
-        type: 'notification',
-        text: 'Estimating Pentode Model Parameters',
-    });
     // initial parameters
     const initial: Initial = {};
     // estimate parameters

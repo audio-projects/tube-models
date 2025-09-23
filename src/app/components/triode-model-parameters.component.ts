@@ -25,12 +25,16 @@ export class TriodeModelParametersComponent {
 
     // Computed properties for SPICE model template
     get spiceSubcktLine(): string {
+        // tube name sanitized for SPICE subckt name
         const cleanTubeName = (this.tube?.name || 'TRIODE').toUpperCase().replace(/[^A-Z0-9]/g, '_');
-        return `.SUBCKT ${cleanTubeName} P G K`;
+        // suffix
+        const suffix = this.tube?.type === 'Triode' ? '' : '_triode';
+        // subckt line
+        return `.SUBCKT ${cleanTubeName}${suffix} P G K`;
     }
 
     get spiceCommentLine(): string {
-        return `* ${this.tube?.name || 'TRIODE'} Triode Model (Norman Koren)`;
+        return `* ${this.tube?.name} Triode Model (Norman Koren)`;
     }
 
     get spiceParamLine(): string {
@@ -45,7 +49,7 @@ export class TriodeModelParametersComponent {
         const cgp = this.tube.cg1p || 0;
         const ccp = this.tube.ccp || 0;
         const rgi = 2000;
-        return `.PARAM MU=${mu} EX=${ex} KG1=${kg1} KP=${kp} KVB=${kvb} CCG=${ccg} CGP=${cgp} CCP=${ccp} RGI=${rgi}`;
+        return `MU=${mu} EX=${ex} KG1=${kg1} KP=${kp} KVB=${kvb} CCG=${ccg} CGP=${cgp} CCP=${ccp} RGI=${rgi}`;
     }
 
     // Trigger calculation request to parent component

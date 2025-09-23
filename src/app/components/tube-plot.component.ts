@@ -22,54 +22,48 @@ Chart.register(...registerables);
     standalone: true,
     imports: [CommonModule, FormsModule],
     template: `
-    <div class="tube-plot-container">
-      <div *ngIf="file" class="mb-3">
-        <h5 class="fw-bold">
-          <i class="bi bi-graph-up me-2"></i>{{ file.name }}
-        </h5>
-        <p class="text-muted mb-2">
-          {{ getMeasurementTypeDescription() }}
-          <span *ngIf="file.series.length > 0">
-            • {{ file.series.length }} series • {{ getTotalPointsCount() }} points
-          </span>
-        </p>
+        <div class="tube-plot-container">
+            <div *ngIf="file" class="mb-3">
+                <h5 class="fw-bold"><i class="bi bi-graph-up me-2"></i>{{ file.name }}</h5>
+                <p class="text-muted mb-2">
+                    {{ getMeasurementTypeDescription() }}
+                    <span *ngIf="file.series.length > 0"> • {{ file.series.length }} series • {{ getTotalPointsCount() }} points </span>
+                </p>
 
-        <!-- Model Selection Dropdown -->
-        <div class="mb-3" *ngIf="availableModels.length > 0">
-          <label for="modelSelect" class="form-label fw-bold">
-            <i class="bi bi-gear me-1"></i>Compare with Model
-          </label>
-          <select class="form-select form-select-sm" id="modelSelect"
-                  [(ngModel)]="selectedModel"
-                  (ngModelChange)="onModelSelectionChange()">
-            <option value="">No Model Selected</option>
-            <option *ngFor="let model of availableModels" [value]="model.key">
-              {{ model.name }}
-            </option>
-          </select>
+                <!-- Model Selection Dropdown -->
+                <div class="mb-3" *ngIf="availableModels.length > 0">
+                    <label for="modelSelect" class="form-label fw-bold"> <i class="bi bi-gear me-1"></i>Compare with Model </label>
+                    <select class="form-select form-select-sm" id="modelSelect" [(ngModel)]="selectedModel" (ngModelChange)="onModelSelectionChange()">
+                        <option value="">No Model Selected</option>
+                        <option *ngFor="let model of availableModels" [value]="model.key">
+                            {{ model.name }}
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="chart-container" style="position: relative; height: 400px;">
+                <canvas #chartCanvas></canvas>
+            </div>
+
+            <div *ngIf="!file" class="text-center py-4">
+                <i class="bi bi-graph-up display-6 text-muted"></i>
+                <p class="text-muted mt-2 mb-0">No file selected</p>
+                <small class="text-muted">Select a file to view its data points</small>
+            </div>
         </div>
-      </div>
-
-      <div class="chart-container" style="position: relative; height: 400px;">
-        <canvas #chartCanvas></canvas>
-      </div>
-
-      <div *ngIf="!file" class="text-center py-4">
-        <i class="bi bi-graph-up display-6 text-muted"></i>
-        <p class="text-muted mt-2 mb-0">No file selected</p>
-        <small class="text-muted">Select a file to view its data points</small>
-      </div>
-    </div>
-  `,
-    styles: [`
-    .tube-plot-container {
-      width: 100%;
-    }
-    .chart-container {
-      width: 100%;
-      height: 400px;
-    }
-  `]
+    `,
+    styles: [
+        `
+            .tube-plot-container {
+                width: 100%;
+            }
+            .chart-container {
+                width: 100%;
+                height: 400px;
+            }
+        `,
+    ],
 })
 export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
 
@@ -80,11 +74,14 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
     private chart: Chart | null = null;
     private viewInitialized = false;
     selectedModel = '';
-    availableModels: { key: string, name: string }[] = [];
+    availableModels: { key: string; name: string }[] = [];
 
     ngAfterViewInit() {
+        // update flag
         this.viewInitialized = true;
+        // intialize tube models
         this.updateAvailableModels();
+        // create chart if file is present
         if (this.file) {
             this.createChart();
         }
@@ -107,10 +104,11 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
     }
 
     private createChart() {
+        // check we can create the chart
         if (!this.file || !this.chartCanvas || this.file.measurementType === 'UNKNOWN') {
             return;
         }
-
+        // Destroy existing chart if any
         this.destroyChart();
 
         const { xField, yField, xLabel, yLabel } = this.getAxesForMeasurementType();
@@ -126,47 +124,47 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                 plugins: {
                     title: {
                         display: true,
-                        text: `${this.file.name} - ${this.getMeasurementTypeDescription()}`
+                        text: `${this.file.name} - ${this.file.measurementTypeLabel}`,
                     },
                     legend: {
                         display: true,
                         position: 'top',
                         labels: {
-                            filter: function(legendItem) {
+                            filter: function (legendItem) {
                                 // Hide legend items with empty labels (model curves)
                                 return legendItem.text !== '';
-                            }
-                        }
-                    }
+                            },
+                        },
+                    },
                 },
                 scales: {
                     x: {
                         display: true,
                         title: {
                             display: true,
-                            text: xLabel
+                            text: xLabel,
                         },
                         min: xMin,
                         max: xMax,
-                        type: 'linear'
+                        type: 'linear',
                     },
                     y: {
                         display: true,
                         title: {
                             display: true,
-                            text: yLabel
+                            text: yLabel,
                         },
                         min: yMin,
                         max: yMax,
-                        type: 'linear'
-                    }
+                        type: 'linear',
+                    },
                 },
                 elements: {
                     point: {
-                        radius: 2
-                    }
-                }
-            }
+                        radius: 2,
+                    },
+                },
+            },
         };
 
         this.chart = new Chart(this.chartCanvas.nativeElement, config);
@@ -179,19 +177,16 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
         }
     }
 
-    private getAxesForMeasurementType(): { xField: string, yField: string, xLabel: string, yLabel: string } {
-        if (!this.file) {
-            return { xField: 'ep', yField: 'ip', xLabel: 'Voltage', yLabel: 'Current' };
-        }
-
-        switch (this.file.measurementType) {
+    private getAxesForMeasurementType(): { xField: string; yField: string; xLabel: string; yLabel: string } {
+        // process based on measurement type
+        switch (this.file?.measurementType) {
             case 'IP_EP_EG_VH':
             case 'IP_EP_EG_VS_VH':
                 return {
                     xField: 'ep',
                     yField: 'ip',
                     xLabel: 'Plate Voltage (V)',
-                    yLabel: 'Plate Current (mA)'
+                    yLabel: 'Plate Current (mA)',
                 };
             case 'IP_EG_EP_VH':
             case 'IP_EG_EP_VS_VH':
@@ -199,14 +194,14 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                     xField: 'eg',
                     yField: 'ip',
                     xLabel: 'Grid Voltage (V)',
-                    yLabel: 'Plate Current (mA)'
+                    yLabel: 'Plate Current (mA)',
                 };
             default:
                 return {
                     xField: 'ep',
                     yField: 'ip',
                     xLabel: 'Voltage (V)',
-                    yLabel: 'Current (mA)'
+                    yLabel: 'Current (mA)',
                 };
         }
     }
@@ -216,18 +211,15 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             return [];
         }
 
-        const colors = [
-            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
-            '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
-        ];
+        const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'];
 
         // Show lines connecting points when no model is selected
         const showLines = this.selectedModel === '' || this.selectedModel === null;
 
         const datasets = this.file.series.map((series, index) => {
             const data = series.points
-                .filter(point => this.getPointValue(point, xField) !== undefined && this.getPointValue(point, yField) !== undefined)
-                .map(point => {
+                .filter((point) => this.getPointValue(point, xField) !== undefined && this.getPointValue(point, yField) !== undefined)
+                .map((point) => {
                     let xValue = this.getPointValue(point, xField) as number;
                     let yValue = this.getPointValue(point, yField) as number;
 
@@ -241,7 +233,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
 
                     return {
                         x: xValue,
-                        y: yValue
+                        y: yValue,
                     };
                 })
                 .sort((a, b) => a.x - b.x);
@@ -257,7 +249,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                 pointRadius: showLines ? 3 : 4,
                 pointHoverRadius: showLines ? 5 : 6,
                 showLine: showLines,
-                tension: 0.1
+                tension: 0.1,
             };
         });
 
@@ -277,12 +269,10 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
     private createModelDatasets(_xField: string, _yField: string) {
         console.log('createModelDatasets called', { selectedModel: this.selectedModel, hasTube: !!this.tube, hasFile: !!this.file });
 
-        if (!this.file || !this.tube || !this.selectedModel) return [];
+        if (!this.file || !this.tube || !this.selectedModel)
+            return [];
 
-        const colors = [
-            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
-            '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
-        ];
+        const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'];
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const modelDatasets: any[] = [];
@@ -292,23 +282,15 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             if (this.tube.triodeModelParameters?.calculatedOn) {
                 console.log('✓ Triode parameters found and calculated');
                 console.log('File measurement type:', this.file!.measurementType);
-                console.log('Number of data series:', this.file!.series.length);                // Generate model curves for each series
+                console.log('Number of data series:', this.file!.series.length); // Generate model curves for each series
                 this.file.series.forEach((series, index) => {
                     let modelData: { x: number; y: number }[] = [];
 
-                    if (this.file!.measurementType === 'plate_characteristics' ||
-                        this.file!.measurementType === 'pentode_plate_characteristics' ||
-                        this.file!.measurementType === 'IP_EP_EG_VS_VH' ||
-                        this.file!.measurementType === 'IP_EP_EG_VH' ||
-                        this.file!.measurementType === 'IP_EPES_EG_VH') {
+                    if (this.file!.measurementType === 'plate_characteristics' || this.file!.measurementType === 'pentode_plate_characteristics' || this.file!.measurementType === 'IP_EP_EG_VS_VH' || this.file!.measurementType === 'IP_EP_EG_VH' || this.file!.measurementType === 'IP_EPES_EG_VH') {
                         console.log('Generating plate characteristic curve for series', index);
                         modelData = this.generatePlateCharacteristicCurve(series);
                     }
-                    else if (this.file!.measurementType === 'transfer_characteristics' ||
-                             this.file!.measurementType === 'pentode_transfer_characteristics' ||
-                             this.file!.measurementType === 'IP_EG_EP_VS_VH' ||
-                             this.file!.measurementType === 'IP_EG_EP_VH' ||
-                             this.file!.measurementType === 'IP_EG_EPES_VH') {
+                    else if (this.file!.measurementType === 'transfer_characteristics' || this.file!.measurementType === 'pentode_transfer_characteristics' || this.file!.measurementType === 'IP_EG_EP_VS_VH' || this.file!.measurementType === 'IP_EG_EP_VH' || this.file!.measurementType === 'IP_EG_EPES_VH') {
                         console.log('Generating transfer characteristic curve for series', index);
                         modelData = this.generateTransferCharacteristicCurve(series);
                     }
@@ -329,9 +311,9 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                             showLine: true,
                             fill: false,
                             tension: 0.1,
-                            pointRadius: 0,  // No points for model lines
+                            pointRadius: 0, // No points for model lines
                             borderWidth: 2,
-                            borderDash: [5, 5] // Dashed line for model
+                            borderDash: [5, 5], // Dashed line for model
                         });
                     }
                 });
@@ -341,7 +323,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                 console.log('Available tube parameters:', {
                     triode: this.tube.triodeModelParameters,
                     pentode: this.tube.pentodeSpiceModelParameters,
-                    tetrode: this.tube.tetrodeSpiceModelParameters
+                    tetrode: this.tube.tetrodeSpiceModelParameters,
                 });
             }
         }
@@ -375,27 +357,14 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
         const gridVoltage = (series.eg || 0) + (this.file?.egOffset || 0);
 
         // Generate points from 0 to a reasonable plate voltage
-        const maxPlateVoltage = Math.max(300, ...series.points.map(p => p.ep || 0));
+        const maxPlateVoltage = Math.max(300, ...series.points.map((p) => p.ep || 0));
         const stepSize = maxPlateVoltage / 100;
-
+        // x values
         for (let plateVoltage = 0; plateVoltage <= maxPlateVoltage; plateVoltage += stepSize) {
             try {
-                const result = normanKorenTriodeModel(
-                    plateVoltage,
-                    gridVoltage,
-                    params.kp,
-                    params.mu,
-                    params.kvb,
-                    params.ex,
-                    params.kg1
-                );
-
-                if (result.ip >= 0 && isFinite(result.ip)) {
-                    points.push({
-                        x: plateVoltage,
-                        y: result.ip
-                    });
-                }
+                const result = normanKorenTriodeModel(plateVoltage, gridVoltage, params.kp, params.mu, params.kvb, params.ex, params.kg1);
+                // y values
+                if (result.ip >= 0 && isFinite(result.ip)) points.push({ x: plateVoltage, y: result.ip });
             }
             catch {
                 // Skip invalid points
@@ -422,27 +391,19 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
         const plateVoltage = series.ep || 250;
 
         // Generate points for grid voltage range
-        const minGridVoltage = Math.min(-10, ...series.points.map(p => p.eg || 0));
-        const maxGridVoltage = Math.max(0, ...series.points.map(p => p.eg || 0));
+        const minGridVoltage = Math.min(-10, ...series.points.map((p) => p.eg || 0));
+        const maxGridVoltage = Math.max(0, ...series.points.map((p) => p.eg || 0));
         const stepSize = (maxGridVoltage - minGridVoltage) / 100;
         const egOffset = this.file?.egOffset || 0;
 
         for (let gridVoltage = minGridVoltage; gridVoltage <= maxGridVoltage; gridVoltage += stepSize) {
             try {
-                const result = normanKorenTriodeModel(
-                    plateVoltage,
-                    gridVoltage + egOffset, // Apply egOffset to model calculation
-                    params.kp,
-                    params.mu,
-                    params.kvb,
-                    params.ex,
-                    params.kg1
-                );
+                const result = normanKorenTriodeModel(plateVoltage, gridVoltage + egOffset, params.kp, params.mu, params.kvb, params.ex, params.kg1);
 
                 if (result.ip >= 0 && isFinite(result.ip)) {
                     points.push({
                         x: gridVoltage + egOffset, // Apply egOffset to x-coordinate for display
-                        y: result.ip
+                        y: result.ip,
                     });
                 }
             }
@@ -459,19 +420,27 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
     // Helper method to safely access Point properties by string key
     private getPointValue(point: Point, fieldName: string): number | undefined {
         switch (fieldName) {
-            case 'ip': return point.ip;
-            case 'is': return point.is;
-            case 'ep': return point.ep;
-            case 'eg': return point.eg;
-            case 'es': return point.es;
-            case 'eh': return point.eh;
-            case 'index': return point.index;
-            default: return undefined;
+            case 'ip':
+                return point.ip;
+            case 'is':
+                return point.is;
+            case 'ep':
+                return point.ep;
+            case 'eg':
+                return point.eg;
+            case 'es':
+                return point.es;
+            case 'eh':
+                return point.eh;
+            case 'index':
+                return point.index;
+            default:
+                return undefined;
         }
     }
 
     private getSeriesLabel(series: Series, index: number): string {
-    // Try to determine the series label based on the measurement type
+        // Try to determine the series label based on the measurement type
         if (series.eg !== undefined) {
             // Apply egOffset to grid voltage in series label
             const effectiveGridVoltage = series.eg + (this.file?.egOffset || 0);
@@ -489,7 +458,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
         return `Series ${index + 1}`;
     }
 
-    private calculateAxisRanges(xField: string, yField: string): { xMin: number, xMax: number, yMin: number, yMax: number } {
+    private calculateAxisRanges(xField: string, yField: string): { xMin: number; xMax: number; yMin: number; yMax: number } {
         if (!this.file || this.file.series.length === 0) {
             return { xMin: 0, xMax: 100, yMin: 0, yMax: 100 };
         }
@@ -558,7 +527,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             xMin: Math.round(xMin * 100) / 100,
             xMax: Math.round((xMax + xPadding) * 100) / 100,
             yMin: Math.round(yMin * 100) / 100,
-            yMax: Math.round((yMax + yPadding) * 100) / 100
+            yMax: Math.round((yMax + yPadding) * 100) / 100,
         };
     }
 
@@ -566,11 +535,11 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
         if (!this.file) return '';
 
         const descriptions: Record<string, string> = {
-            'IP_EP_EG_VH': 'Plate Characteristics (Triode)',
-            'IP_EP_EG_VS_VH': 'Plate Characteristics (Pentode)',
-            'IP_EG_EP_VH': 'Transfer Characteristics (Triode)',
-            'IP_EG_EP_VS_VH': 'Transfer Characteristics (Pentode)',
-            'UNKNOWN': 'Unknown Measurement Type'
+            IP_EP_EG_VH: 'Plate Characteristics (Triode)',
+            IP_EP_EG_VS_VH: 'Plate Characteristics (Pentode)',
+            IP_EG_EP_VH: 'Transfer Characteristics (Triode)',
+            IP_EG_EP_VS_VH: 'Transfer Characteristics (Pentode)',
+            UNKNOWN: 'Unknown Measurement Type',
         };
 
         return descriptions[this.file.measurementType] || this.file.measurementType;
@@ -582,9 +551,6 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
     }
 
     onModelSelectionChange() {
-        // Handle model selection change
-        console.log('Selected model:', this.selectedModel);
-
         // Recreate the chart to update line visibility
         if (this.file && this.viewInitialized) {
             this.createChart();
@@ -592,39 +558,17 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
     }
 
     private updateAvailableModels() {
-        console.log('updateAvailableModels called', { tube: this.tube });
+        // initialize models
         this.availableModels = [];
-
+        // check tube data exists
         if (this.tube) {
-            console.log('Tube triode parameters:', this.tube.triodeModelParameters);
-
-            // Add triode model if calculated
-            if (this.tube.triodeModelParameters?.calculatedOn) {
-                console.log('Adding Norman Koren Triode Model to available models');
-                this.availableModels.push({
-                    key: 'norman-koren-triode',
-                    name: 'Norman Koren Triode Model'
-                });
-            }
-
-            // Add pentode model if calculated
-            if (this.tube.pentodeSpiceModelParameters?.calculatedOn) {
-                this.availableModels.push({
-                    key: 'norman-koren-pentode',
-                    name: 'Norman Koren Pentode Model'
-                });
-            }
-
-            // Add tetrode model if calculated
-            if (this.tube.tetrodeSpiceModelParameters?.calculatedOn) {
-                this.availableModels.push({
-                    key: 'norman-koren-tetrode',
-                    name: 'Norman Koren Tetrode Model'
-                });
-            }
+            // triode model
+            if (this.tube.triodeModelParameters?.calculatedOn)
+                this.availableModels.push({ key: 'norman-koren-triode', name: 'Norman Koren Triode Model' });
+            // pentode model
+            if (this.tube.pentodeModelParameters?.calculatedOn)
+                this.availableModels.push({ key: 'norman-koren-pentode', name: 'Norman Koren Pentode Model' });
         }
-
-        console.log('Available models after update:', this.availableModels);
     }
 
     ngOnDestroy() {

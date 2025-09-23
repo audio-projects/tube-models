@@ -1,14 +1,14 @@
 /// <reference lib="webworker" />
 
 import { DefaultPowellOptions, powell, PowellOptions } from './algorithms/powell';
-import { levmar } from './algorithms/Levenberg-Marquardt';
 import { estimateTriodeParameters } from './estimates/estimate-triode-parameters';
 import { File } from '../files';
+import { Initial } from './initial';
+import { levmar } from './algorithms/Levenberg-Marquardt';
 import { normanKorenTriodeModel } from './models/norman-koren-triode-model';
 import { normanKorenTriodeModelError } from './models/norman-koren-triode-model-error';
-import { Trace } from './trace';
 import { numberValueAt, Vector } from './algorithms/vector';
-import { Initial } from './initial';
+import { Trace } from './trace';
 
 // LM algorithm
 const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDissipation: number, mu: number, ex: number, kg1: number, kp: number, kvb: number, trace?: Trace) {
@@ -48,10 +48,10 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
     // log information
     self.postMessage({
         type: 'log',
-        text: 'Optimizing Triode Model parameters using the Levenberg-Marquardt algorithm'
+        text: `Optimizing Triode Model parameters using the Levenberg-Marquardt algorithm, Objective function value: ${(normanKorenTriodeModelError(files, mu, ex, kg1, kp, kvb, maximumPlateDissipation) * 1e-6).toExponential()}`
     });
     // optimize
-    const result = levmar(R, [1, 1, 1, 1, 1], {trace: trace, tolerance: 1e-4, kmax: 500});
+    const result = levmar(R, [1, 1, 1, 1, 1], {trace: trace, tolerance: 1e-5, kmax: 500});
     // check result
     if (result.converged) {
         // update variable vector
@@ -67,7 +67,7 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
         // log values
         self.postMessage({
             type: 'log',
-            text: 'Triode Model parameters: mu=' + parameters.mu + ', ex=' + parameters.ex + ', kg1=' + parameters.kg1 + ', kp=' + parameters.kp + ', kvb=' + parameters.kvb
+            text: `Triode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, Objective function value: ${(normanKorenTriodeModelError(files, parameters.mu, parameters.ex, parameters.kg1, parameters.kp, parameters.kvb, maximumPlateDissipation) * 1e-6).toExponential()}, iterations: ${result.iterations}`,
         });
         // return model parameters
         return parameters;
@@ -77,17 +77,10 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
 
 // Powell algorithm
 const optimizeWithPowell = function (files: File[], maximumPlateDissipation: number, mu: number, ex: number, kg1: number, kp: number, kvb: number, trace?: Trace) {
-    // create variable vector
-    const x = [mu, ex, kg1, kp, kvb];
     // log information
     postMessage({
         type: 'log',
-        text: 'Optimizing Triode Model parameters using the Powell algorithm',
-    });
-    // log initial function value
-    postMessage({
-        type: 'log',
-        text: 'Objective function value: ' + (normanKorenTriodeModelError(files, mu, ex, kg1, kp, kvb, maximumPlateDissipation) * 1e-6).toExponential(),
+        text: `Optimizing Triode Model parameters using the Powell algorithm, Objective function value: ${(normanKorenTriodeModelError(files, mu, ex, kg1, kp, kvb, maximumPlateDissipation) * 1e-6).toExponential()}`,
     });
     // least square problem
     const leastSquares = function (x: number[]): number {
@@ -108,6 +101,8 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
         traceEnabled: true,
         trace: trace,
     };
+    // create variable vector
+    const x = [mu, ex, kg1, kp, kvb];
     // optimize f1
     const result = powell(x, leastSquares, options);
     // check result
@@ -123,12 +118,7 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
         // log values
         postMessage({
             type: 'log',
-            text: `Triode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}`,
-        });
-        // log function value
-        postMessage({
-            type: 'log',
-            text: 'Objective function value: ' + (normanKorenTriodeModelError(files, parameters.mu, parameters.ex, parameters.kg1, parameters.kp, parameters.kvb, maximumPlateDissipation) * 1e-6).toExponential(),
+            text: `Triode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, Objective function value: ${(normanKorenTriodeModelError(files, parameters.mu, parameters.ex, parameters.kg1, parameters.kp, parameters.kvb, maximumPlateDissipation) * 1e-6).toExponential()}, iterations: ${result.iterations}`,
         });
         // return model parameters
         return parameters;
@@ -142,11 +132,6 @@ addEventListener('message', ({ data }) => {
     const maximumPlateDissipation = data.maximumPlateDissipation;
     const algorithm = data.algorithm;
     const trace = data.trace;
-    // notify ui
-    postMessage({
-        type: 'notification',
-        text: 'Estimating Triode Model Parameters',
-    });
     // initial parameters
     const initial: Initial = {};
     // estimate parameters

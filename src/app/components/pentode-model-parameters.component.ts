@@ -39,16 +39,14 @@ export class PentodeModelParametersComponent {
         const mu = params.mu?.toFixed(3) || '0';
         const ex = params.ex?.toFixed(3) || '0';
         const kg1 = params.kg1?.toFixed(6) || '0';
-        const kg2 = params.kg2?.toFixed(6) || '0';
         const kp = params.kp?.toFixed(6) || '0';
         const kvb = params.kvb?.toFixed(6) || '0';
-        const ccg1 = this.tube.ccg1 || 0;
-        const ccg2 = this.tube.ccg2 || 0;
-        const cg1p = this.tube.cg1p || 0;
-        const cg2p = this.tube.cg2p || 0;
+        const kg2 = params.kg2?.toFixed(6) || '0';
+        const ccg = this.tube.ccg1 || 0;
+        const cgp = this.tube.cg1p || 0;
         const ccp = this.tube.ccp || 0;
         const rgi = 2000;
-        return `.PARAM MU=${mu} EX=${ex} KG1=${kg1} KG2=${kg2} KP=${kp} KVB=${kvb} CCG1=${ccg1} CCG2=${ccg2} CG1P=${cg1p} CG2P=${cg2p} CCP=${ccp} RGI=${rgi}`;
+        return `MU=${mu} EX=${ex} KG1=${kg1} KP=${kp} KVB=${kvb} KG2=${kg2} CCG=${ccg} CGP=${cgp} CCP=${ccp} RGI=${rgi}`;
     }
 
     // Trigger calculation request to parent component

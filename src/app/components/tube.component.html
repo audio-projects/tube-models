@@ -6,7 +6,7 @@
         <nav aria-label="breadcrumb">
           <ol class="breadcrumb">
             <li class="breadcrumb-item">
-              <a routerLink="/tubes" class="text-decoration-none"> <i class="bi bi-collection me-1"></i>Tubes </a>
+              <a routerLink="/tube" class="text-decoration-none"> <i class="bi bi-collection me-1"></i>Tubes </a>
             </li>
             <li class="breadcrumb-item active" aria-current="page">
               {{ tube?.name || "New Tube" }}
@@ -20,7 +20,7 @@
         <p class="text-muted mb-0" *ngIf="tube?.manufacturer">Manufactured by {{ tube?.manufacturer }}</p>
       </div>
       <div class="btn-group" role="group">
-        <a class="btn btn-outline-primary" routerLink="/tubes" title="Back to Tubes List"> <i class="bi bi-arrow-left me-1"></i>Back to Tubes </a>
+        <a class="btn btn-outline-primary" routerLink="/tube" title="Back to Tubes List"> <i class="bi bi-arrow-left me-1"></i>Back to Tubes </a>
         <button type="button" class="btn btn-outline-secondary" (click)="resetForm()" [disabled]="!tube" title="Reset Changes"><i class="bi bi-arrow-clockwise me-1"></i>Reset</button>
         <button type="button" class="btn btn-success" (click)="saveTube()" [disabled]="!tube || !isFormValid() || !canSave()" title="Save Tube"><i class="bi bi-check-lg me-1"></i>Save</button>
         <button type="button" class="btn btn-outline-danger" (click)="deleteTube()" [disabled]="!canDelete()" title="Delete Tube"><i class="bi bi-trash me-1"></i>Delete</button>
@@ -192,7 +192,7 @@
                           <strong>{{ file.name }}</strong>
                           <br />
                           <small class="text-muted">
-                            {{ getMeasurementTypeDescription(file.measurementType) }}
+                            {{ file.measurementTypeLabel }}
                             <span *ngIf="file.series.length > 0"> • {{ file.series.length }} series • {{ getTotalPointsCount(file) }} points </span>
                           </small>
                         </div>
@@ -250,7 +250,7 @@
                     <i class="bi bi-graph-up me-2"></i>
                     <strong>Plotting:</strong> {{ selectedFileForPlot.name }}
                     <br />
-                    <small>{{ getMeasurementTypeDescription(selectedFileForPlot.measurementType) }}
+                    <small>{{ selectedFileForPlot.measurementTypeLabel }}
                       <span *ngIf="selectedFileForPlot.egOffset !== 0"> • Grid offset: {{ selectedFileForPlot.egOffset }}V</span>
                     </small>
                   </div>
@@ -268,7 +268,7 @@
                         <strong>{{ file.name }}</strong>
                         <br />
                         <small class="text-muted">
-                          {{ getMeasurementTypeDescription(file.measurementType) }}
+                          {{ file.measurementTypeLabel }}
                           <span *ngIf="file.series.length > 0"> • {{ file.series.length }} series • {{ getTotalPointsCount(file) }} points </span>
                           <span *ngIf="file.egOffset !== 0"> • Grid offset: {{ file.egOffset }}V </span>
                         </small>
@@ -336,7 +336,7 @@
       <!-- Triode Model Parameters Card -->
       <div class="card mb-4" *ngIf="tube.type === 'Triode' || tube.type === 'Pentode'">
         <div class="card-header bg-success text-white">
-          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Triode Model Parameters</h5>
+          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Triode Model (Norman Koren)</h5>
         </div>
         <div class="card-body triode-model-parameters">
           <app-triode-model-parameters 
@@ -351,7 +351,7 @@
       <!-- Pentode Model Parameters Card -->
       <div class="card mb-4" *ngIf="tube.type === 'Pentode'">
         <div class="card-header bg-success text-white">
-          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Pentode Model Parameters</h5>
+          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Pentode Model (Norman Koren)</h5>
         </div>
         <div class="card-body pentode-model-parameters">
           <app-pentode-model-parameters 

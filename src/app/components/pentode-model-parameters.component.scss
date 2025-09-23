@@ -1,16 +1,17 @@
-.pentode-model-parameters {
-  .form-control-plaintext {
-    font-family: 'Courier New', monospace;
-    font-size: 1.1em;
-    background-color: var(--bs-light);
-    border: 1px solid var(--bs-border-color);
-    border-radius: 0.375rem;
-    padding: 0.375rem 0.75rem;
-    margin-bottom: 0.25rem;
-  }
-  
-  .parameter-label {
-    font-size: 0.9em;
-    color: var(--bs-info);
-  }
+// Triode SPICE Parameters Component Styles
+
+// SPICE code block styling
+pre {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+// Spinning animation for recalculate button
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

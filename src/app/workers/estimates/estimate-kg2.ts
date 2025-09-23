@@ -25,7 +25,7 @@ export const estimateKg2 = function (initial: Initial, files: File[], maxW: numb
         // loop files
         for (const file of files) {
             // check measurement type (ep is in the X-axis)
-            if (file.measurementType === 'IP_EP_EG_VS_VH' || file.measurementType === 'IP_EP_ES_VG_VH' || file.measurementType === 'IP_EPES_EG_VH') {
+            if (file.measurementType === 'IPIS_EP_EG_VS_VH' || file.measurementType === 'IPIS_EP_ES_VG_VH' || file.measurementType === 'IPIS_EPES_EG_VH') {
                 // loop series
                 for (const series of file.series) {
                     // loop points (backwards, high ep)
@@ -36,7 +36,7 @@ export const estimateKg2 = function (initial: Initial, files: File[], maxW: numb
                         const is = p.is ?? 0;
                         const es = p.es ?? 0;
                         // check point meets power criteria and has a is
-                        if (p.ip * p.ep / 1000 < maxW && is > 0) {
+                        if ((p.ip + is) * p.ep / 1000 < maxW && is > 0) {
                             // IPk
                             const ip = ipk(p.eg + file.egOffset, es, initial.kp, initial.mu, initial.kvb, initial.ex);
                             // check we have IPk

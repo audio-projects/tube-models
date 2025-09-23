@@ -1,4 +1,4 @@
-import { fileParserService } from './file-parser-service';
+import { fileAnalysis, fileParserService } from './file-parser-service';
 
 const fileData1 = `Point    Curve     Ia (mA)        Is (mA)       Vg (V)          Va (V)         Vs (V)         Vf (V)
 1        1          0              0             -3.5            3.29           199.71         6.29 
@@ -97,7 +97,8 @@ const fileData1 = `Point    Curve     Ia (mA)        Is (mA)       Vg (V)       
 `;
 
 describe('services / fileParserService', () => {
-    it('shoul parse sample file', () => {
+
+    it('should parse sample file', () => {
         // act
         const result = fileParserService('file1', fileData1);
         // assert
@@ -108,6 +109,7 @@ describe('services / fileParserService', () => {
                     eg: -3.5,
                     es: 199.1209677419355,
                     eh: 6.29,
+                    is: 0,
                     points: [
                         { index: 1, ip: 0, is: 0, eg: -3.5, ep: 3.29, es: 199.71, eh: 6.29 },
                         { index: 2, ip: 0, is: 0, eg: -3.5, ep: 10.45, es: 199.02, eh: 6.29 },
@@ -146,6 +148,7 @@ describe('services / fileParserService', () => {
                     eg: -4,
                     es: 199.17806451612898,
                     eh: 6.29,
+                    is: 0,
                     points: [
                         { index: 1, ip: 0, eg: -4, ep: 3.63, es: 199.71, is: 0, eh: 6.29 },
                         { index: 2, ip: 0, eg: -4, ep: 10.45, es: 199.02, is: 0, eh: 6.29 },
@@ -184,6 +187,7 @@ describe('services / fileParserService', () => {
                     eg: -4.5,
                     es: 199.1209677419355,
                     eh: 6.29,
+                    is: 0,
                     points: [
                         { index: 1, ip: 0, eg: -4.5, ep: 3.63, es: 199.71, is: 0, eh: 6.29 },
                         { index: 2, ip: 0, eg: -4.5, ep: 10.11, es: 199.02, is: 0, eh: 6.29 },
@@ -220,6 +224,7 @@ describe('services / fileParserService', () => {
                 },
             ],
             measurementType: 'IP_EP_EG_VH',
+            measurementTypeLabel: 'Ia(Va, Vg) with Vh≈6.3V',
             eh: 6.29,
             egOffset: 0,
         });
@@ -454,5 +459,52 @@ describe('services / fileParserService', () => {
             es: 299.08,
             eh: 12.59
         });
+    });
+});
+
+
+const analyzeFile = function(filename: string, expectedType: string, expectedLabel: string, done: DoneFn) {
+    // fetch test data
+    fetch(filename)
+        .then((response) => response.text())
+        .then((data) => {
+            // parse file
+            const file = fileParserService(filename, data);
+            if (!file) {
+                // fail
+                fail('Failed to parse test data');
+                // done
+                done();
+                // exit
+                return;
+            }
+            // analyze file
+            const analysis = fileAnalysis(file);
+            // expect
+            expect(analysis.measurementType).toBe(expectedType);
+            expect(analysis.measurementTypeLabel).toBe(expectedLabel);
+            // done
+            done();
+        })
+        .catch((error) => {
+            // fail
+            fail('Failed to fetch test data: ' + error);
+            // done
+            done();
+        });
+};
+
+describe('services / fileParserService / fileAnalysis', () => {
+
+    it('it should analyze ECC81.utd file', (done) => {
+        analyzeFile('/test-assets/ECC81.utd', 'IP_EP_EG_VH', 'Ia(Va, Vg) with Vh≈12.6V', done);
+    });
+
+    it('it should analyze EF80_250.utd file', (done) => {
+        analyzeFile('/test-assets/EF80_250.utd', 'IPIS_EP_EG_VS_VH', 'Ia(Va, Vg), Is(Va, Vg) with Vs≈249.2V, Vh≈6.3V', done);
+    });
+
+    it('it should analyze EL500_triode.utd file', (done) => {
+        analyzeFile('/test-assets/EL500_triode.utd', 'IPIS_EPES_EG_VH', 'Ia(Va=Vs, Vg), Is(Va=Vs, Vg) with Vh≈6.3V', done);
     });
 });

@@ -57,7 +57,6 @@ FileParserService automatically detects measurement types like:
 
 - `IP_EG_EP_VH`: Plate current vs grid/plate voltage with constant heater
 - `IP_EP_EG_VH`: Plate current vs plate/grid voltage with constant heater
-- See `measurementTypeDescription()` in `files.ts` for complete list
 
 ## Development Patterns
 
