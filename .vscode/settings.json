@@ -7,13 +7,11 @@
     "editor.codeActionsOnSave": {
         "source.fixAll.eslint": "explicit"
     },
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
     "eslint.validate": ["javascript", "typescript"],
     "eslint.format.enable": true,
     "eslint.run": "onType",
     "[typescript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[javascript]": {
         "editor.defaultFormatter": "dbaeumer.vscode-eslint"
     }
 }

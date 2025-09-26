@@ -26,19 +26,17 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
         let index = 0;
         // loop data files
         for (const file of files) {
-            // check measurement type
-            if (file.measurementType === 'IP_EG_EP_VH' || file.measurementType === 'IP_EG_EPES_VH' || file.measurementType === 'IP_EP_EG_VH' || file.measurementType === 'IP_EPES_EG_VH') {
-                // loop series
-                for (const series of file.series) {
-                    // loop points
-                    for (const point of series.points) {
-                        // check we can use this point in calculations (max power dissipation and different than zero)
-                        if ((point.ip + (point.is ?? 0)) > 0 && point.ep * (point.ip + (point.is ?? 0)) * 1e-3 <= maximumPlateDissipation) {
-                            // calculate currents
-                            const currents = normanKorenPentodeModel(point.ep, point.eg + file.egOffset, point.es ?? 0, kp * x3, mu * x0, kvb * x4, ex * x1, kg1 * x2, kg2 * x5);
-                            // residual for point
-                            r[index++] = currents.ip - (point.ip + (point.is ?? 0));
-                        }
+            // loop series
+            for (const series of file.series) {
+                // loop points
+                for (const point of series.points) {
+                    // check we can use this point in calculations (max power dissipation and different than zero)
+                    if ((point.ip + (point.is ?? 0)) > 0 && point.ep * (point.ip + (point.is ?? 0)) * 1e-3 <= maximumPlateDissipation) {
+                        // calculate currents
+                        const currents = normanKorenPentodeModel(point.ep, point.eg + file.egOffset, point.es ?? 0, kp * x3, mu * x0, kvb * x4, ex * x1, kg1 * x2, kg2 * x5);
+                        // residuals
+                        r[index++] = currents.ip - point.ip;
+                        r[index++] = currents.is - (point.is ?? 0);
                     }
                 }
             }

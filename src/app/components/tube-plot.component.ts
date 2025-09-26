@@ -3,7 +3,7 @@ import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { CommonModule } from '@angular/common';
 import { File as TubeFile, Point, Series } from '../files';
 import { FormsModule } from '@angular/forms';
-import { normanKorenPentodeModel } from '../workers/models/norman-koren-pentode-model';
+import { normanKorenNewPentodeModel } from '../workers/models/norman-koren-new-pentode-model';
 import { normanKorenTriodeModel } from '../workers/models/norman-koren-triode-model';
 import { TubeInformation } from './tube-information';
 
@@ -18,7 +18,7 @@ Chart.register(...registerables);
             <div *ngIf="file" class="mb-3">
                 <h5 class="fw-bold"><i class="bi bi-graph-up me-2"></i>{{ file.name }}</h5>
                 <p class="text-muted mb-2">
-                    {{ getMeasurementTypeDescription() }}
+                    {{ this.file.measurementTypeLabel }}
                     <span *ngIf="file.series.length > 0"> • {{ file.series.length }} series • {{ getTotalPointsCount() }} points </span>
                 </p>
 
@@ -58,6 +58,7 @@ Chart.register(...registerables);
     ],
 })
 export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
+
     @Input() file: TubeFile | null = null;
     @Input() tube: TubeInformation | null = null;
     @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
@@ -313,11 +314,11 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                         data: combinedData,
                         borderColor: color,
                         backgroundColor: color,
+                        showLine: showLines,
                         fill: false,
+                        tension: 0.1,
                         pointRadius: 2,
                         pointHoverRadius: 4,
-                        showLine: showLines,
-                        tension: 0.1,
                         yAxisID: 'y', // Single axis for combined measurement
                     });
                 }
@@ -379,6 +380,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                     .sort((a, b) => a.x - b.x);
 
                 if (secondaryData.length > 0) {
+                    // create dataset
                     datasets.push({
                         label: '', // Empty label to hide from legend (same series as primary)
                         data: secondaryData,
@@ -394,190 +396,155 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                     });
                 }
             }
+            // Add model curves if a model is selected
+            if (this.selectedModel && this.tube)
+                datasets.push(...this.createModelDatasets(color, isCombined, axesConfig, series));
         });
-
-        // Add model curves if a model is selected
-        if (this.selectedModel && this.tube)
-            datasets.push(...this.createModelDatasets(axesConfig.xField, axesConfig.yField));
-
         return datasets;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    private createModelDatasets(_xField: string, _yField: string) {
-        // check a model is selected
-        if (!this.file || !this.tube || !this.selectedModel)
-            return [];
-
-        const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'];
-
+    private createModelDatasets(color: string, isCombined: boolean, axesConfig: ReturnType<typeof this.getAxesForMeasurementType>, series: Series) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const modelDatasets: any[] = [];
-
-        switch (this.selectedModel) {
-            // triode
-            case 'norman-koren-triode':
-                // Check if we have triode model parameters (could be on pentode tube operating in triode mode)
-                if (this.tube.triodeModelParameters?.calculatedOn) {
-                    // loop series
-                    this.file.series.forEach((series, index) => {
-                        // Initialize model data array
-                        let modelData: { x: number; y: number }[] = [];
-                        // Parse measurement type to determine curve generation method
-                        const { yComponent, xComponent } = this.parseMeasurementType(this.file!.measurementType);
-                        const measurementTypeCategory = this.getMeasurementTypeFromComponents(yComponent, xComponent);
-                        // Generate model data based on measurement type
-                        if (measurementTypeCategory === 'plate')
-                            modelData = this.generateTriodePlateCharacteristicCurve(series);
-                        else if (measurementTypeCategory === 'transfer')
-                            modelData = this.generateTriodeTransferCharacteristicCurve(series);
-                        // Log model data info
-                        if (modelData.length > 0) {
-                            // color
-                            const color = colors[index % colors.length];
-                            // push dataset
-                            modelDatasets.push({
-                                label: '', // Empty label to hide from legend
-                                data: modelData,
-                                backgroundColor: color,
-                                borderColor: color,
-                                showLine: true,
-                                fill: false,
-                                tension: 0.1,
-                                pointRadius: 0, // No points for model lines
-                                borderWidth: 2,
-                                borderDash: [5, 5], // Dashed line for model
-                            });
-                        }
-                    });
-                }
-                break;
-            // pentode
-            case 'norman-koren-pentode':
-                // Check if we have triode model parameters (could be on pentode tube operating in triode mode)
-                if (this.tube.triodeModelParameters?.calculatedOn) {
-                    // loop series
-                    this.file.series.forEach((series, index) => {
-                        // Initialize model data array
-                        let modelData: { x: number; y: number }[] = [];
-                        // Parse measurement type to determine curve generation method
-                        const { yComponent, xComponent } = this.parseMeasurementType(this.file!.measurementType);
-                        const measurementTypeCategory = this.getMeasurementTypeFromComponents(yComponent, xComponent);
-                        const isCombined = this.isCombinedCurrentMeasurement(yComponent, this.file!.measurementType);
-                        // Generate model data based on measurement type
-                        if (measurementTypeCategory === 'plate') {
-                            if (isCombined) {
-                                modelData = this.generateCombinedCurrentPlateCharacteristicCurve(series);
-                            }
-                            else {
-                                modelData = this.generateTriodePlateCharacteristicCurve(series);
-                            }
-                        }
-                        else if (measurementTypeCategory === 'transfer') {
-                            if (isCombined) {
-                                modelData = this.generateCombinedCurrentTransferCharacteristicCurve(series);
-                            }
-                            else {
-                                modelData = this.generateTriodeTransferCharacteristicCurve(series);
-                            }
-                        }
-                        else {
-                            console.log('Measurement type not supported for model generation:', this.file!.measurementType);
-                        }
-
-                        console.log(`Model data generated for series ${index}:`, modelData.length, 'points');
-
-                        if (modelData.length > 0) {
-                            const color = colors[index % colors.length];
-
-                            modelDatasets.push({
-                                label: '', // Empty label to hide from legend
-                                data: modelData,
-                                backgroundColor: color,
-                                borderColor: color,
-                                showLine: true,
-                                fill: false,
-                                tension: 0.1,
-                                pointRadius: 0, // No points for model lines
-                                borderWidth: 2,
-                                borderDash: [5, 5], // Dashed line for model
-                            });
-                        }
-                    });
-                }
-                else {
-                    console.log('✗ No calculated triode parameters found');
-                    console.log('Available tube parameters:', {
-                        triode: this.tube.triodeModelParameters,
-                    });
-                }
-                break;
+        // Initialize model data array
+        let modelData: { x: number; y1: number; y2: number }[] = [];
+        // Parse measurement type to determine curve generation method
+        const { yComponent, xComponent } = this.parseMeasurementType(this.file!.measurementType);
+        const measurementTypeCategory = this.getMeasurementTypeFromComponents(yComponent, xComponent);
+        // Generate model data based on measurement type
+        if (measurementTypeCategory === 'plate') {
+            // plate characteristic curve
+            modelData = this.generatePlateCharacteristicCurve(series);
         }
-        return modelDatasets;
+        else if (measurementTypeCategory === 'transfer') {
+            // transfer characteristic curve
+            modelData = this.generateTransferCharacteristicCurve(series);
+        }
+        // Log model data info
+        if (modelData.length > 0) {
+            // check we are combining both currents in a single dataset
+            if (isCombined) {
+                // create combined dataset
+                modelDatasets.push({
+                    label: '', // Empty label to hide from legend
+                    data: modelData.map((point) => ({ x: point.x, y: point.y1 + point.y2 })),
+                    borderColor: color,
+                    backgroundColor: color,
+                    showLine: true,
+                    fill: false,
+                    tension: 0.1,
+                    pointRadius: 0, // No points for model lines
+                    borderWidth: 2,
+                    borderDash: [5, 5], // Dashed line for model
+                    yAxisID: 'y',
+                });
+                // exit
+                return modelDatasets;
+            }
+            // create left Y axis dataset
+            modelDatasets.push({
+                label: '', // Empty label to hide from legend
+                data: modelData.map((point) => ({ x: point.x, y: point.y1 })),
+                borderColor: color,
+                backgroundColor: color,
+                showLine: true,
+                fill: false,
+                tension: 0.1,
+                pointRadius: 0, // No points for model lines
+                borderWidth: 2,
+                borderDash: [5, 5], // Dashed line for model
+                yAxisID: 'y',
+            });
+            // create right Y axis dataset if dual axis
+            if (axesConfig.hasDualYAxis && axesConfig.rightYField) {
+                // create right Y axis dataset
+                modelDatasets.push({
+                    label: '', // Empty label to hide from legend
+                    data: modelData.map((point) => ({ x: point.x, y: point.y2 })),
+                    borderColor: color,
+                    backgroundColor: color,
+                    showLine: true,
+                    fill: false,
+                    tension: 0.1,
+                    pointRadius: 0, // No points for model lines
+                    borderWidth: 2,
+                    borderDash: [5, 5], // Dashed line for model
+                    yAxisID: 'y1',
+                });
+            }
+            // exit
+            return modelDatasets;
+        }
+        return [];
     }
 
-    private generateTriodePlateCharacteristicCurve(series: Series): { x: number; y: number }[] {
-        // check model has been calculated
-        if (!this.tube?.triodeModelParameters?.calculatedOn) return [];
+    private generatePlateCharacteristicCurve(series: Series): { x: number; y1: number, y2: number }[] {
         // array to hold points
-        const points: { x: number; y: number }[] = [];
-        const params = this.tube.triodeModelParameters;
-        // Check if all required parameters are available
-        if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb) return [];
+        const points: { x: number; y1: number, y2: number }[] = [];
         // Use the grid voltage from the series and apply egOffset
         const gridVoltage = (series.eg || 0) + (this.file?.egOffset || 0);
         // Generate points from 0 to a reasonable plate voltage
         const maxPlateVoltage = Math.max(300, ...series.points.map((p) => p.ep || 0));
         const stepSize = maxPlateVoltage / 100;
-        // x values
-        for (let plateVoltage = 0; plateVoltage <= maxPlateVoltage; plateVoltage += stepSize) {
-            try {
-                const result = normanKorenTriodeModel(plateVoltage, gridVoltage, params.kp, params.mu, params.kvb, params.ex, params.kg1);
-                // y values
-                if (result.ip >= 0 && isFinite(result.ip)) points.push({ x: plateVoltage, y: result.ip });
+        // triode
+        if (this.selectedModel === 'norman-koren-triode') {
+            // check model has been calculated
+            if (!this.tube?.triodeModelParameters?.calculatedOn)
+                return [];
+            // model parameters
+            const params = this.tube?.triodeModelParameters;
+            // Check if all required parameters are available
+            if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb)
+                return [];
+            // x values
+            for (let plateVoltage = 0; plateVoltage <= maxPlateVoltage; plateVoltage += stepSize) {
+                try {
+                    const result = normanKorenTriodeModel(plateVoltage, gridVoltage, params.kp, params.mu, params.kvb, params.ex, params.kg1);
+                    // values
+                    points.push({ x: plateVoltage, y1: result.ip, y2: 0 });
+                }
+                catch {
+                    // Skip invalid points
+                    continue;
+                }
             }
-            catch {
-                // Skip invalid points
-                continue;
-            }
+            return points;
         }
-        return points;
+        // pentode
+        if (this.selectedModel === 'norman-koren-pentode') {
+            // check model has been calculated
+            if (!this.tube?.pentodeModelParameters?.calculatedOn)
+                return [];
+            // model parameters
+            const params = this.tube?.pentodeModelParameters;
+            // Check if all required parameters are available
+            if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb || !params.kg2)
+                return [];
+            // screen voltage
+            const screenVoltage = (series.es || 0);
+            // x values
+            for (let plateVoltage = 0; plateVoltage <= maxPlateVoltage; plateVoltage += stepSize) {
+                try {
+                    const result = normanKorenNewPentodeModel(plateVoltage, gridVoltage, screenVoltage, params.kp, params.mu, params.kvb, params.ex, params.kg1, params.kg2);
+                    // values
+                    points.push({ x: plateVoltage, y1: result.ip, y2: result.is });
+                }
+                catch {
+                    // Skip invalid points
+                    continue;
+                }
+            }
+            return points;
+        }
+        return [];
     }
 
-    // private generatePentodePlateCharacteristicCurve(series: Series): { x: number; y: number }[] {
-    //     // check model has been calculated
-    //     if (!this.tube?.pentodeModelParameters?.calculatedOn) return [];
-    //     // array to hold points
-    //     const points: { x: number; y1: number; y2: number }[] = [];
-    //     const params = this.tube.pentodeModelParameters;
-    //     // Check if all required parameters are available
-    //     if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb || !params.kg2) return [];
-    //     // Use the grid voltage from the series and apply egOffset
-    //     const gridVoltage = (series.eg || 0) + (this.file?.egOffset || 0);
-    //     // Generate points from 0 to a reasonable plate voltage
-    //     const maxPlateVoltage = Math.max(300, ...series.points.map((p) => p.ep || 0));
-    //     const stepSize = maxPlateVoltage / 100;
-    //     // x values
-    //     for (let plateVoltage = 0; plateVoltage <= maxPlateVoltage; plateVoltage += stepSize) {
-    //         try {
-    //             // evaluate model
-    //             const result = normanKorenPentodeModel(plateVoltage, gridVoltage, this.file?.es || 0, params.kp, params.mu, params.kvb, params.ex, params.kg1, params.kg2);
-    //             // y values
-    //             points.push({ x: plateVoltage, y1: result.ip, y2: result.is });
-    //         }
-    //         catch {
-    //             // Skip invalid points
-    //             continue;
-    //         }
-    //     }
-    //     return points;
-    // }
-
-    private generateTriodeTransferCharacteristicCurve(series: Series): { x: number; y: number }[] {
+    private generateTransferCharacteristicCurve(series: Series): { x: number; y1: number, y2: number }[] {
         // check model has been calculated
-        if (!this.tube?.triodeModelParameters?.calculatedOn) return [];
+        if (!this.tube?.triodeModelParameters?.calculatedOn)
+            return [];
         // array to hold points
-        const points: { x: number; y: number }[] = [];
+        const points: { x: number; y1: number, y2: number }[] = [];
         const params = this.tube.triodeModelParameters;
         // Check if all required parameters are available
         if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb) return [];
@@ -588,111 +555,57 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
         const maxGridVoltage = Math.max(0, ...series.points.map((p) => p.eg || 0));
         const stepSize = (maxGridVoltage - minGridVoltage) / 100;
         const egOffset = this.file?.egOffset || 0;
-        // x values
-        for (let gridVoltage = minGridVoltage; gridVoltage <= maxGridVoltage; gridVoltage += stepSize) {
-            try {
-                // calculate ip current
-                const result = normanKorenTriodeModel(plateVoltage, gridVoltage + egOffset, params.kp, params.mu, params.kvb, params.ex, params.kg1);
-                if (result.ip >= 0 && isFinite(result.ip))
-                    points.push({ x: gridVoltage + egOffset, y: result.ip });
+        // triode
+        if (this.selectedModel === 'norman-koren-triode') {
+            // check model has been calculated
+            if (!this.tube?.triodeModelParameters?.calculatedOn)
+                return [];
+            // model parameters
+            const params = this.tube?.triodeModelParameters;
+            // Check if all required parameters are available
+            if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb)
+                return [];
+            // x values
+            for (let gridVoltage = minGridVoltage; gridVoltage <= maxGridVoltage; gridVoltage += stepSize) {
+                try {
+                    const result = normanKorenTriodeModel(plateVoltage, gridVoltage + egOffset, params.kp, params.mu, params.kvb, params.ex, params.kg1);
+                    // values
+                    points.push({ x: plateVoltage, y1: result.ip, y2: 0 });
+                }
+                catch {
+                    // Skip invalid points
+                    continue;
+                }
             }
-            catch {
-                // Skip invalid points
-                continue;
-            }
+            return points;
         }
-        return points;
-    }
-
-    private generateCombinedCurrentPlateCharacteristicCurve(series: Series): { x: number; y: number }[] {
-        console.log('generateCombinedCurrentPlateCharacteristicCurve called for series:', series);
-
-        if (!this.tube?.triodeModelParameters?.calculatedOn) {
-            console.log('No calculated triode parameters available');
-            return [];
-        }
-
-        const points: { x: number; y: number }[] = [];
-        const params = this.tube.triodeModelParameters;
-
-        console.log('Using triode parameters for combined current:', params);
-
-        // Check if all required parameters are available
-        if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb) {
-            console.log('Missing required parameters:', {
-                mu: params.mu,
-                ex: params.ex,
-                kg1: params.kg1,
-                kp: params.kp,
-                kvb: params.kvb,
-            });
-            return [];
-        }
-
-        // Use the grid voltage from the series and apply egOffset
-        const gridVoltage = (series.eg || 0) + (this.file?.egOffset || 0);
-
-        // Generate points from 0 to a reasonable plate voltage
-        const maxPlateVoltage = Math.max(300, ...series.points.map((p) => p.ep || 0));
-        const stepSize = maxPlateVoltage / 100;
-
-        for (let plateVoltage = 0; plateVoltage <= maxPlateVoltage; plateVoltage += stepSize) {
-            try {
-                const result = normanKorenTriodeModel(plateVoltage, gridVoltage, params.kp, params.mu, params.kvb, params.ex, params.kg1);
-
-                // For combined current, we need to approximate ip + is
-                // Since this is a triode model, result only has ip
-                // For EPES (Equal Plate/Screen voltage), we can assume is ≈ 0 or a small fraction of ip
-                // This is a simplification - in reality, we'd need a proper pentode model
-                const combinedCurrent = result.ip; // For triode model, is ≈ 0
-
-                if (combinedCurrent >= 0 && isFinite(combinedCurrent)) points.push({ x: plateVoltage, y: combinedCurrent });
+        // pentode
+        if (this.selectedModel === 'norman-koren-pentode') {
+            // check model has been calculated
+            if (!this.tube?.pentodeModelParameters?.calculatedOn)
+                return [];
+            // model parameters
+            const params = this.tube?.pentodeModelParameters;
+            // Check if all required parameters are available
+            if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb || !params.kg2)
+                return [];
+            // screen voltage
+            const screenVoltage = (series.es || 0);
+            // x values
+            for (let gridVoltage = minGridVoltage; gridVoltage <= maxGridVoltage; gridVoltage += stepSize) {
+                try {
+                    const result = normanKorenNewPentodeModel(plateVoltage, gridVoltage + egOffset, screenVoltage, params.kp, params.mu, params.kvb, params.ex, params.kg1, params.kg2);
+                    // values
+                    points.push({ x: plateVoltage, y1: result.ip, y2: result.is });
+                }
+                catch {
+                    // Skip invalid points
+                    continue;
+                }
             }
-            catch {
-                // Skip invalid points
-                continue;
-            }
+            return points;
         }
-
-        console.log(`Generated ${points.length} points for combined current plate characteristic curve`);
-        return points;
-    }
-
-    private generateCombinedCurrentTransferCharacteristicCurve(series: Series): { x: number; y: number }[] {
-        if (!this.tube?.triodeModelParameters?.calculatedOn) return [];
-
-        const points: { x: number; y: number }[] = [];
-        const params = this.tube.triodeModelParameters;
-
-        if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb) return [];
-
-        // Use the plate voltage from the series
-        const plateVoltage = series.ep || 0;
-        const minGridVoltage = Math.min(-10, ...series.points.map((p) => (p.eg || 0) + (this.file?.egOffset || 0)));
-        const maxGridVoltage = Math.max(0, ...series.points.map((p) => (p.eg || 0) + (this.file?.egOffset || 0)));
-        const stepSize = (maxGridVoltage - minGridVoltage) / 100;
-
-        for (let gridVoltage = minGridVoltage; gridVoltage <= maxGridVoltage; gridVoltage += stepSize) {
-            try {
-                const result = normanKorenTriodeModel(plateVoltage, gridVoltage, params.kp, params.mu, params.kvb, params.ex, params.kg1);
-
-                // For combined current, we need to approximate ip + is
-                // Since this is a triode model, result only has ip
-                const combinedCurrent = result.ip; // For triode model, is ≈ 0
-
-                if (combinedCurrent >= 0 && isFinite(combinedCurrent))
-                    points.push({
-                        x: gridVoltage - (this.file?.egOffset || 0),
-                        y: combinedCurrent,
-                    });
-            }
-            catch {
-                continue;
-            }
-        }
-
-        console.log(`Generated ${points.length} points for combined current transfer characteristic curve`);
-        return points;
+        return [];
     }
 
     // Helper method to safely access Point properties by string key
@@ -966,41 +879,18 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
         };
     }
 
-    getMeasurementTypeDescription(): string {
-        if (!this.file?.measurementType) return '';
-
-        // Parse the new measurement type format
-        const { yComponent, xComponent, seriesComponent } = this.parseMeasurementType(this.file.measurementType);
-
-        if (!yComponent || !xComponent || !seriesComponent) {
-            return this.file.measurementType;
-        }
-
-        // Handle special EPES cases (combined current)
-        if (this.isCombinedCurrentMeasurement(yComponent, this.file.measurementType)) {
-            const xShort = xComponent === 'EG' ? 'Vg' : xComponent === 'EPES' ? 'Va=Vs' : xComponent;
-            const seriesShort = seriesComponent === 'EG' ? 'Vg' : seriesComponent === 'EPES' ? 'Va=Vs' : seriesComponent;
-            return `Ip+Is vs ${xShort} (${seriesShort} constant)`;
-        }
-
-        // Create a descriptive string with short notation
-        const yShort = yComponent === 'IP' ? 'Ip' : yComponent === 'IS' ? 'Is' : yComponent === 'IPIS' ? 'Ip,Is' : yComponent;
-        const xShort = xComponent === 'EP' ? 'Va' : xComponent === 'EG' ? 'Vg' : xComponent === 'ES' ? 'Vs' : xComponent === 'EPES' ? 'Va=Vs' : xComponent;
-        const seriesShort = seriesComponent === 'EP' ? 'Va' : seriesComponent === 'EG' ? 'Vg' : seriesComponent === 'ES' ? 'Vs' : seriesComponent === 'EPES' ? 'Va=Vs' : seriesComponent;
-
-        return `${yShort} vs ${xShort} (${seriesShort} constant)`;
-    }
-
     getTotalPointsCount(): number {
-        if (!this.file) return 0;
+        // check file exists
+        if (!this.file)
+            return 0;
+        // all points in file
         return this.file.series.reduce((total, series) => total + series.points.length, 0);
     }
 
     onModelSelectionChange() {
         // Recreate the chart to update line visibility
-        if (this.file && this.viewInitialized) {
+        if (this.file && this.viewInitialized)
             this.createChart();
-        }
     }
 
     private updateAvailableModels() {
@@ -1010,16 +900,10 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
         if (this.tube) {
             // triode model
             if (this.tube.triodeModelParameters?.calculatedOn)
-                this.availableModels.push({
-                    key: 'norman-koren-triode',
-                    name: 'Norman Koren Triode Model',
-                });
+                this.availableModels.push({key: 'norman-koren-triode', name: 'Norman Koren Triode Model'});
             // pentode model
             if (this.tube.pentodeModelParameters?.calculatedOn)
-                this.availableModels.push({
-                    key: 'norman-koren-pentode',
-                    name: 'Norman Koren Pentode Model',
-                });
+                this.availableModels.push({key: 'norman-koren-pentode', name: 'Norman Koren Pentode Model'});
         }
     }
 
@@ -1029,10 +913,14 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
 
     // Helper methods for parsing new measurement type format
     private parseMeasurementType(measurementType: string): { yComponent: string; xComponent: string; seriesComponent: string; } {
+        // Split the measurement type into components
         const components = measurementType.split('_');
         return {
+            // Y axis
             yComponent: components[0] || '',
+            // X axis
             xComponent: components[1] || '',
+            // Series (constant) axis
             seriesComponent: components[2] || '',
         };
     }
@@ -1081,15 +969,13 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
     }
 
     private getMeasurementTypeFromComponents(yComponent: string, xComponent: string): 'plate' | 'transfer' | 'unknown' {
-        // Determine if this is plate characteristics (current vs plate voltage)
-        // or transfer characteristics (current vs grid voltage)
+        // only currents in Y axis
         if (yComponent.includes('IP') || yComponent.includes('IS')) {
-            if (xComponent === 'EP' || xComponent === 'EPES') {
+            // x axis voltage
+            if (xComponent === 'EP' || xComponent === 'EPES')
                 return 'plate';
-            }
-            else if (xComponent === 'EG') {
+            else if (xComponent === 'EG')
                 return 'transfer';
-            }
         }
         return 'unknown';
     }
@@ -1117,7 +1003,9 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
         leftLabel: string;
         rightLabel: string;
     } {
+        // check dual y axis is required
         if (this.isDualYAxisMeasurement(yComponent)) {
+            // left & right axis
             const { primary, secondary } = this.parseDualYComponent(yComponent);
             return {
                 hasDualAxis: true,
@@ -1128,13 +1016,11 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             };
         }
         else {
-            const field = this.getFieldFromComponent(yComponent);
-            const label = this.getLabelFromComponent(yComponent);
             return {
                 hasDualAxis: false,
-                leftAxis: field,
+                leftAxis: this.getFieldFromComponent(yComponent),
                 rightAxis: '',
-                leftLabel: label,
+                leftLabel: this.getLabelFromComponent(yComponent),
                 rightLabel: '',
             };
         }

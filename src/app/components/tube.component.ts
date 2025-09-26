@@ -430,7 +430,7 @@ export class TubeComponent implements OnInit, AfterViewInit {
 
         try {
             // Create a web worker for pentode calculation
-            const worker = new Worker(new URL('../workers/optimize-norman-koren-pentode-model-parameters.worker.ts', import.meta.url), { type: 'module' });
+            const worker = new Worker(new URL('../workers/optimize-norman-koren-new-pentode-model-parameters.worker.ts', import.meta.url), { type: 'module' });
 
             worker.postMessage({
                 files: this.tube.files,

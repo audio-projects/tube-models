@@ -7,19 +7,15 @@ indent_style = space
 indent_size = 2
 insert_final_newline = true
 trim_trailing_whitespace = true
+max_line_length = 1200
 
 [*.ts]
 quote_type = single
-max_line_length = 120
 indent_size = 4
 curly_bracket_next_line = false
 indent_brace_style = K&R
 spaces_around_operators = true
 spaces_around_brackets = none
-insert_final_newline = true
-trim_trailing_whitespace = true
-# Encourage single-line function signatures where possible
-# Note: Complex formatting rules require ESLint/Prettier configuration
 
 [*.json]
 
