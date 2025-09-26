@@ -17,7 +17,7 @@ export const estimateTriodeParameters = function (files: File[], initial: Initia
     // loop files
     for (const f of files) {
         // find a file that correspond to triode characteristics
-        if (f.measurementType === 'IP_EG_EP_VH' || f.measurementType === 'IP_EG_EPES_VH' || f.measurementType === 'IP_EP_EG_VH' || f.measurementType === 'IP_EPES_EG_VH') {
+        if (f.measurementType === 'IP_EP_EG_VH' || f.measurementType === 'IP_EG_EP_VH' || f.measurementType === 'IPIS_EG_EPES_VH' || f.measurementType === 'IPIS_EPES_EG_VH') {
             // it is a triode like graph, use it
             triodeFiles.push(f);
         }

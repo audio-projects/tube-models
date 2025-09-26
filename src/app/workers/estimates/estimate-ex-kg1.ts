@@ -30,13 +30,11 @@ export const estimateExKg1 = function (initial: Initial, files: File[], maxW: nu
         // loop files
         for (const file of files) {
             // check measurement type
-            if (file.measurementType === 'IP_EP_EG_VH' || file.measurementType === 'IP_EPES_EG_VH') {
+            if (file.measurementType === 'IP_EP_EG_VH' || file.measurementType === 'IPIS_EPES_EG_VH') {
                 // loop series
                 for (const series of file.series) {
                     // series points must be sorted by the X axis (EP)
-                    series.points.sort(function (p1, p2) {
-                        return p1.ep - p2.ep;
-                    });
+                    series.points.sort((p1, p2) => p1.ep - p2.ep);
                     // least squares function
                     const leastSquares = function (x: number[]): number {
                         // get parameters

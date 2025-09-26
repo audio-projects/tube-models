@@ -55,26 +55,4 @@ export interface TubeInformation {
 
     triodeModelParameters?: TriodeModelParameters;
     pentodeModelParameters?: PentodeModelParameters;
-
-    // Norman Koren Pentode Model SPICE Parameters
-    pentodeSpiceModelParameters?: {
-        mu?: number;
-        ex?: number;
-        kg1?: number;
-        kg2?: number;
-        kp?: number;
-        kvb?: number;
-        calculatedOn?: string; // ISO-8601 datetime string with timezone
-    };
-
-    // Tetrode SPICE Parameters (similar to pentode but without screen grid secondary emission)
-    tetrodeSpiceModelParameters?: {
-        mu?: number;
-        ex?: number;
-        kg1?: number;
-        kg2?: number;
-        kp?: number;
-        kvb?: number;
-        calculatedOn?: string; // ISO-8601 datetime string with timezone
-    };
 }

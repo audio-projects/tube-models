@@ -26,7 +26,7 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
         // loop data files
         for (const file of files) {
             // check measurement type
-            if (file.measurementType === 'IP_EG_EP_VH' || file.measurementType === 'IP_EG_EPES_VH' || file.measurementType === 'IP_EP_EG_VH' || file.measurementType === 'IP_EPES_EG_VH') {
+            if (file.measurementType === 'IP_EP_EG_VH' || file.measurementType === 'IP_EG_EP_VH' || file.measurementType === 'IPIS_EG_EPES_VH' || file.measurementType === 'IPIS_EPES_EG_VH') {
                 // loop series
                 for (const series of file.series) {
                     // loop points

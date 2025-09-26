@@ -505,6 +505,6 @@ describe('services / fileParserService / fileAnalysis', () => {
     });
 
     it('it should analyze EL500_triode.utd file', (done) => {
-        analyzeFile('/test-assets/EL500_triode.utd', 'IPIS_EPES_EG_VH', 'Ia(Va=Vs, Vg), Is(Va=Vs, Vg) with Vh≈6.3V', done);
+        analyzeFile('/test-assets/EL500_triode.utd', 'IPIS_EPES_EG_VH', 'Ia(Va=Vs, Vg) + Is(Va=Vs, Vg) with Vh≈6.3V', done);
     });
 });

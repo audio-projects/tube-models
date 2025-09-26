@@ -269,14 +269,14 @@ export const fileAnalysis = function (file: File): File {
             if ((flags & epFlag) !== 0 && !epFileConstant && !egFileConstant) {
                 // I(Vg, Va=Vs) with Vh constant
                 file.measurementType = 'IPIS_EG_EPES_VH';
-                file.measurementTypeLabel = `Ia(Vg, Va=Vs), Is(Vg, Va=Vs) with Vh≈${ehFileMean.toFixed(1)}V`;
+                file.measurementTypeLabel = `Ia(Vg, Va=Vs) + Is(Vg, Va=Vs) with Vh≈${ehFileMean.toFixed(1)}V`;
                 file.eh = ehFileMean;
             }
             // check eg is constant in series
             else if ((flags & egFlag) !== 0 && !egFileConstant && !epFileConstant) {
                 // Ip(Va=Vs, Vg) with Vh constant
                 file.measurementType = 'IPIS_EPES_EG_VH';
-                file.measurementTypeLabel = `Ia(Va=Vs, Vg), Is(Va=Vs, Vg) with Vh≈${ehFileMean.toFixed(1)}V`;
+                file.measurementTypeLabel = `Ia(Va=Vs, Vg) + Is(Va=Vs, Vg) with Vh≈${ehFileMean.toFixed(1)}V`;
                 file.eh = ehFileMean;
             }
         }

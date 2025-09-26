@@ -40,6 +40,8 @@
     "@types/jasmine": "~5.1.7",
     "angular-eslint": "19.3.0",
     "eslint": "^9.23.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
     "jasmine-core": "~5.6.0",
     "karma": "~6.4.4",
     "karma-chrome-launcher": "~3.2.0",
@@ -47,6 +49,7 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "npm-check-updates": "^17.1.18",
+    "prettier": "^3.6.2",
     "typescript": "~5.8.3",
     "typescript-eslint": "8.27.0"
   }
