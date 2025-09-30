@@ -14,10 +14,10 @@ TubeModels is an Angular 19 application for vacuum tube (electron tube) modeling
 
 ### Key Components
 
-- **TubeComponent**: Main tube editor with tabbed interface (upload, plot, specifications, SPICE parameters)
-- **TubesComponent**: List view with Firebase integration for browsing shared tubes
-- **TubePlotComponent**: Chart.js visualization with model overlay capability
-- **PentodeModelParametersComponent/TetrodeSpiceParametersComponent**: SPICE parameter calculation UI
+- **TubeComponent** (`src/app/components/tube.component.ts`): Main tube editor with tabbed interface (upload, plot, specifications, SPICE parameters)
+- **TubesComponent** (`src/app/components/tubes.component.ts`): List view with Firebase integration for browsing shared tubes  
+- **TubePlotComponent** (`src/app/components/tube-plot.component.ts`): Chart.js visualization with model overlay capability
+- **PentodeModelParametersComponent/TriodeModelParametersComponent**: SPICE parameter calculation UI components
 
 ### Services Architecture
 
@@ -30,16 +30,28 @@ TubeModels is an Angular 19 application for vacuum tube (electron tube) modeling
 
 ### Web Worker Architecture
 
-All parameter optimization runs in `optimize-norman-koren-triode-model-parameters.worker.ts` to prevent UI blocking:
+All parameter optimization runs in dedicated worker files to prevent UI blocking:
+
+- **optimize-norman-koren-triode-model-parameters.worker.ts**: Triode model optimization
+- **optimize-norman-koren-pentode-model-parameters.worker.ts**: Pentode model optimization  
+- **optimize-norman-koren-new-pentode-model-parameters.worker.ts**: New pentode model variant
+
+### Optimization Algorithms
 
 - **Powell algorithm** (`src/app/workers/algorithms/powell.ts`): Derivative-free optimization
 - **Levenberg-Marquardt** (`src/app/workers/algorithms/Levenberg-Marquardt.ts`): Non-linear least squares
-- **Norman-Koren Model** (`src/app/workers/models/norman-koren-triode-model.ts`): Core tube model using parameters (mu, ex, kg1, kg2, kp, kvb)
+- **Custom algorithms**: Gaussian elimination, Newton-Simple-Dogleg for numerical optimization
+
+### Tube Models
+
+- **Norman-Koren Triode Model** (`src/app/workers/models/norman-koren-triode-model.ts`): Core triode model using parameters (mu, ex, kg1, kp, kvb)
+- **Norman-Koren Pentode Models** (`src/app/workers/models/`): Multiple pentode model implementations
+- **Derk Models** (`src/app/workers/models/derk-*.ts`): Alternative tube modeling approaches
 
 ### Mathematical Libraries
 
 - **mathjs**: Vector operations and mathematical functions in `src/app/workers/algorithms/vector.ts`
-- **Custom algorithms**: Gaussian elimination, Newton-Simple-Dogleg for numerical optimization
+- **fraction.js**: Precise fractional arithmetic for calculations
 
 ## Data Import Workflow
 
@@ -66,8 +78,16 @@ FileParserService automatically detects measurement types like:
 npm start              # Dev server with host 0.0.0.0 (container-friendly)
 npm run build          # Production build
 npm test               # Headless Chrome tests
+npm run watch          # Build in watch mode
+npm run lint           # ESLint code analysis
 ng generate component  # Standard Angular CLI scaffolding
 ```
+
+### Routing Structure
+
+Simple two-route application (`src/app/app.routes.ts`):
+- `/tube` → TubesComponent (tube list/browser)  
+- `/tube/:id` → TubeComponent (individual tube editor)
 
 ### Firebase Integration
 

@@ -1,5 +1,12 @@
+import {
+    Auth,
+    authState,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signOut,
+    User
+} from '@angular/fire/auth';
 import { Injectable } from '@angular/core';
-import { Auth, signInWithPopup, GoogleAuthProvider, signOut, User, authState } from '@angular/fire/auth';
 import { Observable } from 'rxjs';
 
 @Injectable({

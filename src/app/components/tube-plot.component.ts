@@ -279,16 +279,33 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
         const showLines = this.selectedModel === '' || this.selectedModel === null;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const datasets: any[] = [];
-        // Create datasets for each series
-        this.file.series.forEach((series, index) => {
+        // Parse measurement type to determine curve generation method
+        const { yComponent, xComponent } = this.parseMeasurementType(this.file!.measurementType);
+        const measurementTypeCategory = this.getMeasurementTypeFromComponents(yComponent, xComponent);
+        // min & max x axis values
+        let minX = Number.MAX_VALUE;
+        let maxX = Number.MIN_VALUE;
+        // process series
+        for (let i = 0; i < this.file.series.length; i++) {
+            // current series
+            const series = this.file.series[i];
+            // update min and max X values
+            series.points.forEach((point) => {
+                // x value
+                const xValue = this.getPointValue(point, axesConfig.xField);
+                if (xValue !== undefined) {
+                    minX = Math.min(minX, xValue);
+                    maxX = Math.max(maxX, xValue);
+                }
+            });
             // series color
-            const color = colors[index % colors.length];
+            const color = colors[i % colors.length];
             // label
-            const seriesLabel = this.getSeriesLabel(series, index);
+            const seriesLabel = this.getSeriesLabel(series, i);
             // Check if this is a combined current measurement (EPES case)
             const { yComponent } = this.parseMeasurementType(this.file!.measurementType);
             const isCombined = this.isCombinedCurrentMeasurement(yComponent, this.file!.measurementType);
-
+            //  check Y axis is combining both currents
             if (isCombined) {
                 // Create combined current dataset (ip + is)
                 const combinedData = series.points
@@ -397,20 +414,24 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                 }
             }
             // Add model curves if a model is selected
-            if (this.selectedModel && this.tube)
-                datasets.push(...this.createModelDatasets(color, isCombined, axesConfig, series));
-        });
+            if (this.selectedModel && this.tube) {
+                // append model datasets
+                datasets.push(...this.createModelDatasets(color, isCombined, axesConfig, series, measurementTypeCategory));
+            }
+        }
+        // plate dissipation line for plate curves
+        if (this.tube?.maximumPlateDissipation && measurementTypeCategory === 'plate') {
+            // maximum plate dissipation line
+            datasets.push(...this.createMaximumPlateDissipationDatasets(minX, maxX) );
+        }
         return datasets;
     }
 
-    private createModelDatasets(color: string, isCombined: boolean, axesConfig: ReturnType<typeof this.getAxesForMeasurementType>, series: Series) {
+    private createModelDatasets(color: string, isCombined: boolean, axesConfig: ReturnType<typeof this.getAxesForMeasurementType>, series: Series, measurementTypeCategory: string) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const modelDatasets: any[] = [];
         // Initialize model data array
         let modelData: { x: number; y1: number; y2: number }[] = [];
-        // Parse measurement type to determine curve generation method
-        const { yComponent, xComponent } = this.parseMeasurementType(this.file!.measurementType);
-        const measurementTypeCategory = this.getMeasurementTypeFromComponents(yComponent, xComponent);
         // Generate model data based on measurement type
         if (measurementTypeCategory === 'plate') {
             // plate characteristic curve
@@ -547,7 +568,8 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
         const points: { x: number; y1: number, y2: number }[] = [];
         const params = this.tube.triodeModelParameters;
         // Check if all required parameters are available
-        if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb) return [];
+        if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb)
+            return [];
         // Use the plate voltage from the series
         const plateVoltage = series.ep || 250;
         // Generate points for grid voltage range
@@ -606,6 +628,41 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             return points;
         }
         return [];
+    }
+
+    private createMaximumPlateDissipationDatasets(minPlateVoltage: number, maxPlateVoltage: number) {
+        // plate dissipation (watts)
+        const maxPlateDissipation = this.tube?.maximumPlateDissipation || 0;
+        // points
+        const points: { x: number; y: number }[] = [];
+        // step size
+        const stepSize = (maxPlateVoltage - minPlateVoltage) / 100;
+        // x values
+        for (let plateVoltage = minPlateVoltage; plateVoltage <= maxPlateVoltage; plateVoltage += stepSize) {
+            // ip = Pd / Ep
+            const ip = (maxPlateDissipation / plateVoltage) * 1000;
+            // append point
+            points.push({ x: plateVoltage, y: ip });
+        }
+        // no dataset on no points
+        if (points.length === 0)
+            return [];
+        // create dataset
+        return [
+            {
+                label: `Max Plate Dissipation (${this.tube?.maximumPlateDissipation}W)`,
+                data: points,
+                borderColor: '#DC3545', // Red color for warning/limit
+                backgroundColor: '#DC3545',
+                showLine: true,
+                fill: false,
+                tension: 0.1,
+                pointRadius: 0,
+                borderWidth: 1,
+                borderDash: [10, 5], // Dashed line to indicate it's a limit
+                yAxisID: 'y',
+            }
+        ];
     }
 
     // Helper method to safely access Point properties by string key
@@ -684,7 +741,6 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                 }
             }
         }
-
         // Add some padding to the ranges (10% on each side)
         const xRange = xMax - xMin;
         const yRange = yMax - yMin;
