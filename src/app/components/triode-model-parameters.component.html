@@ -90,7 +90,7 @@
     <pre class="bg-dark text-light p-3 rounded-3" style="font-size: 0.85em; overflow-x: auto" *ngIf="tube?.triodeModelParameters?.calculatedOn"
       >{{ spiceSubcktLine }}
 {{ spiceCommentLine }}
-* Parameters calculated on: {{ tube?.triodeModelParameters?.calculatedOn | date : "short" }} (https://audio-projects.us/tube-models/tube/{{ tube?.id }})
+* Parameters calculated on: {{ tube?.triodeModelParameters?.calculatedOn | date : "short" }} (https://audio-projects.us/tube-models/#/tube/{{ tube?.id }})
 X1 P G K TriodeK {{ spiceParamLine }}
 .ENDS
 

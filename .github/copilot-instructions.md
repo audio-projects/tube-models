@@ -41,12 +41,14 @@ All parameter optimization runs in dedicated worker files to prevent UI blocking
 - **Powell algorithm** (`src/app/workers/algorithms/powell.ts`): Derivative-free optimization
 - **Levenberg-Marquardt** (`src/app/workers/algorithms/Levenberg-Marquardt.ts`): Non-linear least squares
 - **Custom algorithms**: Gaussian elimination, Newton-Simple-Dogleg for numerical optimization
+- **Total Harmonic Distortion** (`src/app/workers/algorithms/total-harmonic-distortion.ts`): THD calculation for audio analysis
 
 ### Tube Models
 
 - **Norman-Koren Triode Model** (`src/app/workers/models/norman-koren-triode-model.ts`): Core triode model using parameters (mu, ex, kg1, kp, kvb)
 - **Norman-Koren Pentode Models** (`src/app/workers/models/`): Multiple pentode model implementations
 - **Derk Models** (`src/app/workers/models/derk-*.ts`): Alternative tube modeling approaches
+- **IPK Model** (`src/app/workers/models/ipk.ts`): Additional tube modeling implementation
 
 ### Mathematical Libraries
 
@@ -79,7 +81,7 @@ npm start              # Dev server with host 0.0.0.0 (container-friendly)
 npm run build          # Production build
 npm test               # Headless Chrome tests
 npm run watch          # Build in watch mode
-npm run lint           # ESLint code analysis
+npm run lint           # ESLint v9 code analysis with new config format
 ng generate component  # Standard Angular CLI scaffolding
 ```
 
@@ -125,8 +127,18 @@ Simple two-route application (`src/app/app.routes.ts`):
 ## Key Integration Points
 
 - **Chart.js**: Custom chart configuration in TubePlotComponent with model overlays
-- **Bootstrap 5**: UI framework with custom SCSS theming
-- **Angular Fire**: Firebase SDK integration with v19 compatibility
+- **Bootstrap 5**: UI framework (v5.3.8) with custom SCSS theming
+- **Angular Fire**: Firebase SDK integration (v17.1.0) with v19 compatibility
 - **Web Workers**: Heavy computation isolation with TypeScript support
+
+## Current Dependencies (Key Versions)
+
+- **Angular**: v19.2.7 (latest stable)
+- **Chart.js**: v4.5.0 for data visualization
+- **Firebase**: v10.14.1 for cloud persistence  
+- **Bootstrap**: v5.3.8 with Bootstrap Icons v1.13.1
+- **mathjs**: v14.7.0 for mathematical operations
+- **fraction.js**: v5.2.1 for precise fractional arithmetic
+- **ESLint**: v9.36.0 with new flat config format
 
 When working on this codebase, prioritize understanding the mathematical domain (vacuum tube electronics) and the data flow from file upload → parsing → storage → visualization → parameter optimization.
