@@ -15,7 +15,7 @@ describe('estimates / estimateExKg1', () => {
                     // initial
                     const initial: Initial = { mu: 56 };
                     // estimate ex/kg1
-                    estimateExKg1(initial, [file], 2.5, 0);
+                    estimateExKg1(initial, [file], 2.5);
                     // check result
                     expect(initial.ex).toBeCloseTo(1.40, 0.01);
                     expect(initial.kg1).toBeCloseTo(303.7, 0.1);
@@ -48,7 +48,7 @@ describe('estimates / estimateExKg1', () => {
     //                 // initial
     //                 const initial: Initial = {mu: 4};
     //                 // estimate ex/kg1
-    //                 estimateExKg1(initial, [file], 1, 0);
+    //                 estimateExKg1(initial, [file], 1);
     //                 // check result
     //                 expect(initial.ex).toBeCloseTo(6.96, 0.01);
     //                 expect(initial.kg1).toBeCloseTo(533.5, 0.1);

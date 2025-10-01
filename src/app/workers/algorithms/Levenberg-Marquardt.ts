@@ -203,7 +203,7 @@ export function levmar(f: (x: Vector) => Vector, x: Vector, options: LevenbergMa
             trace.history.push(xc);
         // evaluate jacobian (central difference used when more precision is needed)
         jacc = computeJacobian(f, xc, residual);
-        // update caculations
+        // update calculations
         jaccT = transpose(jacc);
         // update gradient
         gradc = multiply(jaccT, residual) as Vector;

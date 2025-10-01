@@ -24,7 +24,7 @@ describe('estimates / estimateA', () => {
                 // initial
                 const initial: Initial = { mu: 56, ex: 1.18, kp: 315, kg1: 126.0, kvb: 4155 };
                 // estimate a
-                estimateA(initial, files, 100, 0);
+                estimateA(initial, files, 100);
                 // check result
                 expect(initial.a).toBeCloseTo(0.00041, 0.00001);
                 // done

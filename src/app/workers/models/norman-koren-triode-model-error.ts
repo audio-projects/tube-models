@@ -2,13 +2,13 @@ import { File } from '../../files';
 import { normanKorenTriodeModel } from './norman-koren-triode-model';
 
 // normanKorenTriodeModelError
-export const normanKorenTriodeModelError = function (files: File[], mu: number, ex: number, kg1: number, kp: number, kvb: number, egOffset: number, maximumPlateDissipation: number) {
+export const normanKorenTriodeModelError = function (files: File[], mu: number, ex: number, kg1: number, kp: number, kvb: number, maximumPlateDissipation: number) {
     // result
     let r = 0;
     // loop data files
     for (const file of files) {
         // check measurement type is supported by model
-        if (['IP_EG_EP_VH', 'IP_EG_EPES_VH', 'IP_EP_EG_VH', 'IP_EPES_EG_VH'].indexOf(file.measurementType) !== -1) {
+        if (file.measurementType === 'IP_EP_EG_VH' || file.measurementType === 'IP_EG_EP_VH' || file.measurementType === 'IPIS_EG_EPES_VH' || file.measurementType === 'IPIS_EPES_EG_VH') {
             // loop series
             for (const series of file.series) {
                 // loop points
@@ -16,7 +16,7 @@ export const normanKorenTriodeModelError = function (files: File[], mu: number, 
                     // check we can use this point in calculations (max power dissipation and different than zero)
                     if (point.ip + (point.is ?? 0) > 0 && point.ep * (point.ip + (point.is ?? 0)) * 1e-3 <= maximumPlateDissipation) {
                         // calculate currents
-                        const currents = normanKorenTriodeModel(point.ep, point.eg + egOffset, kp, mu, kvb, ex, kg1);
+                        const currents = normanKorenTriodeModel(point.ep, point.eg + file.egOffset, kp, mu, kvb, ex, kg1);
                         // least squares
                         r += (currents.ip - point.ip - (point.is ?? 0)) * (currents.ip - point.ip - (point.is ?? 0));
                     }

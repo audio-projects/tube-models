@@ -1,24 +1,32 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, NgZone } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import { TubeInformation } from './tube-information';
-import { File as TubeFile, Series, measurementTypeDescription } from '../files';
-import { fileParserService } from '../services/file-parser-service';
-import { TubePlotComponent } from './tube-plot.component';
-import { FirebaseTubeService } from '../services/firebase-tube.service';
+import {
+    AfterViewInit,
+    Component,
+    ElementRef,
+    NgZone,
+    OnInit,
+    ViewChild
+} from '@angular/core';
 import { AuthService } from '../services/auth.service';
-import { PentodeSpiceParametersComponent } from './pentode-spice-parameters.component';
-import { TetrodeSpiceParametersComponent } from './tetrode-spice-parameters.component';
+import { CommonModule } from '@angular/common';
+import { File as TubeFile, Series } from '../files';
+import { fileParserService } from '../services/file-parser-service';
+import { FirebaseTubeService } from '../services/firebase-tube.service';
+import { FormsModule } from '@angular/forms';
+import { PentodeModelParametersComponent } from './pentode-model-parameters.component';
 import { ToastService } from '../services/toast.service';
+import { TriodeModelParametersComponent } from './triode-model-parameters.component';
+import { TubeInformation } from './tube-information';
+import { TubePlotComponent } from './tube-plot.component';
 
 @Component({
     selector: 'app-tube',
     templateUrl: './tube.component.html',
     styleUrl: './tube.component.scss',
-    imports: [FormsModule, CommonModule, RouterLink, TubePlotComponent, PentodeSpiceParametersComponent, TetrodeSpiceParametersComponent],
+    imports: [FormsModule, CommonModule, RouterLink, TubePlotComponent, PentodeModelParametersComponent, TriodeModelParametersComponent],
 })
 export class TubeComponent implements OnInit, AfterViewInit {
+
     @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
     tubeId: string | null = null;
@@ -68,7 +76,6 @@ export class TubeComponent implements OnInit, AfterViewInit {
             maximumPlateVoltage: 0,
             maximumPlateCurrent: 0,
             maximumGrid1Voltage: 0,
-            egOffset: 0,
             files: [],
             owner: this.authService.getCurrentUser()?.uid // Set owner for new tubes
         };
@@ -86,19 +93,19 @@ export class TubeComponent implements OnInit, AfterViewInit {
                     else {
                         console.error('Tube not found');
                         this.toastService.error('Tube not found');
-                        this.router.navigate(['/tubes']);
+                        this.router.navigate(['/tube']);
                     }
                 },
                 error: (error: unknown) => {
                     console.error('Error loading tube:', error);
                     this.toastService.error('Error loading tube');
-                    this.router.navigate(['/tubes']);
+                    this.router.navigate(['/tube']);
                 }
             });
         }
         else {
             console.error('No tube ID provided');
-            this.router.navigate(['/tubes']);
+            this.router.navigate(['/tube']);
         }
     }
 
@@ -182,7 +189,7 @@ export class TubeComponent implements OnInit, AfterViewInit {
                         if (success) {
                             console.log(`Tube "${this.tube!.name}" deleted successfully`);
                             this.toastService.success(`Tube "${this.tube!.name}" deleted successfully!`);
-                            this.router.navigate(['/tubes']);
+                            this.router.navigate(['/tube']);
                         }
                     },
                     error: (error: unknown) => {
@@ -381,11 +388,8 @@ export class TubeComponent implements OnInit, AfterViewInit {
         };
 
         console.log('File data:', data);
-        this.toastService.info(`File: ${file.name}\nType: ${this.getMeasurementTypeDescription(file.measurementType)}\nSeries: ${file.series.length}\nTotal Points: ${this.getTotalPointsCount(file)}`, 'File Information');
-    }
-
-    getMeasurementTypeDescription(measurementType: string): string {
-        return measurementTypeDescription(measurementType);
+        const egOffsetText = file.egOffset !== 0 ? `\nGrid Offset: ${file.egOffset}V` : '';
+        this.toastService.info(`File: ${file.name}\nType: ${file.measurementTypeLabel}\nSeries: ${file.series.length}\nTotal Points: ${this.getTotalPointsCount(file)}${egOffsetText}`, 'File Information');
     }
 
     getTotalPointsCount(file: TubeFile): number {
@@ -416,94 +420,113 @@ export class TubeComponent implements OnInit, AfterViewInit {
         this.selectedFileForPlot = null;
     }
 
-    // Calculate SPICE model parameters for triodes (and pentodes connected as triodes)
-    calculateSpiceModelParameters() {
-        if (!this.tube || (this.tube.type !== 'Triode' && this.tube.type !== 'Pentode') || !this.tube.files || this.tube.files.length === 0) {
+    // Calculate SPICE model parameters for pentodes
+    calculatePentodeModelParameters() {
+        // check files are available
+        if (!this.tube || this.tube.type !== 'Pentode' || !this.tube.files || this.tube.files.length === 0)
             return;
-        }
 
-        // Check if we have any measurement files
-        if (this.tube.files.length === 0) {
-            this.toastService.warning('No measurement files found for SPICE model parameter calculation.', 'Missing Data');
-            return;
-        }
+        this.isCalculatingSpiceParameters = true;
 
-        // Validate that we have usable measurement data
-        let totalDataPoints = 0;
-        let validDataPoints = 0;
-        const maxPowerDissipation = this.tube.maximumPlateDissipation || 1000; // Default to 1000W if not specified
+        try {
+            // Create a web worker for pentode calculation
+            const worker = new Worker(new URL('../workers/optimize-norman-koren-new-pentode-model-parameters.worker.ts', import.meta.url), { type: 'module' });
 
-        for (const file of this.tube.files) {
-            // Check if the measurement type is compatible
-            if (file.measurementType === 'IP_EG_EP_VH' ||
-                file.measurementType === 'IP_EG_EPES_VH' ||
-                file.measurementType === 'IP_EP_EG_VH' ||
-                file.measurementType === 'IP_EPES_EG_VH') {
+            worker.postMessage({
+                files: this.tube.files,
+                maximumPlateDissipation: this.tube.maximumPlateDissipation || 1000, // Default to 1000W if not specified
+                algorithm: 1,  // 0 = Levenberg-Marquardt, 1 = Powell
+                trace: undefined
+            });
 
-                for (const series of file.series) {
-                    for (const point of series.points) {
-                        totalDataPoints++;
-                        // Check if point meets criteria: positive current and within power limits
-                        if ((point.ip + (point.is ?? 0)) > 0 &&
-                            point.ep * (point.ip + (point.is ?? 0)) * 1e-3 <= maxPowerDissipation) {
-                            validDataPoints++;
-                        }
+            worker.onmessage = (e) => {
+                // data
+                const result = e.data;
+                // Handle different message types from worker
+                if (result.type === 'succeeded') {
+                    // Extract parameters from the worker result
+                    const params = result.parameters;
+                    if (params) {
+                        this.tube!.pentodeModelParameters = {
+                            mu: params.mu || 0,
+                            ex: params.ex || 0,
+                            kg1: params.kg1 || 0,
+                            kg2: params.kg2 || 0,
+                            kp: params.kp || 0,
+                            kvb: params.kvb || 0,
+                            calculatedOn: new Date().toISOString()
+                        };
+                        // update flag
+                        this.isCalculatingSpiceParameters = false;
+                        // notify user
+                        this.toastService.success('SPICE model parameters calculated successfully!', 'Calculation Complete');
                     }
+                    else {
+                        // update flag
+                        this.isCalculatingSpiceParameters = false;
+                        // notify user
+                        this.toastService.error('Failed to calculate SPICE model parameters. Invalid result.', 'Calculation Failed');
+                    }
+                    // end worker
+                    worker.terminate();
                 }
-            }
+                else if (result.type === 'failed') {
+                    // update flag
+                    this.isCalculatingSpiceParameters = false;
+                    // notify user
+                    this.toastService.error('Failed to calculate SPICE model parameters. Please check your measurement data.', 'Calculation Failed');
+                    // end worker
+                    worker.terminate();
+                }
+                else if (result.type === 'notification' || result.type === 'log') {
+                    // log message
+                    console.log(`${result.type}: ${result.text}`);
+                }
+            };
+
+            worker.onerror = (error) => {
+                // log error
+                console.error('Worker error:', error);
+                // update flag
+                this.isCalculatingSpiceParameters = false;
+                // notify user
+                this.toastService.error('An error occurred while calculating SPICE model parameters.', 'Calculation Error');
+                // end worker
+                worker.terminate();
+            };
+
         }
+        catch (error) {
+            // log error
+            console.error('Error creating worker:', error);
+            // notify user
+            this.toastService.error('Failed to initialize calculation worker.', 'Worker Error');
+            // update flag
+            this.isCalculatingSpiceParameters = false;
+        }
+    }
 
-        console.log(`Data validation: ${validDataPoints} valid points out of ${totalDataPoints} total points`);
-
-        if (validDataPoints === 0) {
-            this.toastService.warning(
-                `No valid measurement data found. Checked ${totalDataPoints} data points but none meet the criteria (positive current, within power limits).`,
-                'Invalid Data'
-            );
+    calculateTriodeModelParameters() {
+        // check files are available
+        if (!this.tube || !this.tube.files || this.tube.files.length === 0)
             return;
-        }
-
-        if (validDataPoints < 5) {
-            this.toastService.warning(
-                `Insufficient data for reliable calculation. Found only ${validDataPoints} valid points. At least 5 points recommended.`,
-                'Insufficient Data'
-            );
-            // Continue anyway but warn the user
-        }
 
         this.isCalculatingSpiceParameters = true;
 
         try {
             // Create a web worker for calculation
-            console.log('Creating worker...');
             const worker = new Worker(new URL('../workers/optimize-norman-koren-triode-model-parameters.worker.ts', import.meta.url), { type: 'module' });
-            console.log('Worker created successfully:', worker);
-
-            // Prepare initial parameters - use existing ones or defaults
-            const initialParameters = this.tube.triodeModelParameters || {
-                mu: 20,    // Default amplification factor
-                ex: 1.4,   // Default exponent
-                kg1: 1332, // Default grid constant
-                kg2: 0,    // Default kg2 (usually 0 for triodes)
-                kp: 600,   // Default plate constant
-                kvb: 300,  // Default bias constant
-                calculated: false
-            };
 
             worker.postMessage({
                 files: this.tube.files,
                 maximumPlateDissipation: this.tube.maximumPlateDissipation || 1000, // Default to 1000W if not specified
-                egOffset: this.tube.egOffset || 0,
-                initial: initialParameters,  // This is what the worker expects!
-                algorithm: 0,  // 0 = Levenberg-Marquardt, 1 = Powell
+                algorithm: 1,  // 0 = Levenberg-Marquardt, 1 = Powell
                 trace: undefined
             });
-            console.log('Message posted to worker');
 
             worker.onmessage = (e) => {
-                console.log('Worker message received:', e.data);
+                // data
                 const result = e.data;
-
                 // Handle different message types from worker
                 if (result.type === 'succeeded') {
                     // Extract parameters from the worker result
@@ -513,93 +536,56 @@ export class TubeComponent implements OnInit, AfterViewInit {
                             mu: params.mu || 0,
                             ex: params.ex || 0,
                             kg1: params.kg1 || 0,
-                            kg2: params.kg2 || 0, // kg2 might not be used for triodes
                             kp: params.kp || 0,
                             kvb: params.kvb || 0,
-                            calculated: true
+                            calculatedOn: new Date().toISOString()
                         };
-                        console.log('Triode model parameters calculated:', this.tube!.triodeModelParameters);
+                        // update flag
                         this.isCalculatingSpiceParameters = false;
+                        // notify user
                         this.toastService.success('SPICE model parameters calculated successfully!', 'Calculation Complete');
                     }
                     else {
-                        console.error('Parameters object is undefined');
-                        this.toastService.error('Failed to calculate SPICE model parameters. Invalid result.', 'Calculation Failed');
+                        // update flag
                         this.isCalculatingSpiceParameters = false;
+                        // notify user
+                        this.toastService.error('Failed to calculate SPICE model parameters. Invalid result.', 'Calculation Failed');
                     }
+                    // end worker
                     worker.terminate();
                 }
                 else if (result.type === 'failed') {
-                    console.error('Worker calculation failed:', result);
-                    this.toastService.error('Failed to calculate SPICE model parameters. Please check your measurement data.', 'Calculation Failed');
+                    // update flag
                     this.isCalculatingSpiceParameters = false;
+                    // notify user
+                    this.toastService.error('Failed to calculate SPICE model parameters. Please check your measurement data.', 'Calculation Failed');
+                    // end worker
                     worker.terminate();
                 }
                 else if (result.type === 'notification' || result.type === 'log') {
-                    // Handle progress notifications and logs
-                    console.log('Worker progress:', result.text);
-                    // Don't terminate worker for progress messages
+                    // log message
+                    console.log(`${result.type}: ${result.text}`);
                 }
-                // Ignore other message types (like notifications, logs)
             };
 
             worker.onerror = (error) => {
+                // log error
                 console.error('Worker error:', error);
-                this.toastService.error('An error occurred while calculating SPICE model parameters.', 'Calculation Error');
+                // update flag
                 this.isCalculatingSpiceParameters = false;
+                // notify user
+                this.toastService.error('An error occurred while calculating SPICE model parameters.', 'Calculation Error');
+                // end worker
                 worker.terminate();
             };
-
         }
         catch (error) {
+            // log error
             console.error('Error creating worker:', error);
+            // notify user
             this.toastService.error('Failed to initialize calculation worker.', 'Worker Error');
+            // update flag
             this.isCalculatingSpiceParameters = false;
-        }
-    }
-
-    generateSpiceModelText(): string {
-        if (!this.tube?.triodeModelParameters?.calculated) {
-            return 'No SPICE model parameters calculated.';
-        }
-
-        const params = this.tube.triodeModelParameters;
-        const tubeName = this.tube.name || 'TRIODE';
-
-        return `.SUBCKT ${tubeName.toUpperCase().replace(/[^A-Z0-9]/g, '_')} P G K
-* ${this.tube.name} Triode Model (Norman Koren)
-* Calculated parameters
-* MU=${params.mu?.toFixed(3)} EX=${params.ex?.toFixed(3)} KG1=${params.kg1?.toFixed(6)}
-* KG2=${params.kg2?.toFixed(6)} KP=${params.kp?.toFixed(6)} KVB=${params.kvb?.toFixed(6)}
-
-E1 7 0 VALUE={V(P,K)/KP*LOG(1+EXP(KP*(1/MU+V(G,K)/SQRT(KVB+V(P,K)*V(P,K)))))}
-RE1 7 0 1G
-G1 P K VALUE={(PWR(V(7),EX)+PWRS(V(7),EX))/KG1*ATAN(V(P,K)/KVB)}
-RCP P K 1G
-C1 G P {KG2*1E-12}
-.ENDS
-
-.PARAM MU=${params.mu?.toFixed(3)} EX=${params.ex?.toFixed(3)} KG1=${params.kg1?.toFixed(6)}
-.PARAM KG2=${params.kg2?.toFixed(6)} KP=${params.kp?.toFixed(6)} KVB=${params.kvb?.toFixed(6)}`;
-    }
-
-    copySpiceModel() {
-        const spiceText = this.generateSpiceModelText();
-
-        if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(spiceText).then(() => {
-                this.toastService.success('SPICE model copied to clipboard!', 'Copied');
-            });
-        }
-        else {
-            // Fallback for older browsers
-            const textArea = document.createElement('textarea');
-            textArea.value = spiceText;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-            this.toastService.success('SPICE model copied to clipboard!', 'Copied');
         }
     }
 

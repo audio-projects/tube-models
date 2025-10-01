@@ -3,7 +3,7 @@ import { Trace } from '../trace';
 import { Initial } from '../initial';
 
 // estimateMu
-export const estimateMu = function (initial: Initial, files: File[], maxW: number, egOffset: number, trace?: Trace) {
+export const estimateMu = function (initial: Initial, files: File[], maxW: number, trace?: Trace) {
     // check we need to estimate mu
     if (!initial.mu) {
         // maximum plate current
@@ -41,13 +41,11 @@ export const estimateMu = function (initial: Initial, files: File[], maxW: numbe
         // loop files
         for (const f of files) {
             // check measurement type
-            if (f.measurementType === 'IP_EP_EG_VH' || f.measurementType === 'IP_EPES_EG_VH') {
+            if (f.measurementType === 'IP_EP_EG_VH' || f.measurementType === 'IPIS_EPES_EG_VH') {
                 // loop series
                 for (const s of f.series) {
                     // series points must be sorted by the X axis (EP)
-                    s.points.sort(function (p1, p2) {
-                        return p1.ep - p2.ep;
-                    });
+                    s.points.sort((p1, p2) => p1.ep - p2.ep);
                     // points around ipmu
                     let lower = null,
                         upper = null;
@@ -57,7 +55,7 @@ export const estimateMu = function (initial: Initial, files: File[], maxW: numbe
                         upper = {
                             ip: s.points[m].ip + (s.points[m].is ?? 0),
                             ep: s.points[m].ep,
-                            eg: (s.eg ?? 0) + egOffset,
+                            eg: (s.eg ?? 0) + f.egOffset,
                         };
                     }
                     // check data is available

@@ -29,7 +29,7 @@
   <!-- Statistics Cards -->
   <div class="row mb-4">
     <div class="col-md-3">
-      <div class="card bg-primary text-white">
+      <div class="card bg-primary text-white" (click)="filterByType('')" style="cursor: pointer;">
         <div class="card-body">
           <div class="d-flex justify-content-between">
             <div>
@@ -44,7 +44,7 @@
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card bg-success text-white">
+      <div class="card bg-success text-white" (click)="filterByType('Triode')" style="cursor: pointer;">
         <div class="card-body">
           <div class="d-flex justify-content-between">
             <div>
@@ -59,7 +59,7 @@
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card bg-warning text-white">
+      <div class="card bg-warning text-white" (click)="filterByType('Tetrode')" style="cursor: pointer;">
         <div class="card-body">
           <div class="d-flex justify-content-between">
             <div>
@@ -74,7 +74,7 @@
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card bg-info text-white">
+      <div class="card bg-info text-white" (click)="filterByType('Pentode')" style="cursor: pointer;">
         <div class="card-body">
           <div class="d-flex justify-content-between">
             <div>
@@ -137,18 +137,16 @@
         </div>
         <div class="col-md-2">
           @if (authService.isAuthenticated()) {
-            <label class="form-label">Ownership</label>
-            <div class="form-check">
-              <input 
-                class="form-check-input" 
-                type="checkbox" 
-                id="myRecordsFilter"
-                [(ngModel)]="showMyRecordsOnly"
-                (change)="filterTubes()">
-              <label class="form-check-label" for="myRecordsFilter">
-                <i class="bi bi-person-check me-1"></i>My Records Only
-              </label>
-            </div>
+            <label for="ownershipFilter" class="form-label">Ownership</label>
+            <select 
+              class="form-select" 
+              id="ownershipFilter"
+              [(ngModel)]="selectedOwnership"
+              (change)="filterTubes()">
+              <option value="">All</option>
+              <option value="mine">Mine</option>
+              <option value="others">Others</option>
+            </select>
           }
         </div>
         <div class="col-md-2 d-flex align-items-end">
