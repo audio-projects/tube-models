@@ -2,35 +2,33 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>TubeModels</title>
-    <script type="text/javascript">
-        // Angular SPA redirect handler for GitHub Pages
-        // This script works in conjunction with the root-level 404.html
-        // to restore proper Angular routing after a GitHub Pages 404 redirect
-        
-        (function(l) {
-            // Check if we have a redirect from the root 404.html
-            if (l.search) {
-                var q = {};
-                l.search.slice(1).split('&').forEach(function(v) {
-                    var a = v.split('=');
-                    q[a[0]] = a.slice(1).join('=').replace(/~and~/g, '&');
-                });
-                
-                // If we have a path parameter, restore the original URL
-                if (q.p !== undefined) {
-                    var newPath = decodeURIComponent(q.p);
-                    var newSearch = q.q ? ('?' + decodeURIComponent(q.q).replace(/~and~/g, '&')) : '';
-                    var newUrl = l.pathname.slice(0, -1) + newPath + newSearch + l.hash;
-                    
-                    // Use replaceState to restore the URL without triggering another navigation
-                    window.history.replaceState(null, null, newUrl);
-                }
-            }
-        })(window.location);
-    </script>
+    <title>TubeModels - Page Not Found</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            padding: 50px; 
+            background-color: #f5f5f5; 
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 40px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        }
+        h1 { color: #333; }
+        p { color: #666; margin: 20px 0; }
+        a { color: #007bff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
 </head>
 <body>
-    <!-- Angular app will load here -->
+    <div class="container">
+        <h1>404 - Page Not Found</h1>
+        <p>The page you're looking for doesn't exist.</p>
+        <p><a href="/tube-models/">Return to TubeModels</a></p>
+    </div>
 </body>
 </html>
