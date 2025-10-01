@@ -1,5 +1,23 @@
-
 import { File } from '../files';
+
+export interface TriodeModelParameters {
+    mu?: number;
+    ex?: number;
+    kg1?: number;
+    kp?: number;
+    kvb?: number;
+    calculatedOn?: string; // ISO-8601 datetime string with timezone
+}
+
+export interface PentodeModelParameters {
+    mu?: number;
+    ex?: number;
+    kg1?: number;
+    kg2?: number;
+    kp?: number;
+    kvb?: number;
+    calculatedOn?: string; // ISO-8601 datetime string with timezone
+}
 
 export interface TubeInformation {
     id: string;
@@ -34,41 +52,7 @@ export interface TubeInformation {
     cg3p?: number;
     ccp?: number;
     files: File[];
-    egOffset?: number;
 
-    // Norman Koren Triode Model SPICE Parameters
-    triodeModelParameters?: {
-        mu?: number;
-        ex?: number;
-        kg1?: number;
-        kg2?: number;
-        kp?: number;
-        kvb?: number;
-        calculated?: boolean;
-        lastCalculated?: string;
-    };
-
-    // Norman Koren Pentode Model SPICE Parameters
-    pentodeSpiceModelParameters?: {
-        mu?: number;
-        ex?: number;
-        kg1?: number;
-        kg2?: number;
-        kp?: number;
-        kvb?: number;
-        calculated?: boolean;
-        lastCalculated?: string;
-    };
-
-    // Tetrode SPICE Parameters (similar to pentode but without screen grid secondary emission)
-    tetrodeSpiceModelParameters?: {
-        mu?: number;
-        ex?: number;
-        kg1?: number;
-        kg2?: number;
-        kp?: number;
-        kvb?: number;
-        calculated?: boolean;
-        lastCalculated?: string;
-    };
+    triodeModelParameters?: TriodeModelParameters;
+    pentodeModelParameters?: PentodeModelParameters;
 }

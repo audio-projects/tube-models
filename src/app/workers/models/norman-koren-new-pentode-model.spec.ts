@@ -1,7 +1,6 @@
 import { normanKorenNewPentodeModel } from './norman-koren-new-pentode-model';
 
 describe('models / normanKorenNewPentodeModel', () => {
-
     it('should evaluate model', () => {
         // act
         const result = normanKorenNewPentodeModel(1, 2, 3, 4, 5, 6, 7, 8, 9);

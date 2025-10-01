@@ -3,7 +3,7 @@ import { File } from '../../files';
 import { Initial } from '../initial';
 import { Trace } from '../trace';
 
-export const estimateExKg1 = function (initial: Initial, files: File[], maxW: number, egOffset: number, trace?: Trace) {
+export const estimateExKg1 = function (initial: Initial, files: File[], maxW: number, trace?: Trace) {
     // check we need to estimate ex and kg1
     if (!initial.ex || !initial.kg1) {
         // mu must be initialized
@@ -30,13 +30,11 @@ export const estimateExKg1 = function (initial: Initial, files: File[], maxW: nu
         // loop files
         for (const file of files) {
             // check measurement type
-            if (file.measurementType === 'IP_EP_EG_VH' || file.measurementType === 'IP_EPES_EG_VH') {
+            if (file.measurementType === 'IP_EP_EG_VH' || file.measurementType === 'IPIS_EPES_EG_VH') {
                 // loop series
                 for (const series of file.series) {
                     // series points must be sorted by the X axis (EP)
-                    series.points.sort(function (p1, p2) {
-                        return p1.ep - p2.ep;
-                    });
+                    series.points.sort((p1, p2) => p1.ep - p2.ep);
                     // least squares function
                     const leastSquares = function (x: number[]): number {
                         // get parameters
@@ -53,9 +51,9 @@ export const estimateExKg1 = function (initial: Initial, files: File[], maxW: nu
                             // check point meets power criteria
                             if ((p.ip * p.ep) / 1000 < maxW) {
                                 // check point meets criteria
-                                if (p.ep / mu > -(p.eg + egOffset)) {
+                                if (p.ep / mu > -(p.eg + file.egOffset)) {
                                     // compute error
-                                    const e = -Math.log((p.ip + (p.is ?? 0)) * 1e-3) - Math.log(kg1) + ex * Math.log(p.ep / mu + p.eg + egOffset);
+                                    const e = -Math.log((p.ip + (p.is ?? 0)) * 1e-3) - Math.log(kg1) + ex * Math.log(p.ep / mu + p.eg + file.egOffset);
                                     // compute residual
                                     r += e * e;
                                     // increment number of points
@@ -86,12 +84,12 @@ export const estimateExKg1 = function (initial: Initial, files: File[], maxW: nu
                             trace.estimates.ex?.average.push({
                                 file: file.name,
                                 ex: Math.abs(result.x[0]),
-                                eg: (series.eg ?? 0) + egOffset,
+                                eg: (series.eg ?? 0) + file.egOffset,
                             });
                             trace.estimates.kg1?.average.push({
                                 file: file.name,
                                 kg1: Math.abs(result.x[1]),
-                                eg: (series.eg ?? 0) + egOffset,
+                                eg: (series.eg ?? 0) + file.egOffset,
                             });
                         }
                         // append to sums
