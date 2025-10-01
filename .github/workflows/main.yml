@@ -34,12 +34,12 @@ jobs:
         run: npm test -- --watch=false --browsers=ChromeHeadless
 
       - name: Build Angular application
-        run: npm run build -- --configuration=production
+        run: npm run build -- --configuration=production --base-href="/tube-models/"
 
       - name: Create deployment directory structure
         run: |
           mv ./dist/tube-models/browser ./dist/tube-models/tube-models
-          cp ./dist/tube-models/tube-models/index.html ./dist/tube-models/tube-models/404.html
+          cp 404.html ./dist/tube-models/404.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
