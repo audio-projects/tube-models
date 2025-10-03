@@ -2,6 +2,7 @@ import { derkEModel } from './derk-e-model';
 import { PentodeModelResult } from './pentode-model-result';
 
 describe('models / derkEModel', () => {
+
     it('should calculate ip and is correctly with secondary emission enabled', () => {
         // act
         const result: PentodeModelResult = derkEModel(

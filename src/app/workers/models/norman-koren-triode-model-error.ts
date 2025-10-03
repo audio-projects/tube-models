@@ -8,7 +8,7 @@ export const normanKorenTriodeModelError = function (files: File[], mu: number, 
     // loop data files
     for (const file of files) {
         // check measurement type is supported by model
-        if (file.measurementType === 'IP_EP_EG_VH' || file.measurementType === 'IP_EG_EP_VH' || file.measurementType === 'IPIS_EG_EPES_VH' || file.measurementType === 'IPIS_EPES_EG_VH') {
+        if (file.measurementType === 'IP_VA_VG_VH' || file.measurementType === 'IP_VG_VA_VH' || file.measurementType === 'IPIS_VG_VAVS_VH' || file.measurementType === 'IPIS_VAVS_VG_VH') {
             // loop series
             for (const series of file.series) {
                 // loop points

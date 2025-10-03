@@ -69,8 +69,8 @@ Tab-delimited files with columns: `Point`, `Curve`, `Ia (mA)`, `Vg (V)`, `Va (V)
 
 FileParserService automatically detects measurement types like:
 
-- `IP_EG_EP_VH`: Plate current vs grid/plate voltage with constant heater
-- `IP_EP_EG_VH`: Plate current vs plate/grid voltage with constant heater
+- `IP_VG_VA_VH`: Plate current vs grid/plate voltage with constant heater
+- `IP_VA_VG_VH`: Plate current vs plate/grid voltage with constant heater
 
 ## Development Patterns
 

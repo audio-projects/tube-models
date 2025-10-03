@@ -28,7 +28,7 @@ export const estimateKp = function (initial: Initial, files: File[], maxW: numbe
         // loop files
         for (const file of files) {
             // check measurement type
-            if (file.measurementType === 'IP_EP_EG_VH' || file.measurementType === 'IPIS_EPES_EG_VH') {
+            if (file.measurementType === 'IP_VA_VG_VH' || file.measurementType === 'IPIS_VAVS_VG_VH') {
                 // loop series
                 for (const series of file.series) {
                     // series points must be sorted by the X axis (EP)

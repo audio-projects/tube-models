@@ -6,9 +6,9 @@ export const estimateKvb = function (initial: Initial, files: File[], maxW: numb
     // check we need to estimate kvb
     if (!initial.kvb) {
         // mu must be initialized
-        if (!initial.mu || !initial.kp || !initial.kg1 || !initial.ex) {
+        if (!initial.kp || !initial.mu || !initial.ex || !initial.kg1) {
             // cannot estimate ex and kg1 without mu
-            throw new Error('Cannot estimate kp without mu, kp, kg1 and ex');
+            throw new Error('Cannot estimate kvb without kp, mu, ex and kg1');
         }
         // initialize trace
         if (trace) {
@@ -28,7 +28,7 @@ export const estimateKvb = function (initial: Initial, files: File[], maxW: numb
         // loop files
         for (const file of files) {
             // check measurement type
-            if (file.measurementType === 'IP_EP_EG_VH' || file.measurementType === 'IPIS_EPES_EG_VH') {
+            if (file.measurementType === 'IP_VA_VG_VH' || file.measurementType === 'IPIS_VAVS_VG_VH') {
                 // loop series
                 for (const series of file.series) {
                     // series average (for trace)

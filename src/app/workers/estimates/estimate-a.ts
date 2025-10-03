@@ -8,9 +8,9 @@ export const estimateA = function (initial: Initial, files: File[], maxW: number
     // check we need to estimate a
     if (!initial.a) {
         // mu must be initialized
-        if (!initial.mu || !initial.kp || !initial.kg1 || !initial.ex || !initial.kvb) {
+        if (!initial.kp || !initial.mu || !initial.kvb || !initial.ex || !initial.kg1) {
             // cannot estimate ex and kg1 without mu
-            throw new Error('Cannot estimate kp without mu, kp, kg1, ex and kvb');
+            throw new Error('Cannot estimate kp without kp, mu, kvb, ex and kg1');
         }
         // initialize trace
         if (trace) {

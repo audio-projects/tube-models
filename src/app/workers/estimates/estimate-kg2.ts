@@ -7,9 +7,9 @@ export const estimateKg2 = function (initial: Initial, files: File[], maxW: numb
     // check we need to estimate kg2
     if (!initial.kg2) {
         // mu, ex, kp and kvb must be initialized
-        if (!initial.mu || !initial.ex || !initial.kp || !initial.kvb) {
-            // cannot estimate kg2 without mu, ex, kp and kvb
-            throw new Error('Cannot estimate kg2 without mu, ex, kp and kvb');
+        if (!initial.kp || !initial.mu || !initial.kvb || !initial.ex) {
+            // cannot estimate kg2 without kp, mu, kvb and ex
+            throw new Error('Cannot estimate kg2 without kp, mu, kvb and ex');
         }
         // initialize trace
         if (trace) {
@@ -25,7 +25,7 @@ export const estimateKg2 = function (initial: Initial, files: File[], maxW: numb
         // loop files
         for (const file of files) {
             // check measurement type (ep is in the X-axis)
-            if (file.measurementType === 'IPIS_EP_EG_VS_VH' || file.measurementType === 'IPIS_EP_ES_VG_VH' || file.measurementType === 'IPIS_EPES_EG_VH') {
+            if (file.measurementType === 'IPIS_VA_VG_VS_VH' || file.measurementType === 'IPIS_VA_VS_VG_VH' || file.measurementType === 'IPIS_VAVS_VG_VH') {
                 // loop series
                 for (const series of file.series) {
                     // loop points (backwards, high ep)
