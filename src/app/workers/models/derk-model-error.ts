@@ -2,11 +2,9 @@ import { derkModel } from './derk-model';
 import { File } from '../../files';
 
 // derkModelError
-export const derkModelError = function (files: File[], mu: number, kp: number, kvb: number, ex: number, kg1: number, kg2: number, a: number, alphaS: number, beta: number, secondaryEmission: boolean, s: number, alphaP: number, lambda: number, v: number, w: number, maximumPlateDissipation: number) {
+export const derkModelError = function (files: File[], kp: number, mu: number, kvb: number, ex: number, kg1: number, kg2: number, a: number, alpha: number, alphaS: number, beta: number, secondaryEmission: boolean, s: number, alphaP: number, lambda: number, v: number, w: number, maximumPlateDissipation: number) {
     // result
     let r = 0;
-    // calculate alpha
-    const alpha = 1 - (kg1 * (1 + alphaS)) / kg2;
     // loop data files
     for (const file of files) {
         // check measurement type is supported by model

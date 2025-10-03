@@ -16,11 +16,11 @@ export const estimatePentodeParameters = function (files: File[], initial: Initi
     estimateKg2(initial, files, maxW, trace);
     // return estimates (for Koren pentode models we use a hardcoded KVB=100)
     return {
-        mu: initial.mu,
-        kg1: initial.kg1,
         kp: initial.kp,
-        ex: initial.ex,
+        mu: initial.mu,
         kvb: 100,
+        ex: initial.ex,
+        kg1: initial.kg1,
         kg2: initial.kg2
     };
 };

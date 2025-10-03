@@ -47,7 +47,7 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
     // log information
     self.postMessage({
         type: 'log',
-        text: `Optimizing Pentode Model parameters using the Levenberg-Marquardt algorithm, Objective function value: ${(normanKorenNewPentodeModelError(files, mu, ex, kg1, kp, kvb, kg2, maximumPlateDissipation) * 1e-6).toExponential()}`
+        text: `Optimizing Pentode Model parameters using the Levenberg-Marquardt algorithm, Objective function value: ${(normanKorenNewPentodeModelError(files, kp, mu, kvb, ex, kg1, kg2, maximumPlateDissipation) * 1e-6).toExponential()}`
     });
     // optimize
     const result = levmar(R, [1, 1, 1, 1, 1, 1], {trace: trace, tolerance: 1e-4, kmax: 500});
@@ -67,7 +67,7 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
         // log values
         self.postMessage({
             type: 'log',
-            text: `Pentode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, kg2=${parameters.kg2}, Objective function value: ${(normanKorenNewPentodeModelError(files, parameters.mu, parameters.ex, parameters.kg1, parameters.kp, parameters.kvb, parameters.kg2, maximumPlateDissipation) * 1e-6).toExponential()}, iterations: ${result.iterations}`,
+            text: `Pentode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, kg2=${parameters.kg2}, Objective function value: ${(normanKorenNewPentodeModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, parameters.kg2, maximumPlateDissipation) * 1e-6).toExponential()}, iterations: ${result.iterations}`,
         });
         // return model parameters
         return parameters;
@@ -80,7 +80,7 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
     // log information
     postMessage({
         type: 'log',
-        text: `Optimizing Pentode Model parameters using the Powell algorithm, Objective function value: ${(normanKorenNewPentodeModelError(files, mu, ex, kg1, kp, kvb, kg2, maximumPlateDissipation) * 1e-6).toExponential()}`,
+        text: `Optimizing Pentode Model parameters using the Powell algorithm, Objective function value: ${(normanKorenNewPentodeModelError(files, kp, mu, kvb, ex, kg1, kg2, maximumPlateDissipation) * 1e-6).toExponential()}`,
     });
     // least square problem
     const leastSquares = function (x: number[]): number {
@@ -92,7 +92,7 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
         const kvb = Math.abs(x[4]);
         const kg2 = Math.abs(x[5]);
         // evaluate target function
-        return normanKorenNewPentodeModelError(files, mu, ex, kg1, kp, kvb, kg2, maximumPlateDissipation);
+        return normanKorenNewPentodeModelError(files, kp, mu, kvb, ex, kg1, kg2, maximumPlateDissipation);
     };
     // powell optimization options
     const options: PowellOptions = {
@@ -120,7 +120,7 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
         // log values
         postMessage({
             type: 'log',
-            text: `Pentode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, kg2=${parameters.kg2}, Objective function value: ${(normanKorenNewPentodeModelError(files, parameters.mu, parameters.ex, parameters.kg1, parameters.kp, parameters.kvb, parameters.kg2, maximumPlateDissipation) * 1e-6).toExponential()}, iterations: ${result.iterations}`,
+            text: `Pentode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, kg2=${parameters.kg2}, Objective function value: ${(normanKorenNewPentodeModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, parameters.kg2, maximumPlateDissipation) * 1e-6).toExponential()}, iterations: ${result.iterations}`,
         });
         // return model parameters
         return parameters;

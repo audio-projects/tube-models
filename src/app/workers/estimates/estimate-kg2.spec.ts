@@ -11,7 +11,7 @@ describe('estimates / estimateKg2', () => {
         // estimate kg2
         estimateKg2(initial, [], 100);
         // check result
-        expect(initial.kg2).toBeCloseTo(1000, 0.1);
+        expect(initial.kg2).toBeCloseTo(1000, 2);
     });
 
     it('it should estimate "kg2" from EF80 files', (done) => {
@@ -33,9 +33,9 @@ describe('estimates / estimateKg2', () => {
                 // initial
                 const initial: Initial = { mu: 56, ex: 1.18, kp: 315, kvb: 4155 };
                 // estimate kg2
-                estimateKg2(initial, files, 100);
+                estimateKg2(initial, files, 2.5);
                 // check result
-                expect(initial.kg2).toBeCloseTo(638.46, 0.1);
+                expect(initial.kg2).toBeCloseTo(626.23, 2);
                 // done
                 done();
             })
@@ -70,9 +70,9 @@ describe('estimates / estimateKg2', () => {
                 // initial
                 const initial: Initial = { mu: 5.5, ex: 1.59, kp: 54.05, kvb: 6122.6 };
                 // estimate kg2
-                estimateKg2(initial, files, 100);
+                estimateKg2(initial, files, 25);
                 // check result
-                expect(initial.kg2).toBeCloseTo(11428.21, 0.1);
+                expect(initial.kg2).toBeCloseTo(8788.79, 2);
                 // done
                 done();
             })

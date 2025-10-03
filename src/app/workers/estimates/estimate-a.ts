@@ -8,9 +8,9 @@ export const estimateA = function (initial: Initial, files: File[], maxW: number
     // check we need to estimate a
     if (!initial.a) {
         // mu must be initialized
-        if (!initial.mu || !initial.kp || !initial.kg1 || !initial.ex || !initial.kvb) {
+        if (!initial.kp || !initial.mu || !initial.kvb || !initial.ex || !initial.kg1) {
             // cannot estimate ex and kg1 without mu
-            throw new Error('Cannot estimate kp without mu, kp, kg1, ex and kvb');
+            throw new Error('Cannot estimate kp without kp, mu, kvb, ex and kg1');
         }
         // initialize trace
         if (trace) {
@@ -26,7 +26,7 @@ export const estimateA = function (initial: Initial, files: File[], maxW: number
         // loop files
         for (const file of files) {
             // check measurement type (ep is in the X-axis)
-            if (file.measurementType === 'IP_EP_EG_VS_VH' || file.measurementType === 'IP_EP_ES_VG_VH') {
+            if (file.measurementType === 'IPIS_VA_VG_VS_VH' || file.measurementType === 'IPIS_VA_VS_VG_VH') {
                 // loop series
                 for (const series of file.series) {
                     // series points must be sorted by the X axis (EP)
