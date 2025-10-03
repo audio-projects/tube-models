@@ -36,7 +36,7 @@ export const estimateKg2 = function (initial: Initial, files: File[], maxW: numb
                         const is = p.is ?? 0;
                         const es = p.es ?? 0;
                         // check point meets power criteria and has a is
-                        if ((p.ip + is) * p.ep / 1000 < maxW && is > 0) {
+                        if (p.ip * p.ep * 1e-3 <= maxW && is > 0) {
                             // IPk
                             const ip = ipk(p.eg + file.egOffset, es, initial.kp, initial.mu, initial.kvb, initial.ex);
                             // check we have IPk

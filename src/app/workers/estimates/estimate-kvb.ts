@@ -39,7 +39,7 @@ export const estimateKvb = function (initial: Initial, files: File[], maxW: numb
                     // loop points
                     for (const p of series.points) {
                         // check point meets power criteria
-                        if ((p.ip + (p.is ?? 0)) * p.ep * 1e-3 < maxW) {
+                        if (p.ip * p.ep * 1e-3 <= maxW) {
                             // check point meets criteria (9.1.4)
                             if (kp * (1 / mu + (p.eg + file.egOffset) / p.ep) > 1) {
                                 // calculate e1

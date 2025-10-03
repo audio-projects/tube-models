@@ -2,7 +2,7 @@ import { File } from '../../files';
 import { normanKorenTriodeModel } from './norman-koren-triode-model';
 
 // normanKorenTriodeModelError
-export const normanKorenTriodeModelError = function (files: File[], mu: number, ex: number, kg1: number, kp: number, kvb: number, maximumPlateDissipation: number) {
+export const normanKorenTriodeModelError = function (files: File[], kp: number, mu: number, kvb: number, ex: number, kg1: number, maximumPlateDissipation: number) {
     // result
     let r = 0;
     // loop data files

@@ -49,7 +49,7 @@ export const estimateExKg1 = function (initial: Initial, files: File[], maxW: nu
                             // current point
                             const p = series.points[k];
                             // check point meets power criteria
-                            if ((p.ip * p.ep) / 1000 < maxW) {
+                            if (p.ip * p.ep * 1e-3 < maxW) {
                                 // check point meets criteria
                                 if (p.ep / mu > -(p.eg + file.egOffset)) {
                                     // compute error

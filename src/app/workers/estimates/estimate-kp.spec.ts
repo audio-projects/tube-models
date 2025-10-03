@@ -17,7 +17,7 @@ describe('estimates / estimateKp', () => {
                     // estimate kp
                     estimateKp(initial, [file], 2.5);
                     // check result
-                    expect(initial.kp).toBeCloseTo(238.17163161359613);
+                    expect(initial.kp).toBeCloseTo(238.17, 2);
                     // done
                     done();
                     // exit
@@ -49,7 +49,7 @@ describe('estimates / estimateKp', () => {
                     // estimate kp
                     estimateKp(initial, [file], 1);
                     // check result
-                    expect(initial.kp).toBeCloseTo(975.3102522459169);
+                    expect(initial.kp).toBeCloseTo(975.31, 2);
                     // done
                     done();
                     // exit

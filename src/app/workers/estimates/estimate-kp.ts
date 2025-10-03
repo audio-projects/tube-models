@@ -46,7 +46,7 @@ export const estimateKp = function (initial: Initial, files: File[], maxW: numbe
                             // current point
                             const p = series.points[k];
                             // check point meets power criteria
-                            if ((p.ip + (p.is ?? 0)) * p.ep * 1e-3 < maxW) {
+                            if (p.ip * p.ep * 1e-3 <= maxW) {
                                 // check point meets criteria
                                 if (p.ep / mu > -(p.eg + file.egOffset)) {
                                     // calculate e1 estimate

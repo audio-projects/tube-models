@@ -2,7 +2,7 @@ import { File } from '../../files';
 import { normanKorenNewPentodeModel } from './norman-koren-new-pentode-model';
 
 // normanKorenNewPentodeModelError
-export const normanKorenNewPentodeModelError = function (files: File[], mu: number, ex: number, kg1: number, kp: number, kvb: number, kg2: number, maximumPlateDissipation: number) {
+export const normanKorenNewPentodeModelError = function (files: File[], kp: number, mu: number, kvb: number, ex: number, kg1: number, kg2: number, maximumPlateDissipation: number) {
     // result
     let r = 0;
     // loop data files
