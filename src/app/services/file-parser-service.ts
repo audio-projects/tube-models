@@ -203,14 +203,14 @@ export const fileAnalysis = function (file: File): File {
                 // check screen current is present
                 if (isFileMean !== 0) {
                     // Ia(Va, Vg), Is(Va, Vg) with Vs, Vh constant
-                    file.measurementType = 'IPIS_EP_EG_VS_VH';
+                    file.measurementType = 'IPIS_VA_VG_VS_VH';
                     file.measurementTypeLabel = `Ia(Va, Vg), Is(Va, Vg) with Vs≈${esFileMean.toFixed(1)}V, Vh≈${ehFileMean.toFixed(1)}V`;
                     file.es = esFileMean;
                     file.eh = ehFileMean;
                 }
                 else {
                     // Ia(Va, Vg) with Vh constant
-                    file.measurementType = 'IP_EP_EG_VH';
+                    file.measurementType = 'IP_VA_VG_VH';
                     file.measurementTypeLabel = `Ia(Va, Vg) with Vh≈${ehFileMean.toFixed(1)}V`;
                     file.eh = ehFileMean;
                 }
@@ -220,14 +220,14 @@ export const fileAnalysis = function (file: File): File {
                 // check screen current is present
                 if (isFileMean !== 0) {
                     // Ia(Vg, Va), Is(Vg, Va) with Vs, Vh constant
-                    file.measurementType = 'IPIS_EG_EP_VS_VH';
+                    file.measurementType = 'IPIS_VG_VA_VS_VH';
                     file.measurementTypeLabel = `Ia(Vg, Va), Is(Vg, Va) with Vs≈${esFileMean.toFixed(1)}V, Vh≈${ehFileMean.toFixed(1)}V`;
                     file.es = esFileMean;
                     file.eh = ehFileMean;
                 }
                 else {
                     // Ia(Vg, Va) with Vh constant
-                    file.measurementType = 'IP_EG_EP_VH';
+                    file.measurementType = 'IP_VG_VA_VH';
                     file.measurementTypeLabel = `Ia(Vg, Va) with Vh≈${ehFileMean.toFixed(1)}V`;
                     file.eh = ehFileMean;
                 }
@@ -238,15 +238,15 @@ export const fileAnalysis = function (file: File): File {
             // check "eg" is constant in series and "es" is variable
             if ((flags & egFlag) !== 0 && !egFileConstant && !esFileConstant) {
                 // Ia(Vs, Vg), Is(Vs, Vg) with Vs, Vh constant
-                file.measurementType = 'IPIS_ES_EG_VS_VH';
+                file.measurementType = 'IPIS_VS_VG_VA_VH';
                 file.measurementTypeLabel = `Ia(Vs, Vg), Is(Vs, Vg) with Va≈${epFileMean.toFixed(1)}V, Vh≈${ehFileMean.toFixed(1)}V`;
                 file.ep = epFileMean;
                 file.eh = ehFileMean;
             }
             // check "es" is constant in series and "eg" is variable
             else if ((flags & esFlag) !== 0 && !esFileConstant && !egFileConstant) {
-                // Ia(Vg, Va), Is(Vg, Va) with Vs, Vh constant
-                file.measurementType = 'IPIS_EG_ES_VP_VH';
+                // Ia(Vg, Vs), Is(Vg, Vs) with Va, Vh constant
+                file.measurementType = 'IPIS_VG_VS_VA_VH';
                 file.measurementTypeLabel = `Ia(Vg, Vs), Is(Vg, Vs) with Va≈${epFileMean.toFixed(1)}V, Vh≈${ehFileMean.toFixed(1)}V`;
                 file.ep = epFileMean;
                 file.eh = ehFileMean;
@@ -257,7 +257,7 @@ export const fileAnalysis = function (file: File): File {
             // check es is constant in series
             if ((flags & esFlag) !== 0 && !esFileConstant && !epFileConstant) {
                 // I(Va, Vs) with Vg, Vh constant
-                file.measurementType = 'IPIS_EP_ES_VG_VH';
+                file.measurementType = 'IPIS_VA_VS_VG_VH';
                 file.measurementTypeLabel = `Ia(Va, Vs), Is(Va, Vs) with Vg≈${egFileMean.toFixed(1)}V, Vh≈${ehFileMean.toFixed(1)}V`;
                 file.eg = egFileMean;
                 file.eh = ehFileMean;
@@ -268,14 +268,14 @@ export const fileAnalysis = function (file: File): File {
             // check ep is constant in series
             if ((flags & epFlag) !== 0 && !epFileConstant && !egFileConstant) {
                 // I(Vg, Va=Vs) with Vh constant
-                file.measurementType = 'IPIS_EG_EPES_VH';
+                file.measurementType = 'IPIS_VG_VAVS_VH';
                 file.measurementTypeLabel = `Ia(Vg, Va=Vs) + Is(Vg, Va=Vs) with Vh≈${ehFileMean.toFixed(1)}V`;
                 file.eh = ehFileMean;
             }
             // check eg is constant in series
             else if ((flags & egFlag) !== 0 && !egFileConstant && !epFileConstant) {
                 // Ip(Va=Vs, Vg) with Vh constant
-                file.measurementType = 'IPIS_EPES_EG_VH';
+                file.measurementType = 'IPIS_VAVS_VG_VH';
                 file.measurementTypeLabel = `Ia(Va=Vs, Vg) + Is(Va=Vs, Vg) with Vh≈${ehFileMean.toFixed(1)}V`;
                 file.eh = ehFileMean;
             }

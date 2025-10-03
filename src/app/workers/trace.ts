@@ -59,13 +59,16 @@ export interface Trace {
     history: MathCollection[];
     functionValues: number[];
     estimates: {
+        kp?: {
+            average: KpAverage[];
+        };
         mu?: {
-            maxip: number;
+            maxIp: number;
             ip: number;
             points: Point[];
         };
-        kp?: {
-            average: KpAverage[];
+        kvb?: {
+            average: KvbAverage[];
         };
         ex?: {
             average: ExAverage[];
@@ -73,15 +76,18 @@ export interface Trace {
         kg1?: {
             average: Kg1Average[];
         };
-        kvb?: {
-            average: KvbAverage[];
-        };
         kg2?: {
             average: Kg2Average[];
         };
         a?: {
             average: AAverage[];
         };
+        secondaryEmission?: {
+            s?: {
+                s?: number;
+                average: number[];
+            };
+        }
     };
     residuals: ResidualEntry[];
     functionCalls: number;

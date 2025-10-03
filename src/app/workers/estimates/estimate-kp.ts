@@ -28,7 +28,7 @@ export const estimateKp = function (initial: Initial, files: File[], maxW: numbe
         // loop files
         for (const file of files) {
             // check measurement type
-            if (file.measurementType === 'IP_EP_EG_VH' || file.measurementType === 'IPIS_EPES_EG_VH') {
+            if (file.measurementType === 'IP_VA_VG_VH' || file.measurementType === 'IPIS_VAVS_VG_VH') {
                 // loop series
                 for (const series of file.series) {
                     // series points must be sorted by the X axis (EP)
@@ -46,7 +46,7 @@ export const estimateKp = function (initial: Initial, files: File[], maxW: numbe
                             // current point
                             const p = series.points[k];
                             // check point meets power criteria
-                            if ((p.ip + (p.is ?? 0)) * p.ep * 1e-3 < maxW) {
+                            if (p.ip * p.ep * 1e-3 <= maxW) {
                                 // check point meets criteria
                                 if (p.ep / mu > -(p.eg + file.egOffset)) {
                                     // calculate e1 estimate

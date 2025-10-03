@@ -223,7 +223,7 @@ describe('services / fileParserService', () => {
                     ],
                 },
             ],
-            measurementType: 'IP_EP_EG_VH',
+            measurementType: 'IP_VA_VG_VH',
             measurementTypeLabel: 'Ia(Va, Vg) with Vh≈6.3V',
             eh: 6.29,
             egOffset: 0,
@@ -395,7 +395,7 @@ describe('services / fileParserService', () => {
         // assert
         expect(result).toBeDefined();
         expect(result!.name).toBe('ECC81');
-        expect(result!.measurementType).toBe('IP_EP_EG_VH');
+        expect(result!.measurementType).toBe('IP_VA_VG_VH');
         expect(result!.eh).toBe(12.59);
         expect(result!.series.length).toBe(5);
 
@@ -497,14 +497,14 @@ const analyzeFile = function(filename: string, expectedType: string, expectedLab
 describe('services / fileParserService / fileAnalysis', () => {
 
     it('it should analyze ECC81.utd file', (done) => {
-        analyzeFile('/test-assets/ECC81.utd', 'IP_EP_EG_VH', 'Ia(Va, Vg) with Vh≈12.6V', done);
+        analyzeFile('/test-assets/ECC81.utd', 'IP_VA_VG_VH', 'Ia(Va, Vg) with Vh≈12.6V', done);
     });
 
     it('it should analyze EF80_250.utd file', (done) => {
-        analyzeFile('/test-assets/EF80_250.utd', 'IPIS_EP_EG_VS_VH', 'Ia(Va, Vg), Is(Va, Vg) with Vs≈249.2V, Vh≈6.3V', done);
+        analyzeFile('/test-assets/EF80_250.utd', 'IPIS_VA_VG_VS_VH', 'Ia(Va, Vg), Is(Va, Vg) with Vs≈249.2V, Vh≈6.3V', done);
     });
 
     it('it should analyze EL500_triode.utd file', (done) => {
-        analyzeFile('/test-assets/EL500_triode.utd', 'IPIS_EPES_EG_VH', 'Ia(Va=Vs, Vg) + Is(Va=Vs, Vg) with Vh≈6.3V', done);
+        analyzeFile('/test-assets/EL500_triode.utd', 'IPIS_VAVS_VG_VH', 'Ia(Va=Vs, Vg) + Is(Va=Vs, Vg) with Vh≈6.3V', done);
     });
 });

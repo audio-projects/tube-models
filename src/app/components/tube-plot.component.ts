@@ -112,7 +112,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
         const isCombined = this.isCombinedCurrentMeasurement(yComponent, this.file.measurementType);
 
         if (isCombined) {
-            // For EPES cases, calculate ranges based on combined current (ip + is)
+            // For VAVS cases, calculate ranges based on combined current (ip + is)
             axisRanges = this.calculateCombinedCurrentAxisRanges(axesConfig.xField);
         }
         else if (axesConfig.hasDualYAxis) {
@@ -302,7 +302,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             const color = colors[i % colors.length];
             // label
             const seriesLabel = this.getSeriesLabel(series, i);
-            // Check if this is a combined current measurement (EPES case)
+            // Check if this is a combined current measurement (VAVS case)
             const { yComponent } = this.parseMeasurementType(this.file!.measurementType);
             const isCombined = this.isCombinedCurrentMeasurement(yComponent, this.file!.measurementType);
             //  check Y axis is combining both currents
@@ -987,12 +987,12 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                 return 'ip';
             case 'IS':
                 return 'is';
-            case 'EP':
-            case 'EPES':
+            case 'VA':
+            case 'VAVS':
                 return 'ep';
-            case 'EG':
+            case 'VG':
                 return 'eg';
-            case 'ES':
+            case 'VS':
                 return 'es';
             default:
                 return 'ep'; // default fallback
@@ -1005,16 +1005,16 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                 return 'Plate Current (mA)';
             case 'IS':
                 return 'Screen Current (mA)';
-            case 'EP':
+            case 'VA':
                 return 'Plate Voltage (V)';
-            case 'EG':
+            case 'VG':
                 return 'Grid Voltage (V)';
-            case 'ES':
+            case 'VS':
                 return 'Screen Voltage (V)';
-            case 'EPES':
+            case 'VAVS':
                 return 'Plate/Screen Voltage (V)';
             case 'IPIS':
-                // Check if this is a combined current measurement (EPES case)
+                // Check if this is a combined current measurement (VAVS case)
                 if (this.file?.measurementType && this.isCombinedCurrentMeasurement('IPIS', this.file.measurementType)) {
                     return 'Total Current (mA)';
                 }
@@ -1028,18 +1028,18 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
         // only currents in Y axis
         if (yComponent.includes('IP') || yComponent.includes('IS')) {
             // x axis voltage
-            if (xComponent === 'EP' || xComponent === 'EPES')
+            if (xComponent === 'VA' || xComponent === 'VAVS')
                 return 'plate';
-            else if (xComponent === 'EG')
+            else if (xComponent === 'VG')
                 return 'transfer';
         }
         return 'unknown';
     }
 
     private isDualYAxisMeasurement(yComponent: string): boolean {
-        // Check if Y component contains multiple measurements but exclude EPES cases
+        // Check if Y component contains multiple measurements but exclude VAVS cases
         if (this.file?.measurementType && this.isCombinedCurrentMeasurement(yComponent, this.file.measurementType)) {
-            return false; // EPES cases use combined current plotting
+            return false; // VAVS cases use combined current plotting
         }
         return yComponent === 'IPIS' || (yComponent.includes('IP') && yComponent.includes('IS'));
     }
@@ -1082,13 +1082,13 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
         }
     }
 
-    private isEPESMeasurement(measurementType: string): boolean {
-        // Check if measurement type contains EPES (plate and screen voltage equal)
-        return measurementType.includes('EPES');
+    private isVAVSMeasurement(measurementType: string): boolean {
+        // Check if measurement type contains VAVS (plate and screen voltage equal)
+        return measurementType.includes('VAVS');
     }
 
     private isCombinedCurrentMeasurement(yComponent: string, measurementType: string): boolean {
-        // IPIS measurements with EPES should be treated as combined current (ip + is)
-        return yComponent === 'IPIS' && this.isEPESMeasurement(measurementType);
+        // IPIS measurements with VAVS should be treated as combined current (ip + is)
+        return yComponent === 'IPIS' && this.isVAVSMeasurement(measurementType);
     }
 }
