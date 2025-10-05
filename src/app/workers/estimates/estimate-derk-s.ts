@@ -4,7 +4,7 @@ import { ipk } from '../models/ipk';
 import { Trace } from '../trace';
 
 // estimateDerkS
-export const estimateDerkS = function (initial: Initial, inflectionPoints: InflectionPoint[], egOffset: number, trace?: Trace) {
+export const estimateDerkS = function (initial: Initial, inflectionPoints: InflectionPoint[], trace?: Trace) {
     // check we need to estimate S
     if (!initial.s) {
         // mu must be initialized
@@ -27,7 +27,7 @@ export const estimateDerkS = function (initial: Initial, inflectionPoints: Infle
         // loop inflectionPoints
         for (const p of inflectionPoints) {
             // ipk
-            const ip = ipk(p.eg + egOffset, p.es, initial.kp, initial.mu, initial.kvb, initial.ex);
+            const ip = ipk(p.eg, p.es, initial.kp, initial.mu, initial.kvb, initial.ex);
             // calculate Psec estimate @ Vamax
             const Psec = p.is * 1e-3 * initial.kg2 / ip - (1 + initial.alphaS / (1 + initial.alphaS / (1 + initial.beta * p.epmax)));
             // calculate s

@@ -1,3 +1,4 @@
+import { InflectionPoint } from './estimates/inflection-point';
 import { MathCollection, MathNumericType } from 'mathjs';
 import { Point } from '../files';
 import { Vector } from './algorithms/vector';
@@ -34,6 +35,20 @@ export interface Kg2Average {
 export interface AAverage {
     file: string;
     a: number;
+    eg: number;
+};
+
+export interface AlphaSAverage {
+    file: string;
+    a: number;
+    b: number;
+    eg: number;
+};
+
+export interface BetaAverage {
+    file: string;
+    a: number;
+    b: number;
     eg: number;
 };
 
@@ -87,7 +102,14 @@ export interface Trace {
                 s?: number;
                 average: number[];
             };
-        }
+            inflectionPoints?: InflectionPoint[];
+        };
+        beta?: {
+            average: BetaAverage[];
+        };
+        alphaS?: {
+            average: AlphaSAverage[];
+        };
     };
     residuals: ResidualEntry[];
     functionCalls: number;

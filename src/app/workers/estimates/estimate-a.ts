@@ -26,7 +26,7 @@ export const estimateA = function (initial: Initial, files: File[], maxW: number
         // loop files
         for (const file of files) {
             // check measurement type (ep is in the X-axis)
-            if (file.measurementType === 'IPIS_VA_VG_VS_VH' || file.measurementType === 'IPIS_VA_VS_VG_VH') {
+            if (file.measurementType === 'IPIS_VA_VG_VS_VH' || file.measurementType === 'IPIS_VA_VS_VG_VH' || file.measurementType === 'IPIS_VAVS_VG_VH') {
                 // loop series
                 for (const series of file.series) {
                     // series points must be sorted by the X axis (EP)
