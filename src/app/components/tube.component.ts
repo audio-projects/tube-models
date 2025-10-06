@@ -16,6 +16,7 @@ import { FormsModule } from '@angular/forms';
 import { NormanKorenPentodeModelParametersComponent } from './norman-koren-pentode-model-parameters.component';
 import { ToastService } from '../services/toast.service';
 import { NormanKorenTriodeModelParametersComponent } from './norman-koren-triode-model-parameters.component';
+import { DerkPentodeModelParametersComponent } from './derk-pentode-model-parameters.component';
 import { TubeInformation } from './tube-information';
 import { TubePlotComponent } from './tube-plot.component';
 
@@ -23,7 +24,7 @@ import { TubePlotComponent } from './tube-plot.component';
     selector: 'app-tube',
     templateUrl: './tube.component.html',
     styleUrl: './tube.component.scss',
-    imports: [FormsModule, CommonModule, RouterLink, TubePlotComponent, NormanKorenPentodeModelParametersComponent, NormanKorenTriodeModelParametersComponent],
+    imports: [FormsModule, CommonModule, RouterLink, TubePlotComponent, NormanKorenPentodeModelParametersComponent, NormanKorenTriodeModelParametersComponent, DerkPentodeModelParametersComponent],
 })
 export class TubeComponent implements OnInit, AfterViewInit {
 
@@ -36,6 +37,7 @@ export class TubeComponent implements OnInit, AfterViewInit {
     activeTab = 'upload'; // For tab management
     selectedFileForPlot: TubeFile | null = null; // Track file selected for plotting
     isCalculatingSpiceParameters = false; // Track calculation state
+    isCalculatingDerkParameters = false; // Track Derk model calculation state
 
     constructor(
         private route: ActivatedRoute,
@@ -586,6 +588,100 @@ export class TubeComponent implements OnInit, AfterViewInit {
             this.toastService.error('Failed to initialize calculation worker.', 'Worker Error');
             // update flag
             this.isCalculatingSpiceParameters = false;
+        }
+    }
+
+    calculateDerkModelParameters() {
+        // check files are available
+        if (!this.tube || this.tube.type !== 'Pentode' || !this.tube.files || this.tube.files.length === 0)
+            return;
+
+        this.isCalculatingDerkParameters = true;
+
+        try {
+            // Create a web worker for Derk model calculation
+            const worker = new Worker(new URL('../workers/optimize-derk-model-parameters.worker.ts', import.meta.url), { type: 'module' });
+
+            worker.postMessage({
+                files: this.tube.files,
+                maximumPlateDissipation: this.tube.maximumPlateDissipation || 1000, // Default to 1000W if not specified
+                secondaryEmission: false, // Default to false, could be made configurable
+                algorithm: 1,  // 0 = Levenberg-Marquardt, 1 = Powell
+                trace: undefined
+            });
+
+            worker.onmessage = (e) => {
+                // data
+                const result = e.data;
+                // Handle different message types from worker
+                if (result.type === 'succeeded') {
+                    // Extract parameters from the worker result
+                    const params = result.parameters;
+                    if (params) {
+                        this.tube!.derkModelParameters = {
+                            mu: params.mu || 0,
+                            ex: params.ex || 0,
+                            kg1: params.kg1 || 0,
+                            kg2: params.kg2 || 0,
+                            kp: params.kp || 0,
+                            kvb: params.kvb || 0,
+                            a: params.a || 0,
+                            alpha: params.alpha || 0,
+                            alphaS: params.alphaS || 0,
+                            beta: params.beta || 0,
+                            secondaryEmission: params.secondaryEmission || false,
+                            s: params.s || 0,
+                            alphaP: params.alphaP || 0,
+                            lambda: params.lambda || 0,
+                            v: params.v || 0,
+                            w: params.w || 0,
+                            calculatedOn: new Date().toISOString()
+                        };
+                        // notify user
+                        this.toastService.success('Derk model parameters calculated successfully!', 'Calculation Complete');
+                    }
+                    else {
+                        // notify user
+                        this.toastService.error('Failed to calculate Derk model parameters. Invalid result.', 'Calculation Failed');
+                    }
+                    // update flag
+                    this.isCalculatingDerkParameters = false;
+                    // end worker
+                    worker.terminate();
+                }
+                else if (result.type === 'failed') {
+                    // update flag
+                    this.isCalculatingDerkParameters = false;
+                    // notify user
+                    this.toastService.error('Failed to calculate Derk model parameters. Please check your measurement data.', 'Calculation Failed');
+                    // end worker
+                    worker.terminate();
+                }
+                else if (result.type === 'notification' || result.type === 'log') {
+                    // log message
+                    console.log(`${result.type}: ${result.text}`);
+                }
+            };
+
+            worker.onerror = (error) => {
+                // log error
+                console.error('Derk model worker error:', error);
+                // update flag
+                this.isCalculatingDerkParameters = false;
+                // notify user
+                this.toastService.error('An error occurred while calculating Derk model parameters.', 'Calculation Error');
+                // end worker
+                worker.terminate();
+            };
+
+        }
+        catch (error) {
+            // log error
+            console.error('Error creating Derk model worker:', error);
+            // notify user
+            this.toastService.error('Failed to initialize Derk model calculation worker.', 'Worker Error');
+            // update flag
+            this.isCalculatingDerkParameters = false;
         }
     }
 

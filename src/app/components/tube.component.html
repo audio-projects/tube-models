@@ -363,6 +363,21 @@
         </div>
       </div>
 
+      <!-- Derk Pentode Model Parameters Card -->
+      <div class="card mb-4" *ngIf="tube.type === 'Pentode'">
+        <div class="card-header bg-info text-white">
+          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Pentode Model (Derk Reefman)</h5>
+        </div>
+        <div class="card-body derk-pentode-model-parameters">
+          <app-derk-pentode-model-parameters 
+            [tube]="tube"
+            [isCalculating]="isCalculatingDerkParameters"
+            [canCalculate]="tube.files && tube.files.length > 0"
+            (calculateRequested)="calculateDerkModelParameters()">
+          </app-derk-pentode-model-parameters>
+        </div>
+      </div>
+
       <!-- Help Card -->
       <div class="card">
         <div class="card-header bg-light">
