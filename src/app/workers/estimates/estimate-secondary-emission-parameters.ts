@@ -1,12 +1,153 @@
-import { derkEModel } from '../models/derk-e-model';
+import { derkEModel } from '../models/derke-model';
 import { derkModel } from '../models/derk-model';
 import { estimateDerkES } from './estimate-derke-s';
 import { estimateDerkS } from './estimate-derk-s';
 import { File, Point } from '../../files';
-import { InflectionPoint } from './inflection-point';
 import { Initial } from '../initial';
-import { powell, DefaultPowellOptions } from '../algorithms/powell';
+import { powell } from '../algorithms/powell';
+import { ScreenCurrentFeaturePoint } from './screen-current-feature-point';
 import { Trace } from '../trace';
+
+const Epsilon = 1e-6;
+
+/**
+ * Calculates the approximate first derivative (slope) at point i using the central difference method.
+ * f'(x_i) ≈ (y_{i+1} - y_{i-1}) / (x_{i+1} - x_{i-1})
+ */
+function calculateFirstDerivative(points: Point[], i: number): number | undefined {
+    // ensure we have enough points to calculate the derivative
+    if (i === 0 || i === points.length - 1) {
+        // Cannot calculate central difference for boundary points
+        return undefined;
+    }
+    // central difference formula
+    const dy = (points[i + 1].is || 0) - (points[i - 1].is || 0);
+    const dx = points[i + 1].ep - points[i - 1].ep;
+    // return slope
+    return dx !== 0 ? dy / dx : Infinity; // Handle vertical slope
+}
+
+/**
+ * Calculates the approximate second derivative at point i using the central difference method.
+ * f''(x_i) ≈ (y_{i+1} - 2y_i + y_{i-1}) / (Δx^2) - assuming uniform spacing.
+ * This implementation uses the first derivative of the first derivative for uneven spacing:
+ * f''(x_i) ≈ (f'(x_{i+1}) - f'(x_{i-1})) / (x_{i+1} - x_{i-1})
+ *
+ * NOTE: For robustness and simplicity with potentially uneven spacing, we can approximate
+ * the second derivative using the y-values directly, which is equivalent to applying the
+ * central difference formula twice.
+ */
+function calculateSecondDerivative(points: Point[], i: number): number | undefined {
+    // ensure we have enough points to calculate the second derivative
+    if (i <= 0 || i >= points.length - 1) {
+        // Requires two neighbors on both sides, or use the direct y-value formula.
+        // For simplicity, we'll focus on interior points.
+        return undefined;
+    }
+    // y values
+    const y_i_plus_1 = points[i + 1].is || 0;
+    const y_i = points[i].is || 0;
+    const y_i_minus_1 = points[i - 1].is || 0;
+    // x values
+    const x_i_plus_1 = points[i + 1].ep;
+    const x_i_minus_1 = points[i - 1].ep;
+    // a simple, robust approximation for uneven spacing
+    const dy2 = y_i_plus_1 - 2 * y_i + y_i_minus_1;
+    const dx_squared_approx = (x_i_plus_1 - points[i].ep) * (points[i].ep - x_i_minus_1);
+    // return second derivative
+    return dx_squared_approx !== 0 ? dy2 / dx_squared_approx : Infinity;
+}
+
+export function findScreenCurrentFeaturePointsInSeries(points: Point[], egOffset: number): ScreenCurrentFeaturePoint[] {
+    // inflection points to use
+    const featurePoints: ScreenCurrentFeaturePoint[] = [];
+    // 1. Calculate and store first derivatives for all points
+    const firstDerivatives: (number | undefined)[] = points.map((_, i) => calculateFirstDerivative(points, i));
+    // 2. Calculate and store second derivatives for all points
+    const secondDerivatives: (number | undefined)[] = points.map((_, i) => calculateSecondDerivative(points, i));
+    // loop from 1 to length - 1
+    for (let i = 1; i < points.length - 1; i++) {
+        // derivatives
+        const d1_i = firstDerivatives[i];
+        const d2_i = secondDerivatives[i];
+        // validate both derivatives exist
+        if (d1_i === undefined || d2_i === undefined)
+            continue;
+        // --- A. Local Maximum Detection (First Derivative Test) ---
+        // A local max occurs where the first derivative changes sign from (+) to (-)
+        // and is approximately zero (critical point).
+        const d1_prev = firstDerivatives[i - 1];
+        const d1_next = firstDerivatives[i + 1];
+        // validate derivatives exist
+        if (d1_prev !== undefined && d1_next !== undefined) {
+            // Check if slope changes from positive/zero to negative/zero
+            if (d1_prev > Epsilon && d1_next < -Epsilon) {
+                // point at local maximum
+                const point = points[i];
+                // append maximum point
+                featurePoints.push({
+                    type: 'Local Maximum',
+                    epmax: point.ep,
+                    eg: point.eg + egOffset,
+                    is: point.is || 0,
+                    ip: point.ip,
+                    ep: point.ep,
+                    es: point.es || 0
+                });
+                // continue to next point
+                continue;
+            }
+        }
+        // --- B. Inflection Point Detection (Second Derivative Test) ---
+        // An inflection point occurs where the second derivative changes sign.
+        // We check the sign change between d2_i and d2_{i-1}.
+        const d2_prev = secondDerivatives[i - 1];
+        // validate previous second derivative exists
+        if (d2_prev !== undefined) {
+            // Check for sign change in the second derivative (concavity change)
+            if ((d2_prev < -Epsilon && d2_i > Epsilon) || (d2_prev > Epsilon && d2_i < -Epsilon)) {
+                // Inflection point is detected *between* points i-1 and i
+                // For reporting, we can use the current point 'i' as an approximation
+                featurePoints.push({
+                    type: 'Inflection Point',
+                    epmax: points[i].ep,
+                    eg: points[i].eg + egOffset,
+                    is: points[i].is || 0,
+                    ip: points[i].ip,
+                    ep: points[i].ep,
+                    es: points[i].es || 0
+                });
+                // continue to next point
+                continue;
+            }
+        }
+    }
+    return featurePoints;
+}
+
+function findScreenCurrentFeaturePoints(files: File[]): ScreenCurrentFeaturePoint[] {
+    // inflection points to use
+    const featurePoints: ScreenCurrentFeaturePoint[] = [];
+    // loop all files
+    for (const file of files) {
+        // check measurement type (ep is in the X-axis and es is constant), do not use triode files
+        if (file.measurementType === 'IPIS_VA_VG_VS_VH') {
+            // loop series
+            for (const series of file.series) {
+                // we require at least 3 points to find inflection or local max
+                if (series.points.length < 3)
+                    continue;
+                // series points must be sorted by the X axis (EP)
+                series.points.sort((p1, p2) => p1.ep - p2.ep);
+                // find feature points in series
+                const seriesFeaturePoints = findScreenCurrentFeaturePointsInSeries(series.points, file.egOffset);
+                // append to main feature points
+                featurePoints.push(...seriesFeaturePoints);
+            }
+        }
+    }
+    return featurePoints;
+}
 
 // estimateSecondaryEmissionParameters
 export const estimateSecondaryEmissionParameters = function (initial: Initial, files: File[], model: typeof derkModel | typeof derkEModel, estimateS: typeof estimateDerkS | typeof estimateDerkES, trace?: Trace) {
@@ -14,9 +155,7 @@ export const estimateSecondaryEmissionParameters = function (initial: Initial, f
     if (trace) {
         // estimates
         trace.estimates = trace.estimates || {};
-        trace.estimates.secondaryEmission = {
-            inflectionPoints: []
-        };
+        trace.estimates.secondaryEmission = {};
     }
     // lambda (lambda = mu)
     initial.lambda = initial.lambda || initial.mu;
@@ -24,93 +163,23 @@ export const estimateSecondaryEmissionParameters = function (initial: Initial, f
     initial.alphaP = initial.alphaP || 0.05;
     // estimate v, w & s if needed
     if (!initial.v || !initial.w || !initial.s) {
-        // inflection & local maximum points
-        const points = [];
-        // loop all files
-        for (const file of files) {
-            // check measurement type (ep is in the X-axis and es is constant), do not use triode files
-            if (file.measurementType === 'IPIS_VA_VG_VS_VH') {
-                // loop series
-                for (const series of file.series) {
-                    // series points must be sorted by the X axis (EP)
-                    series.points.sort((p1, p2) => p1.ep - p2.ep);
-                    // inflection point detection
-                    let lastSlope = 0;
-                    let lp: Point | null = null;
-                    let rp: Point | null = null;
-                    // loop points
-                    for (const p of series.points) {
-                        // point must have is and es defined
-                        if (p.is && p.es) {
-                            // intialize point, apply eg offset
-                            rp = {...p};
-                            rp.eg += file.egOffset;
-                            // check we have a lp
-                            if (lp) {
-                                // calculate slope
-                                const slope = ((rp.is || 0) - (lp.is || 0)) / (rp.ep - lp.ep);
-                                // detect inflection point (change in slope sign)
-                                if (slope * lastSlope < 0) {
-                                    // store point (last point since this is the place slope changed)
-                                    points.push(lp);
-                                    // exit loop
-                                    break;
-                                }
-                                // detect local maximum (slope is increasing when ep is increasing, detect a decreasing slope)
-                                if (slope < lastSlope) {
-                                    // store point (last point since this is the place slope changed)
-                                    points.push(lp);
-                                    // exit loop
-                                    break;
-                                }
-                                // store slope
-                                lastSlope = slope;
-                            }
-                            // update lp
-                            lp = rp;
-                        }
-                    }
-                }
-            }
-        }
-        // inflection points to use
-        const inflectionPoints : InflectionPoint[] = [];
-        // loop points
-        for (const point of points) {
-            // least squares
-            const ls = function(x: number[]): number {
-                // Vamax
-                const epmax = Math.abs(x[0]);
-                // calculate screen current, point.eg already has egOffset applied
-                const {is} = model(epmax, point.eg, point.es, initial.kp, initial.mu, initial.kvb, initial.ex, initial.kg1, initial.kg2, initial.a, initial.alpha, initial.alphaS, initial.beta, true);
-                // residual
-                return ((point.is || 0) - is) * ((point.is || 0) - is);
-            };
-            // optimize leastSquares
-            const r = powell([point.ep], ls, DefaultPowellOptions);
-            // check result
-            if (r.converged) {
-                // epmax
-                const epmax = Math.abs(r.x[0]);
-                // check it is a valid value
-                if (point.ep >= epmax) {
-                    // add to inflection points
-                    inflectionPoints.push({
-                        epmax: epmax,
-                        eg: point.eg,
-                        is: point.is || 0,
-                        ip: point.ip,
-                        ep: point.ep,
-                        es: point.es || 0
-                    });
-                }
-            }
-        }
+        // find feature points
+        const screenCurrentFeaturePoints = findScreenCurrentFeaturePoints(files);
         // update trace
-        if (trace?.estimates.secondaryEmission)
-            trace.estimates.secondaryEmission.inflectionPoints = inflectionPoints;
+        if (trace?.estimates?.secondaryEmission)
+            trace.estimates.secondaryEmission.screenCurrentFeaturePoints = screenCurrentFeaturePoints;
         // check we need to estimate v or w
         if (!initial.v || !initial.w) {
+            // check we detected feature points in screen current
+            if (screenCurrentFeaturePoints.length === 0) {
+                // estimate v & w as zero
+                initial.v = 0;
+                initial.w = 0;
+                // estimate S
+                estimateS(initial, screenCurrentFeaturePoints, trace);
+                // exit
+                return;
+            }
             // least squares function
             const leastSquares = function(x: number[]) {
                 // get parameters
@@ -118,10 +187,10 @@ export const estimateSecondaryEmissionParameters = function (initial: Initial, f
                 const w = x[1];
                 // result
                 let r = 0;
-                // loop inflectionPoints
-                for (const p of inflectionPoints) {
+                // loop screenCurrentFeaturePoints
+                for (const p of screenCurrentFeaturePoints) {
                     // difference
-                    const d = -p.epmax + p.ip / initial.lambda - v * p.eg - w;
+                    const d = -p.epmax + p.ip / (initial.lambda || 1) - v * p.eg - w;
                     // update r
                     r += d * d;
                 }
@@ -131,7 +200,8 @@ export const estimateSecondaryEmissionParameters = function (initial: Initial, f
             const result = powell([0, 0], leastSquares, {
                 iterations: 500,
                 traceEnabled: false,
-                relativeThreshold: 1e-4
+                relativeThreshold: 1e-4,
+                absoluteThreshold: 2.220446049250312e-16
             });
             // check result
             if (result.converged) {
@@ -144,13 +214,8 @@ export const estimateSecondaryEmissionParameters = function (initial: Initial, f
                 initial.v = 0;
                 initial.w = 0;
             }
-            // update trace
-            if (trace) {
-                trace.estimates.secondaryEmission.v = Math.abs(initial.v);
-                trace.estimates.secondaryEmission.w = Math.abs(initial.w);
-            }
         }
         // estimate S
-        estimateS(initial, inflectionPoints, trace);
+        estimateS(initial, screenCurrentFeaturePoints, trace);
     }
 };

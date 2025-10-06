@@ -2,6 +2,7 @@ import { InflectionPoint } from './estimates/inflection-point';
 import { MathCollection, MathNumericType } from 'mathjs';
 import { Point } from '../files';
 import { Vector } from './algorithms/vector';
+import { ScreenCurrentFeaturePoint } from './estimates/screen-current-feature-point';
 
 export interface KpAverage {
     file: string;
@@ -102,7 +103,7 @@ export interface Trace {
                 s?: number;
                 average: number[];
             };
-            inflectionPoints?: InflectionPoint[];
+            screenCurrentFeaturePoints?: ScreenCurrentFeaturePoint[];
         };
         beta?: {
             average: BetaAverage[];

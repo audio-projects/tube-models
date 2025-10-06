@@ -2,6 +2,7 @@ import { derkModel } from './derk-model';
 import { PentodeModelResult } from './pentode-model-result';
 
 describe('models / derkModel', () => {
+
     it('should calculate ip and is correctly with valid inputs', () => {
         // arrange
         const ep = 100;

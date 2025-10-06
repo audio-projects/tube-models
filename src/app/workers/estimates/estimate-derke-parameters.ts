@@ -1,5 +1,5 @@
 import { DefaultPowellOptions, powell } from '../algorithms/powell';
-import { derkEModel } from '../models/derk-e-model';
+import { derkEModel } from '../models/derke-model';
 import { estimateA } from './estimate-a';
 import { estimateDerkES } from './estimate-derke-s';
 import { estimateKg2 } from './estimate-kg2';

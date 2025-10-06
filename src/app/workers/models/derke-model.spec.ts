@@ -1,4 +1,4 @@
-import { derkEModel } from './derk-e-model';
+import { derkEModel } from './derke-model';
 import { PentodeModelResult } from './pentode-model-result';
 
 describe('models / derkEModel', () => {

@@ -135,7 +135,7 @@ addEventListener('message', ({ data }) => {
     // initial parameters
     const initial: Initial = {};
     // estimate parameters
-    const estimates = estimateTriodeParameters(files, initial, maximumPlateDissipation, trace);
+    const estimates = estimateTriodeParameters(initial, files, maximumPlateDissipation, trace);
     // update parameters
     const mu = Math.abs(estimates.mu ?? 0);
     const ex = Math.abs(estimates.ex ?? 0);

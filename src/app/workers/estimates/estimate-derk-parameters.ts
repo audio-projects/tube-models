@@ -4,13 +4,16 @@ import { estimateA } from './estimate-a';
 import { estimateDerkS } from './estimate-derk-s';
 import { estimateKg2 } from './estimate-kg2';
 import { estimateSecondaryEmissionParameters } from './estimate-secondary-emission-parameters';
+import { estimateTriodeParameters } from './estimate-triode-parameters';
 import { File } from '../../files';
 import { Initial } from '../initial';
 import { ipk } from '../models/ipk';
 import { Trace } from '../trace';
 
 // estimateDerkParameters
-export const estimateDerkParameters = function (initial: Initial, files: File[], maxW: number, secondaryEmission: boolean, trace?: Trace) {
+export const estimateDerkParameters = function (initial: Initial, files: File[], maxW: number, secondaryEmission: boolean, trace?: Trace): Initial {
+    // estimate triode parameters first
+    initial = estimateTriodeParameters(initial, files, maxW, trace);
     // initialize trace
     if (trace) {
         // estimates
@@ -119,4 +122,6 @@ export const estimateDerkParameters = function (initial: Initial, files: File[],
     // check we need to process secondary emission
     if (secondaryEmission)
         estimateSecondaryEmissionParameters(initial, files, derkModel, estimateDerkS, trace);
+    // return estimates
+    return initial;
 };

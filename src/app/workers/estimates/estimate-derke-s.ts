@@ -1,10 +1,10 @@
-import { InflectionPoint } from './inflection-point';
 import { Initial } from '../initial';
 import { ipk } from '../models/ipk';
+import { ScreenCurrentFeaturePoint } from './screen-current-feature-point';
 import { Trace } from '../trace';
 
 // estimateDerkES
-export const estimateDerkES = function (initial: Initial, inflectionPoints: InflectionPoint[], trace?: Trace) {
+export const estimateDerkES = function (initial: Initial, screenCurrentFeaturePoints: ScreenCurrentFeaturePoint[], trace?: Trace) {
     // check we need to estimate S
     if (!initial.s) {
         // mu must be initialized
@@ -24,8 +24,8 @@ export const estimateDerkES = function (initial: Initial, inflectionPoints: Infl
         // average
         let sum = 0;
         let count = 0;
-        // loop inflectionPoints
-        for (const p of inflectionPoints) {
+        // loop screenCurrentFeaturePoints
+        for (const p of screenCurrentFeaturePoints) {
             // ipk
             const ip = ipk(p.eg, p.es, initial.kp, initial.mu, initial.kvb, initial.ex);
             // calculate Psec estimate @ Vamax

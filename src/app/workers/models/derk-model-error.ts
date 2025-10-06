@@ -8,7 +8,7 @@ export const derkModelError = function (files: File[], kp: number, mu: number, k
     // loop data files
     for (const file of files) {
         // check measurement type is supported by model
-        if (['IP_EP_EG_VS_VH', 'IP_EG_EP_VS_VH', 'IP_EP_ES_VG_VH', 'IP_ES_EG_VA_VH', 'IP_EG_EPES_VH', 'IP_EG_EPES_VH'].indexOf(file.measurementType) !== -1) {
+        if (file.measurementType !== 'IP_VA_VG_VH' && file.measurementType !== 'IP_VG_VA_VH' && file.measurementType !== 'IPIS_VG_VAVS_VH' && file.measurementType !== 'IPIS_VAVS_VG_VH') {
             // loop series
             for (const series of file.series) {
                 // loop points

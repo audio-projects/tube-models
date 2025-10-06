@@ -6,7 +6,7 @@ import { File } from '../../files';
 import { Initial } from '../initial';
 import { Trace } from '../trace';
 
-export const estimateTriodeParameters = function (files: File[], initial: Initial, maxW: number, trace?: Trace): Initial {
+export const estimateTriodeParameters = function (initial: Initial, files: File[], maxW: number, trace?: Trace): Initial {
     // initialize trace
     if (trace) {
         // estimates
