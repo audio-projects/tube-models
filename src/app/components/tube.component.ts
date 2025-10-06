@@ -15,7 +15,7 @@ import { FirebaseTubeService } from '../services/firebase-tube.service';
 import { FormsModule } from '@angular/forms';
 import { PentodeModelParametersComponent } from './pentode-model-parameters.component';
 import { ToastService } from '../services/toast.service';
-import { TriodeModelParametersComponent } from './triode-model-parameters.component';
+import { NormanKorenTriodeModelParametersComponent } from './norman-koren-triode-model-parameters.component';
 import { TubeInformation } from './tube-information';
 import { TubePlotComponent } from './tube-plot.component';
 
@@ -23,7 +23,7 @@ import { TubePlotComponent } from './tube-plot.component';
     selector: 'app-tube',
     templateUrl: './tube.component.html',
     styleUrl: './tube.component.scss',
-    imports: [FormsModule, CommonModule, RouterLink, TubePlotComponent, PentodeModelParametersComponent, TriodeModelParametersComponent],
+    imports: [FormsModule, CommonModule, RouterLink, TubePlotComponent, PentodeModelParametersComponent, NormanKorenTriodeModelParametersComponent],
 })
 export class TubeComponent implements OnInit, AfterViewInit {
 

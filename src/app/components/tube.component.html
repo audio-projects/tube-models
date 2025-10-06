@@ -339,12 +339,12 @@
           <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Triode Model (Norman Koren)</h5>
         </div>
         <div class="card-body triode-model-parameters">
-          <app-triode-model-parameters 
+          <app-norman-koren-triode-model-parameters 
             [tube]="tube"
             [isCalculating]="isCalculatingSpiceParameters"
             [canCalculate]="tube.files && tube.files.length > 0"
             (calculateRequested)="calculateTriodeModelParameters()">
-          </app-triode-model-parameters>
+          </app-norman-koren-triode-model-parameters>
         </div>
       </div>
 
