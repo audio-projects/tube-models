@@ -13,7 +13,7 @@ import { File as TubeFile, Series } from '../files';
 import { fileParserService } from '../services/file-parser-service';
 import { FirebaseTubeService } from '../services/firebase-tube.service';
 import { FormsModule } from '@angular/forms';
-import { PentodeModelParametersComponent } from './pentode-model-parameters.component';
+import { NormanKorenPentodeModelParametersComponent } from './norman-koren-pentode-model-parameters.component';
 import { ToastService } from '../services/toast.service';
 import { NormanKorenTriodeModelParametersComponent } from './norman-koren-triode-model-parameters.component';
 import { TubeInformation } from './tube-information';
@@ -23,7 +23,7 @@ import { TubePlotComponent } from './tube-plot.component';
     selector: 'app-tube',
     templateUrl: './tube.component.html',
     styleUrl: './tube.component.scss',
-    imports: [FormsModule, CommonModule, RouterLink, TubePlotComponent, PentodeModelParametersComponent, NormanKorenTriodeModelParametersComponent],
+    imports: [FormsModule, CommonModule, RouterLink, TubePlotComponent, NormanKorenPentodeModelParametersComponent, NormanKorenTriodeModelParametersComponent],
 })
 export class TubeComponent implements OnInit, AfterViewInit {
 

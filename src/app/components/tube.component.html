@@ -354,12 +354,12 @@
           <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Pentode Model (Norman Koren)</h5>
         </div>
         <div class="card-body pentode-model-parameters">
-          <app-pentode-model-parameters 
+          <app-norman-koren-pentode-model-parameters 
             [tube]="tube"
             [isCalculating]="isCalculatingSpiceParameters"
             [canCalculate]="tube.files && tube.files.length > 0"
             (calculateRequested)="calculatePentodeModelParameters()">
-          </app-pentode-model-parameters>
+          </app-norman-koren-pentode-model-parameters>
         </div>
       </div>
 
