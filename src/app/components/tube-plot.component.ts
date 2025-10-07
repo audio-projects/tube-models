@@ -556,7 +556,8 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             // x values
             for (let plateVoltage = 0; plateVoltage <= maxPlateVoltage; plateVoltage += stepSize) {
                 try {
-                    const result = normanKorenNewPentodeModel(plateVoltage, gridVoltage, screenVoltage, params.kp, params.mu, params.kvb, params.ex, params.kg1, params.kg2);
+                    // evaluate model, when no screen current use Pentode connected as a Triode
+                    const result = normanKorenNewPentodeModel(plateVoltage, gridVoltage, screenVoltage || plateVoltage, params.kp, params.mu, params.kvb, params.ex, params.kg1, params.kg2);
                     // values
                     points.push({ x: plateVoltage, y1: result.ip, y2: result.is });
                 }
@@ -575,14 +576,15 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             // model parameters
             const params = this.tube?.derkModelParameters;
             // Check if all required parameters are available
-            if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb || !params.kg2 || !params.a || !params.alpha || !params.alphaS || !params.beta || !params.s || !params.alphaP || !params.lambda || !params.v || !params.w)
+            if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb || !params.kg2 || !params.a || !params.alphaS || !params.beta)
                 return [];
             // screen voltage
             const screenVoltage = (series.es || 0);
             // x values
             for (let plateVoltage = 0; plateVoltage <= maxPlateVoltage; plateVoltage += stepSize) {
                 try {
-                    const result = derkModel(plateVoltage, gridVoltage, screenVoltage, params.kp, params.mu, params.kvb, params.ex, params.kg1, params.kg2, params.a, params.alpha, params.alphaS, params.beta, params.secondaryEmission || false, params.s, params.alphaP, params.lambda, params.v, params.w);
+                    // evaluate model, when no screen current use Pentode connected as a Triode
+                    const result = derkModel(plateVoltage, gridVoltage, screenVoltage || plateVoltage, params.kp, params.mu, params.kvb, params.ex, params.kg1, params.kg2, params.a, params.alphaS, params.beta, params.secondaryEmission || false, params.s || 0, params.alphaP || 0, params.lambda || 0, params.v || 0, params.w || 0);
                     // values
                     points.push({ x: plateVoltage, y1: result.ip, y2: result.is });
                 }

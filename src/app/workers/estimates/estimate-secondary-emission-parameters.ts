@@ -1,5 +1,3 @@
-import { derkEModel } from '../models/derke-model';
-import { derkModel } from '../models/derk-model';
 import { estimateDerkES } from './estimate-derke-s';
 import { estimateDerkS } from './estimate-derk-s';
 import { File, Point } from '../../files';
@@ -117,8 +115,6 @@ export function findScreenCurrentFeaturePointsInSeries(points: Point[], egOffset
                     ep: points[i].ep,
                     es: points[i].es || 0
                 });
-                // continue to next point
-                continue;
             }
         }
     }
@@ -150,7 +146,18 @@ function findScreenCurrentFeaturePoints(files: File[]): ScreenCurrentFeaturePoin
 }
 
 // estimateSecondaryEmissionParameters
-export const estimateSecondaryEmissionParameters = function (initial: Initial, files: File[], model: typeof derkModel | typeof derkEModel, estimateS: typeof estimateDerkS | typeof estimateDerkES, trace?: Trace) {
+export const estimateSecondaryEmissionParameters = function (initial: Initial, files: File[], secondaryEmission: boolean, estimateS: typeof estimateDerkS | typeof estimateDerkES, trace?: Trace) {
+    // check secondaryEmission is enabled
+    if (!secondaryEmission) {
+        // set secondary emission parameters to zero
+        initial.s = 0;
+        initial.alphaP = 0;
+        initial.lambda = 0;
+        initial.v = 0;
+        initial.w = 0;
+        // exit
+        return;
+    }
     // initialize trace if needed
     if (trace) {
         // estimates

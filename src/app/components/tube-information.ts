@@ -10,7 +10,6 @@ export interface DerkModelParameters {
     kp?: number;
     kvb?: number;
     a?: number;
-    alpha?: number;
     alphaS?: number;
     beta?: number;
     secondaryEmission?: boolean;

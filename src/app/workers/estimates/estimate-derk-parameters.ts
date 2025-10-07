@@ -1,5 +1,4 @@
 import { DefaultPowellOptions, powell } from '../algorithms/powell';
-import { derkModel } from '../models/derk-model';
 import { estimateA } from './estimate-a';
 import { estimateDerkS } from './estimate-derk-s';
 import { estimateKg2 } from './estimate-kg2';
@@ -119,9 +118,8 @@ export const estimateDerkParameters = function (initial: Initial, files: File[],
         initial.alphaS = count > 0 ? count / bSum : 5;
         initial.beta = count > 0 ? initial.alphaS * aSum / count : 0.001;
     }
-    // check we need to process secondary emission
-    if (secondaryEmission)
-        estimateSecondaryEmissionParameters(initial, files, derkModel, estimateDerkS, trace);
+    // process secondary emission
+    estimateSecondaryEmissionParameters(initial, files, secondaryEmission, estimateDerkS, trace);
     // return estimates
     return initial;
 };

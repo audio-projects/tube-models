@@ -626,7 +626,6 @@ export class TubeComponent implements OnInit, AfterViewInit {
                             kp: params.kp || 0,
                             kvb: params.kvb || 0,
                             a: params.a || 0,
-                            alpha: params.alpha || 0,
                             alphaS: params.alphaS || 0,
                             beta: params.beta || 0,
                             secondaryEmission: params.secondaryEmission || false,
