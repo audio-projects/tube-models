@@ -9,7 +9,7 @@ import { ipk } from '../models/ipk';
 import { Trace } from '../trace';
 
 // estimateDerkEParameters
-export const estimateDerkEParameters = function (initial: Initial, files: File[], maxW: number, secondaryEmission: boolean, trace?: Trace) {
+export const estimateDerkEParameters = function (initial: Initial, files: File[], maxW: number, secondaryEmission: boolean, trace?: Trace): Initial {
     // initialize trace
     if (trace) {
         // estimates
@@ -117,4 +117,6 @@ export const estimateDerkEParameters = function (initial: Initial, files: File[]
     }
     // process secondary emission
     estimateSecondaryEmissionParameters(initial, files, secondaryEmission, estimateDerkES, trace);
+    // return estimates
+    return initial;
 };
