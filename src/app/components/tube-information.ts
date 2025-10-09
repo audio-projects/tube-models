@@ -1,21 +1,23 @@
 import { File } from '../files';
+import { TriodeModelParameters } from '../workers/models/triode-model-parameters';
+import { PentodeModelParameters } from '../workers/models/pentode-model-parameters';
 
-export interface TriodeModelParameters {
-    mu?: number;
-    ex?: number;
-    kg1?: number;
-    kp?: number;
-    kvb?: number;
-    calculatedOn?: string; // ISO-8601 datetime string with timezone
-}
-
-export interface PentodeModelParameters {
+export interface DerkModelParameters {
     mu?: number;
     ex?: number;
     kg1?: number;
     kg2?: number;
     kp?: number;
     kvb?: number;
+    a?: number;
+    alphaS?: number;
+    beta?: number;
+    secondaryEmission?: boolean;
+    s?: number;
+    alphaP?: number;
+    lambda?: number;
+    v?: number;
+    w?: number;
     calculatedOn?: string; // ISO-8601 datetime string with timezone
 }
 
@@ -41,6 +43,7 @@ export interface TubeInformation {
     minimumHeaterToCathodeVoltage?: number;
     heaterCurrent?: number;
     heaterWarmupTime?: number;
+
     ccg1?: number;
     ccg2?: number;
     ccg3?: number;
@@ -51,8 +54,11 @@ export interface TubeInformation {
     cg2p?: number;
     cg3p?: number;
     ccp?: number;
+
     files: File[];
 
     triodeModelParameters?: TriodeModelParameters;
     pentodeModelParameters?: PentodeModelParameters;
+    derkModelParameters?: DerkModelParameters;
+    derkEModelParameters?: DerkModelParameters;
 }

@@ -17,7 +17,7 @@ TubeModels is an Angular 19 application for vacuum tube (electron tube) modeling
 - **TubeComponent** (`src/app/components/tube.component.ts`): Main tube editor with tabbed interface (upload, plot, specifications, SPICE parameters)
 - **TubesComponent** (`src/app/components/tubes.component.ts`): List view with Firebase integration for browsing shared tubes  
 - **TubePlotComponent** (`src/app/components/tube-plot.component.ts`): Chart.js visualization with model overlay capability
-- **PentodeModelParametersComponent/TriodeModelParametersComponent**: SPICE parameter calculation UI components
+- **NormanKorenPentodeModelParametersComponent/NormanKorenTriodeModelParametersComponent**: SPICE parameter calculation UI components
 
 ### Services Architecture
 

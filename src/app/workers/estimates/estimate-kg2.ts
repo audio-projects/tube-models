@@ -28,6 +28,8 @@ export const estimateKg2 = function (initial: Initial, files: File[], maxW: numb
             if (file.measurementType === 'IPIS_VA_VG_VS_VH' || file.measurementType === 'IPIS_VA_VS_VG_VH' || file.measurementType === 'IPIS_VAVS_VG_VH') {
                 // loop series
                 for (const series of file.series) {
+                    // sort series points by X axle (Ep)
+                    series.points.sort((a, b) => a.ep - b.ep);
                     // loop points (backwards, high ep)
                     for (let k = series.points.length - 1; k >= 0; k--) {
                         // current point

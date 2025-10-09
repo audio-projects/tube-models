@@ -9,12 +9,12 @@ import { ToastService } from '../services/toast.service';
 import { TubeInformation } from './tube-information';
 
 @Component({
-    selector: 'app-pentode-model-parameters',
-    templateUrl: './pentode-model-parameters.component.html',
-    styleUrl: './pentode-model-parameters.component.scss',
+    selector: 'app-norman-koren-pentode-model-parameters',
+    templateUrl: './norman-koren-pentode-model-parameters.component.html',
+    styleUrl: './norman-koren-pentode-model-parameters.component.scss',
     imports: [CommonModule],
 })
-export class PentodeModelParametersComponent {
+export class NormanKorenPentodeModelParametersComponent {
 
     @Input() tube: TubeInformation | undefined = undefined;
     @Input() isCalculating = false;

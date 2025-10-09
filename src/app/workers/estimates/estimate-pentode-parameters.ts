@@ -4,9 +4,9 @@ import { File } from '../../files';
 import { Initial } from '../initial';
 import { Trace } from '../trace';
 
-export const estimatePentodeParameters = function (files: File[], initial: Initial, maxW: number, trace?: Trace): Initial {
+export const estimatePentodeParameters = function (initial: Initial, files: File[], maxW: number, trace?: Trace): Initial {
     // estimate triode parameters first
-    initial = estimateTriodeParameters(files, initial, maxW, trace);
+    initial = estimateTriodeParameters(initial, files, maxW, trace);
     // initialize trace
     if (trace) {
         // estimates

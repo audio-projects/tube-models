@@ -1,6 +1,16 @@
-import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild } from '@angular/core';
+import {
+    AfterViewInit,
+    Component,
+    ElementRef,
+    Input,
+    OnChanges,
+    OnDestroy,
+    SimpleChanges,
+    ViewChild
+} from '@angular/core';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { CommonModule } from '@angular/common';
+import { derkModel } from '../workers/models/derk-model';
 import { File as TubeFile, Point, Series } from '../files';
 import { FormsModule } from '@angular/forms';
 import { normanKorenNewPentodeModel } from '../workers/models/norman-koren-new-pentode-model';
@@ -546,7 +556,35 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             // x values
             for (let plateVoltage = 0; plateVoltage <= maxPlateVoltage; plateVoltage += stepSize) {
                 try {
-                    const result = normanKorenNewPentodeModel(plateVoltage, gridVoltage, screenVoltage, params.kp, params.mu, params.kvb, params.ex, params.kg1, params.kg2);
+                    // evaluate model, when no screen current use Pentode connected as a Triode
+                    const result = normanKorenNewPentodeModel(plateVoltage, gridVoltage, screenVoltage || plateVoltage, params.kp, params.mu, params.kvb, params.ex, params.kg1, params.kg2);
+                    // values
+                    points.push({ x: plateVoltage, y1: result.ip, y2: result.is });
+                }
+                catch {
+                    // Skip invalid points
+                    continue;
+                }
+            }
+            return points;
+        }
+        // derk model
+        if (this.selectedModel === 'derk-pentode') {
+            // check model has been calculated
+            if (!this.tube?.derkModelParameters?.calculatedOn)
+                return [];
+            // model parameters
+            const params = this.tube?.derkModelParameters;
+            // Check if all required parameters are available
+            if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb || !params.kg2 || !params.a || !params.alphaS || !params.beta)
+                return [];
+            // screen voltage
+            const screenVoltage = (series.es || 0);
+            // x values
+            for (let plateVoltage = 0; plateVoltage <= maxPlateVoltage; plateVoltage += stepSize) {
+                try {
+                    // evaluate model, when no screen current use Pentode connected as a Triode
+                    const result = derkModel(plateVoltage, gridVoltage, screenVoltage || plateVoltage, params.kp, params.mu, params.kvb, params.ex, params.kg1, params.kg2, params.a, params.alphaS, params.beta, params.secondaryEmission || false, params.s || 0, params.alphaP || 0, params.lambda || 0, params.v || 0, params.w || 0);
                     // values
                     points.push({ x: plateVoltage, y1: result.ip, y2: result.is });
                 }
@@ -960,6 +998,9 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             // pentode model
             if (this.tube.pentodeModelParameters?.calculatedOn)
                 this.availableModels.push({key: 'norman-koren-pentode', name: 'Norman Koren Pentode Model'});
+            // derk model
+            if (this.tube.derkModelParameters?.calculatedOn)
+                this.availableModels.push({key: 'derk-pentode', name: 'Derk Pentode Model'});
         }
     }
 

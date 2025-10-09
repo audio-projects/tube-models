@@ -9,7 +9,6 @@ export interface Initial {
     kg2?: number;
     // derk
     a?: number;
-    alpha?: number;
     alphaS?: number;
     beta?: number;
     s?: number;
