@@ -37,7 +37,7 @@ jobs:
           hide_branch_rate: false
           hide_complexity: true
           indicators: true
-          output: both
+          output: pullrequest
           thresholds: '60 80'
 
       - name: Build Angular application
