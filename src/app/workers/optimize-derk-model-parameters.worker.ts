@@ -204,7 +204,7 @@ addEventListener('message', ({ data }) => {
     // get state
     const files = data.files;
     const maximumPlateDissipation = data.maximumPlateDissipation;
-    const secondaryEmission = data.secondaryEmission || true;
+    const secondaryEmission = data.secondaryEmission;
     const algorithm = data.algorithm;
     const trace = data.trace;
     // estimate parameters
