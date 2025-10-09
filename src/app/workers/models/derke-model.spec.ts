@@ -1,4 +1,4 @@
-import { derkEModel } from './derk-e-model';
+import { derkEModel } from './derke-model';
 import { PentodeModelResult } from './pentode-model-result';
 
 describe('models / derkEModel', () => {
@@ -16,7 +16,6 @@ describe('models / derkEModel', () => {
             0.8, // kg1
             1.0, // kg2
             0.5, // a
-            undefined, // alpha
             0.3, // alphaS
             0.02, // beta
             true, // secondaryEmission
@@ -46,15 +45,14 @@ describe('models / derkEModel', () => {
             0.8, // kg1
             1.0, // kg2
             0.5, // a
-            undefined, // alpha
             0.3, // alphaS
             0.02, // beta
             false, // secondaryEmission
-            0.1, // s
-            0.05, // alphaP
-            2.0, // lambda
-            0.1, // v
-            0.2  // w
+            0, // s
+            0, // alphaP
+            0, // lambda
+            0, // v
+            0  // w
         );
         // assert
         expect(result.ip).toBeDefined();
