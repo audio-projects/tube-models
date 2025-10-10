@@ -6,11 +6,9 @@ import { Initial } from '../initial';
 export const estimateMu = function (initial: Initial, files: File[], maxW: number, trace?: Trace) {
     // check we need to estimate mu
     if (!initial.mu) {
-        // maximum plate current for reference
+        // maximum plate current
         let maxIp = 0;
-        // collect all non-zero currents for dynamic threshold calculation
-        const allCurrents: number[] = [];
-        // loop files to find maximum current and collect all currents
+        // loop files
         for (const file of files) {
             // loop series
             for (const series of file.series) {
@@ -18,35 +16,22 @@ export const estimateMu = function (initial: Initial, files: File[], maxW: numbe
                 for (const p of series.points) {
                     // check point meets plate power criteria
                     if (p.ip * p.ep * 1e-3 < maxW) {
-                        // update maxIp (plate current only)
+                        // update maxIp
                         maxIp = Math.max(p.ip, maxIp);
-                        // collect non-zero plate currents for percentile analysis
-                        if (p.ip > 0) {
-                            allCurrents.push(p.ip);
-                        }
                     }
                 }
             }
         }
-        // sort currents for percentile calculation
-        allCurrents.sort((a, b) => a - b);
-        // calculate cutoff threshold using multi-criteria approach
-        const measurementNoise = 0.02; // mA - typical uTracer precision floor
-        const percentileThreshold = allCurrents.length > 0 ? allCurrents[Math.floor(allCurrents.length * 0.05)] : measurementNoise;
-        const maxPercentageThreshold = 0.02 * maxIp; // maximum 2% of max current
-        // use the most restrictive (smallest) threshold, but never below measurement noise
-        const ipCutoff = Math.max(
-            measurementNoise,
-            Math.min(percentileThreshold, maxPercentageThreshold)
-        );
-        // mu points at cutoff
+        // find ip to estimate Mu
+        const ipmu = 0.05 * maxIp;
+        // mu points
         const mup: Point[] = [];
         // trace
         if (trace) {
             // mu
             trace.estimates.mu = {
                 maxIp: maxIp,
-                ip: ipCutoff,
+                ip: ipmu,
                 points: mup,
             };
         }
@@ -55,44 +40,48 @@ export const estimateMu = function (initial: Initial, files: File[], maxW: numbe
         let muCount = 0;
         // loop files
         for (const f of files) {
-            // check measurement type (triode and pentode plate characteristics)
-            if (f.measurementType === 'IP_VA_VG_VH' || f.measurementType === 'IPIS_VAVS_VG_VH' || f.measurementType === 'IPIS_VA_VG_VS_VH' || f.measurementType === 'IPIS_VG_VA_VS_VH' || f.measurementType === 'IPIS_VG_VAVS_VH') {
+            // check measurement type (triode plate characteristics)
+            if (f.measurementType === 'IP_VA_VG_VH' || f.measurementType === 'IPIS_VAVS_VG_VH') {
                 // loop series
                 for (const s of f.series) {
-                    // grid voltage for this series
-                    const eg = (s.eg ?? 0) + f.egOffset;
-                    // skip positive grid voltages (not cutoff region)
-                    if (eg >= 0)
-                        continue;
-                    // find points with minimal plate current (near cutoff)
-                    for (const p of s.points) {
-                        // check if point is in cutoff region (plate current only)
-                        if (p.ip <= ipCutoff && p.ip > 0) {
-                            // check point meets plate power criteria
-                            if (p.ip * p.ep * 1e-3 < maxW) {
-                                // add cutoff point for mu calculation
-                                mup.push({
-                                    ip: p.ip,
-                                    ep: p.ep,
-                                    eg: eg,
-                                });
-                            }
-                        }
+                    // series points must be sorted by the X axis (EP)
+                    s.points.sort((p1, p2) => p1.ep - p2.ep);
+                    // points around ipmu
+                    let lower = null,
+                        upper = null;
+                    // loop points
+                    for (let m = 0; (!lower || !upper || upper.ip < ipmu) && m < s.points.length; m++) {
+                        lower = upper;
+                        upper = {
+                            ip: s.points[m].ip + (s.points[m].is ?? 0),
+                            ep: s.points[m].ep,
+                            eg: (s.eg ?? 0) + f.egOffset,
+                        };
+                    }
+                    // check data is available
+                    if (lower && upper && lower.ip <= ipmu && upper.ip >= ipmu) {
+                        // slope & intercept (y = mx + n)
+                        const slope = (upper.ip - lower.ip) / (upper.ep - lower.ep);
+                        const n = upper.ip - slope * upper.ep;
+                        // extrapolate point for ipmu
+                        mup.push({
+                            ip: ipmu,
+                            eg: lower.eg,
+                            ep: (ipmu - n) / slope,
+                        });
                     }
                 }
             }
         }
-        // calculate mu from cutoff points using mu = -Va/Vg
-        for (const p of mup) {
-            // mu estimation formula: mu = -Va/Vg at cutoff
-            const muEstimate = -p.ep / p.eg;
-            // ensure physically reasonable mu (typical range 1-200)
-            if (muEstimate > 1 && muEstimate < 200) {
-                muSum += muEstimate;
-                muCount++;
-            }
+        // check we have at least two points to estimate value
+        if (mup.length > 1) {
+            // sort by |eg|
+            mup.sort((p1, p2) => Math.abs(p1.eg) - Math.abs(p2.eg));
+            // use first two points (low |eg|)
+            muSum -= (mup[1].ep - mup[0].ep) / (mup[1].eg - mup[0].eg);
+            muCount++;
         }
-        // calculate mu (average of estimates, or default if none found)
+        // calculate mu
         initial.mu = muCount > 0 ? muSum / muCount : 50;
     }
 };
