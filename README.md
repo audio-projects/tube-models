@@ -529,6 +529,59 @@ Testing candidate values (doubling sequence):
 
 This empirical fitting approach provides a robust initial estimate that helps the Powell optimizer converge efficiently to the final optimal parameters.
 
+### Pentode Parameter Estimation
+
+According to Derk Reefman's methodology (page 36, section 11.2), pentode model parameters are estimated using a two-stage approach:
+
+**Stage 1: Triode-Strapped Measurements**
+
+The PDF recommends: *"The initial parameter estimates µest, xest, kp,est, kg1,est, kVB,est in any of the pentode models can most conveniently be obtained by first strapping the pentode as a triode, and fitting the Koren triode model to the observed data."*
+
+This means:
+
+1. Measure the pentode with **screen connected to plate** (triode-strapped configuration)
+2. Apply the complete triode parameter estimation sequence (μ, Ex, Kg1, Kp, Kvb)
+3. Use these triode parameters as initial estimates for the pentode model
+
+**Stage 2: Pentode-Specific Parameters**
+
+After obtaining triode-strapped parameters, estimate the pentode-specific parameters ($K_{g2}$, etc.)
+
+#### Screen Grid Parameter ($K_{g2}$)
+
+The screen grid scaling parameter is estimated using high anode voltage measurements where screen current behavior is most stable.
+
+**Estimation Method:**
+
+For high anode voltages, the screen current approximates:
+
+$$I_{g2}(V_a \gg 1) \approx \frac{I_{P,Koren}(V_{g1}, V_{g2})}{K_{g2}}$$
+
+**Solution for $K_{g2}$:**
+
+$$K_{g2,est} = \left\langle \frac{I_{P,Koren,est}(V_{g1}, V_{g2})}{I_{g2,obs}} \right\rangle_{V_{g1}, V_{g2}}$$
+
+Where:
+
+- $I_{P,Koren,est} = I_{pk} = E_1^{E_x}$: Koren current calculated using triode parameters ($\mu_{est}$, $E_{x,est}$, $K_{p,est}$, $K_{vb,est}$)
+- $I_{g2,obs}$: Measured screen current from pentode data
+- $\langle \rangle$: Average over multiple grid voltage combinations
+
+**Implementation Notes:**
+
+- Select measurement points with **high plate voltage** (Va >> Vg2) for best accuracy
+- Use **pentode or triode-strapped measurement data** with separate plate and screen currents
+- For each series (grid voltage), selects highest plate voltage point meeting power criteria
+- Average multiple estimates across different operating points
+- Typical range: $K_{g2}$ = 100-10000 depending on tube type
+
+**Practical Workflow:**
+1. Measure pentode in **triode mode** → estimate (μ, Ex, Kg1, Kp, Kvb)
+2. Measure pentode in **pentode mode** → estimate $K_{g2}$ using triode parameters
+3. Use all parameters as initial values for pentode model optimization
+
+This two-stage approach provides robust initial estimates for the complete pentode model parameter set.
+
 #### Estimation Sequence
 
 The complete parameter estimation follows this order:
@@ -562,6 +615,7 @@ $$r_i(x) = I_{measured,i} - I_{model}(V_{p,i}, V_{g,i}, V_{s,i}; x)$$
 - **Convergence Criteria**: $\|F(x_{k+1}) - F(x_k)\| < \varepsilon$
 
 **Features:**
+
 - **Power Dissipation Constraints**: Respects tube maximum ratings during optimization
 - **Weighted Residuals**: Emphasizes important operating regions
 - **Robust Error Handling**: Manages numerical edge cases and invalid operating points
@@ -569,9 +623,11 @@ $$r_i(x) = I_{measured,i} - I_{model}(V_{p,i}, V_{g,i}, V_{s,i}; x)$$
 ### Signal Analysis
 
 #### Total Harmonic Distortion (THD) Calculation
+
 Advanced audio analysis capabilities for evaluating vacuum tube linearity in amplifier applications. THD measurement is crucial for audio applications as it quantifies how much the tube distorts the input signal.
 
 **Physical Significance:**
+
 When a vacuum tube amplifies a pure sinusoidal signal, non-linearities in the tube's transfer characteristic create harmonic frequencies that weren't present in the original signal. These harmonics contribute to the perceived "warmth" and character of tube amplifiers, but excessive distortion degrades audio quality.
 
 **Mathematical Foundation:**
@@ -592,6 +648,7 @@ where:
 - $N = 512$ points per cycle for high-resolution analysis
 
 **Physical Interpretation:**
+
 - **Low THD (<1%)**: Indicates high linearity, suitable for high-fidelity audio applications
 - **Moderate THD (1-5%)**: Typical for audio tubes, adds pleasant harmonic content
 - **High THD (>5%)**: May indicate overdriven conditions or non-optimal operating point
@@ -608,6 +665,7 @@ where:
 This application is designed to work with measurement data from the **uTracer** - a sophisticated vacuum tube curve tracer developed by Ronald Dekker. The uTracer is an open-source hardware project that enables precise measurement of vacuum tube characteristics.
 
 **About the uTracer:**
+
 - **Website**: [https://www.dos4ever.com/uTracer3/uTracer3_pag0.html](https://www.dos4ever.com/uTracer3/uTracer3_pag0.html)
 - **Precision Measurements**: Capable of accurate plate and screen current measurements
 - **Automated Sweeps**: Performs systematic voltage sweeps for complete tube characterization
