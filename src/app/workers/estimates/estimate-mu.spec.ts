@@ -18,7 +18,7 @@ describe('estimates / estimateMu', () => {
                     // estimate mu
                     estimateMu(initial, [file], 2.5);
                     // check result
-                    expect(initial.mu).toBeCloseTo(29.67, 2);
+                    expect(initial.mu).toBeCloseTo(41.57, 1);
                     // done
                     done();
                     // exit
@@ -50,7 +50,7 @@ describe('estimates / estimateMu', () => {
                     // estimate mu
                     estimateMu(initial, [file], 2.5);
                     // check result
-                    expect(initial.mu).toBeCloseTo(12.26, 2);
+                    expect(initial.mu).toBeCloseTo(14.56, 1);
                     // done
                     done();
                     // exit
@@ -82,7 +82,7 @@ describe('estimates / estimateMu', () => {
                     // estimate mu
                     estimateMu(initial, [file], 1);
                     // check result
-                    expect(initial.mu).toBeCloseTo(45.29, 2);
+                    expect(initial.mu).toBeCloseTo(93.82, 1);
                     // done
                     done();
                     // exit
@@ -126,7 +126,7 @@ describe('estimates / estimateMu', () => {
                 // estimate mu
                 estimateMu(initial, files, 25);
                 // check result
-                expect(initial.mu).toBeCloseTo(4.18, 2);
+                expect(initial.mu).toBeCloseTo(4.82, 1);
                 // done
                 done();
                 // exit

@@ -1,6 +1,6 @@
 import { File, Point } from '../../files';
-import { Trace } from '../trace';
 import { Initial } from '../initial';
+import { Trace } from '../trace';
 
 // estimateMu
 export const estimateMu = function (initial: Initial, files: File[], maxW: number, trace?: Trace) {
@@ -40,8 +40,8 @@ export const estimateMu = function (initial: Initial, files: File[], maxW: numbe
         let muCount = 0;
         // loop files
         for (const f of files) {
-            // check measurement type (triode plate characteristics)
-            if (f.measurementType === 'IP_VA_VG_VH' || f.measurementType === 'IPIS_VAVS_VG_VH') {
+            // check measurement type (triode and pentode plate characteristics)
+            if (f.measurementType === 'IP_VA_VG_VH' || f.measurementType === 'IPIS_VAVS_VG_VH' || f.measurementType === 'IPIS_VA_VG_VS_VH' || f.measurementType === 'IPIS_VG_VA_VS_VH' || f.measurementType === 'IPIS_VG_VAVS_VH') {
                 // loop series
                 for (const s of f.series) {
                     // series points must be sorted by the X axis (EP)
