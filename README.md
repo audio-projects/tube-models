@@ -8,6 +8,11 @@ A comprehensive web application for vacuum tube (electron tube) mathematical mod
 
 This application implements advanced mathematical models based on the pioneering work of **Norman Koren** and enhanced by **Derk Reefman's** theoretical extensions. The models address fundamental limitations of earlier SPICE models and provide physically accurate representations of vacuum tube behavior across all operating regions.
 
+**Sources:**
+
+- Norman Koren: https://www.normankoren.com/Audio/index.html
+- Derk Reefman: https://www.dos4ever.com/uTracer3/uTracer3_pag14.html
+
 ### Key Theoretical Principles
 
 **Constant Space Charge**: The foundation concept for pentode modeling, where total cathode current remains largely independent of plate voltage for a given screen voltage. This principle, well-established both experimentally and theoretically, enables accurate modeling of electron flow distribution between plate and screen electrodes.
@@ -243,37 +248,95 @@ where $J$ is the Jacobian matrix, $\lambda$ is the damping parameter, and $\delt
 
 #### Initial Parameter Estimation
 
-Automated algorithms provide physically meaningful starting points for optimization:
+The Norman-Koren model requires accurate initial estimates to ensure convergence of the optimization algorithms. Parameter estimation follows a specific order based on the physical characteristics and measurement conditions:
 
-**Physical Constraint Analysis:**
+#### 1. Amplification Factor ($\mu$)
 
-The estimation process uses limiting conditions to extract initial parameter values:
+The amplification factor is estimated using limiting condition where the space charge term becomes negligible. This occurs when:
+- High plate voltage ($V_a$) relative to other voltages
+- Grid voltage ($V_g$) near cutoff
 
-**For Amplification Factor ($\mu$):**
+**Estimation Method (Situation 1):**
 
-Using the limiting condition where $V_a^2 \gg K_{vb}$ and $K_p(1/\mu + V_g/V_a) \ll 1$:
+Under these conditions, the simplified equation becomes:
 
-$$E_1 \approx V_a(1/\mu + V_g/V_a) = V_a/\mu + V_g$$
+$$\mu_{est} = -\frac{V_a}{V_g}$$
 
-This allows direct extraction of $\mu$ from the slope of plate current vs. grid voltage characteristics.
+This is extracted from measurement points where the plate current approaches zero, providing a direct relationship between plate and grid voltages at cutoff.
 
-**For Screen Current Scaling ($K_{g2}$):**
+**Implementation:**
+- Select measurement points with minimal plate current ($I_p \approx 0$)
+- Calculate ratio of plate to grid voltage for multiple points
+- Average the results to obtain robust estimate
 
-At high plate voltages, screen current approaches:
+#### 2. Perveance Parameters ($E_x$ and $K_{g1}$)
 
-$$I_{g2}(V_a \gg 1) \approx \frac{I_{P,Koren}(V_{g1}, V_{g2})}{K_{g2}}$$
+The perveance parameter $E_x$ and the grid voltage scaling factor $K_{g1}$ are estimated together using the log-linear relationship in the space charge limited region.
 
-**For Voltage Dependency ($A$):**
+**Estimation Method:**
 
-The plate current slope at high voltages determines the $A$ parameter:
+Taking the logarithm of the simplified current equation:
 
-$$\frac{\partial I_a(V_a \gg 1)}{\partial V_a} = I_{P,Koren} \frac{A}{K_{g1}}$$
+$$\ln(I_p) = \ln(K_{g1}) + E_x \ln(E_1)$$
 
-**Features:**
-- **Physical Constraints**: Ensures parameters remain within realistic ranges based on tube physics
-- **Data-Driven Estimates**: Analyzes measurement characteristics using mathematical limiting conditions
-- **Convergence Acceleration**: Good starting points dramatically improve optimization success rates
-- **Automatic Validation**: Cross-checks parameter estimates against known physical bounds
+where $E_1 = V_a/\mu + V_g$ using the previously estimated $\mu$.
+
+**Implementation:**
+- Plot $\ln(I_p)$ versus $\ln(E_1)$ for measurement points in the space charge region
+- Perform linear regression to extract:
+  - Slope = $E_x$ (typically around 1.5 for triodes)
+  - Intercept = $\ln(K_{g1})$
+- Validate that $E_x$ falls within physically reasonable bounds (1.0 to 2.5)
+
+#### 3. Knee Parameter ($K_p$)
+
+The knee parameter $K_p$ controls the transition from space charge limited to temperature limited current. It is estimated using the exponential approximation in the high current region.
+
+**Estimation Method (Situation 2):**
+
+For high plate currents where the space charge term dominates:
+
+$$K_{p,est} = \frac{I_p}{I_{P,Koren} \cdot \exp(-K_{vb}/V_a)}$$
+
+This requires an iterative approach since $K_{vb}$ is not yet determined.
+
+**Implementation:**
+- Initially assume $K_{vb} = 0$ for first approximation
+- Select measurement points with high plate current
+- Calculate $K_p$ from the ratio of measured to theoretical current
+- Refine estimate after $K_{vb}$ determination
+
+#### 4. Beam Current Parameter ($K_{vb}$)
+
+The beam current parameter $K_{vb}$ represents the voltage dependence of the current limiting mechanism. It is estimated using the square root relationship in the transition region.
+
+**Estimation Method (Situation 3):**
+
+In the intermediate voltage region, the current relationship can be approximated as:
+
+$$K_{vb,est} = V_a \sqrt{\frac{I_{P,measured}}{I_{P,Koren}}}$$
+
+**Implementation:**
+
+- Select measurement points in the transition region (moderate plate voltages)
+- Calculate the ratio of measured to space charge limited current
+- Extract $K_{vb}$ using the square root relationship
+- Validate consistency across multiple measurement points
+
+#### Estimation Sequence
+
+The complete parameter estimation follows this order:
+
+1. **$\mu$ Estimation**: Use cutoff characteristics for direct calculation
+2. **$E_x$ and $K_{g1}$ Estimation**: Apply log-linear regression with known $\mu$
+3. **$K_p$ Estimation**: Use high current region with iterative refinement
+4. **$K_{vb}$ Estimation**: Apply transition region analysis with all previous parameters
+
+**Validation Features:**
+- **Physical Bounds Checking**: Ensures all parameters remain within realistic ranges
+- **Cross-Validation**: Compares estimates across different measurement regions
+- **Iterative Refinement**: Improves estimates through multiple passes
+- **Convergence Monitoring**: Tracks parameter stability during estimation
 
 #### Error Function Minimization
 
