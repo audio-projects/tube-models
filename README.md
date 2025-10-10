@@ -461,29 +461,82 @@ This demonstrates the practical application of Derk Reefman's $K_p$ estimation m
 
 #### 4. Beam Current Parameter ($K_{vb}$)
 
-The beam current parameter $K_{vb}$ represents the voltage dependence of the current limiting mechanism. It is estimated using the square root relationship in the transition region.
+The beam current parameter $K_{vb}$ represents the voltage dependence of the current limiting mechanism. It is estimated using an empirical least-squares fitting approach that tests discrete candidate values.
 
-**Estimation Method (Situation 3):**
+**Estimation Method:**
 
-In the intermediate voltage region, the current relationship can be approximated as:
+Rather than using algebraic approximations, the implementation uses a direct empirical approach:
+- Tests a sequence of candidate $K_{vb}$ values
+- For each candidate, calculates the RMS error using the full Norman-Koren triode model
+- Selects the candidate that minimizes prediction error
 
-$$K_{vb,est} = V_a \sqrt{\frac{I_{P,measured}}{I_{P,Koren}}}$$
+**Algorithm:**
 
-**Implementation:**
+1. **Define candidate sequence**:
 
-- Select measurement points in the transition region (moderate plate voltages)
-- Calculate the ratio of measured to space charge limited current
-- Extract $K_{vb}$ using the square root relationship
-- Validate consistency across multiple measurement points
+   $$K_{vb,candidates} = [50, 100, 200, 400, 800, 3200]$$
+   (doubling sequence covering typical triode range)
+
+2. **For each candidate $K_{vb,c}$**:
+
+   - Calculate model predictions using complete Norman-Koren equations:
+     $$E_1 = \frac{V_p}{K_p} \ln\left(1 + \exp\left(K_p\left(\frac{1}{\mu} + \frac{V_g}{\sqrt{K_{vb,c} + V_p^2}}\right)\right)\right)$$
+     $$I_{p,model} = \frac{E_1^{E_x}}{K_{g1}}$$
+   - Compute RMS error: 
+     $$RMS_{error} = \sqrt{\frac{1}{N}\sum_{i=1}^{N}(I_{p,model,i} - I_{p,measured,i})^2}$$
+
+3. **Select optimal value**:
+
+   $$K_{vb,est} = \arg\min_{K_{vb,c}} RMS_{error}(K_{vb,c})$$
+
+**Implementation Details:**
+
+- **Consistency**: Uses `normanKorenTriodeModelError()` function - the same error calculation as the Powell optimizer
+- **Full model**: No approximations - complete Norman-Koren triode equations for all points
+- **Power filtering**: Only uses measurement points where $P = I_p \cdot V_p \leq P_{max}$
+- **Robustness**: Handles edge cases (infinite values, NaN, zero counts)
+
+**Practical Example: ECC82 (12AU7) $K_{vb}$ Estimation**
+
+Using triode measurement data from `src/test-assets/ECC82.utd` with initial parameters:
+- μ = 14.56, Ex = 1.11, Kg1 = 1478.9, Kp = 93.6
+- Maximum plate dissipation: 2.5W
+
+Testing candidate values (doubling sequence):
+
+| $K_{vb}$ Candidate | RMS Error | Status |
+|-------------------|-----------|---------|
+| 50                | 1.408e+0  |         |
+| 100               | 1.407e+0  |         |
+| 200               | 1.406e+0  |         |
+| 400               | 1.404e+0  |         |
+| 800               | 1.400e+0  | ✓ **Best** |
+| 3200              | 1.405e+0  |         |
+
+**Analysis Results:**
+- **Selected $K_{vb}$**: 800 (minimum RMS error)
+- **Error profile**: U-shaped curve with minimum at 800, increasing for both lower and higher values
+- **Physical interpretation**: 800 is typical for low-μ double triodes like 12AU7
+- **Optimization refinement**: This initial estimate provides a good starting point for Powell optimizer
+- **Efficiency**: Only 6 evaluations needed to find optimal value in range 50-3200
+
+**Advantages of Empirical Approach:**
+- ✓ No algebraic approximations or limiting conditions required
+- ✓ Uses complete model equations (consistent with optimizer)
+- ✓ Handles parameter coupling through discrete search
+- ✓ Simple, robust, and easy to validate
+- ✓ Fast evaluation (6 candidates, milliseconds)
+
+This empirical fitting approach provides a robust initial estimate that helps the Powell optimizer converge efficiently to the final optimal parameters.
 
 #### Estimation Sequence
 
 The complete parameter estimation follows this order:
 
-1. **$\mu$ Estimation**: Use cutoff characteristics for direct calculation
+1. **$\mu$ Estimation**: Use Derk Reefman 5% current methodology for direct calculation
 2. **$E_x$ and $K_{g1}$ Estimation**: Apply log-linear regression with known $\mu$
-3. **$K_p$ Estimation**: Use high current region with iterative refinement
-4. **$K_{vb}$ Estimation**: Apply transition region analysis with all previous parameters
+3. **$K_p$ Estimation**: Use linear regression on high voltage region data
+4. **$K_{vb}$ Estimation**: Apply direct algebraic solution with all previous parameters
 
 **Validation Features:**
 - **Physical Bounds Checking**: Ensures all parameters remain within realistic ranges

@@ -1,5 +1,4 @@
 import { estimateKvb } from './estimate-kvb';
-import { File } from '../../files';
 import { fileParserService } from '../../services/file-parser-service';
 import { Initial } from '../initial';
 
@@ -18,7 +17,39 @@ describe('estimates / estimateKvb', () => {
                     // estimate kvb
                     estimateKvb(initial, [file], 2.5);
                     // check result
-                    expect(initial.kvb).toBeCloseTo(20575.75, 2);
+                    expect(initial.kvb).toBeCloseTo(800.0, 2);
+                    // done
+                    done();
+                    // exit
+                    return;
+                }
+                // fail
+                fail('Failed to parse test data');
+                // done
+                done();
+            })
+            .catch((error) => {
+                // fail
+                fail('Failed to fetch test data: ' + error);
+                // done
+                done();
+            });
+    });
+
+    it('it should estimate "kvb" from ECC82.utd file', (done) => {
+        // fetch test data
+        fetch('/test-assets/ECC82.utd')
+            .then((response) => response.text())
+            .then((data) => {
+                // parse file
+                const file = fileParserService('ECC82.utd', data);
+                if (file) {
+                    // initial
+                    const initial: Initial = { mu: 14.56, ex: 1.11, kg1: 1478.9, kp: 93.6 };
+                    // estimate kvb
+                    estimateKvb(initial, [file], 2.5);
+                    // check result
+                    expect(initial.kvb).toBeCloseTo(800.0, 2);
                     // done
                     done();
                     // exit
@@ -50,7 +81,7 @@ describe('estimates / estimateKvb', () => {
                     // estimate kvb
                     estimateKvb(initial, [file], 1);
                     // check result
-                    expect(initial.kvb).toBeCloseTo(898932.43, 2);
+                    expect(initial.kvb).toBeCloseTo(3200.0, 2);
                     // done
                     done();
                     // exit
@@ -69,32 +100,28 @@ describe('estimates / estimateKvb', () => {
             });
     });
 
-    it('it should estimate "kvb" from EEL500 files', (done) => {
-        // files
-        const fileNames = ['EL500_200.utd', 'EL500_250.utd', 'EL500_300.utd', 'EL500_triode.utd'];
-        // fetch all files
-        Promise.all(fileNames.map((fileName) => fetch('/test-assets/' + fileName)))
-            .then((responses) => Promise.all(responses.map((response) => response.text())))
+    // kvb estimation is only for Triodes, other tube types use a hardcoded value
+    it('it should estimate "kvb" from EL500_triode.utd file', (done) => {
+        // fetch test data
+        fetch('/test-assets/EL500_triode.utd')
+            .then((response) => response.text())
             .then((data) => {
-                // files
-                const files: File[] = [];
-                // loop file data
-                for (let i = 0; i < data.length; i++) {
-                    // parse file content
-                    const file = fileParserService(fileNames[i], data[i]);
-                    if (file) {
-                        // update egOffset
-                        file.egOffset = -25;
-                        // add file
-                        files.push(file);
-                    }
-                }
+                // parse file
+                const file = fileParserService('EL500_triode.utd', data);
+                if (file) {
                 // initial
-                const initial: Initial = { mu: 4.82, ex: 1.58, kg1: 863.17, kp: 76.78 };
-                // estimate kvb
-                estimateKvb(initial, files, 25);
-                // check result
-                expect(initial.kvb).toBeCloseTo(10548.03, 2);
+                    const initial: Initial = { mu: 4.82, ex: 1.58, kg1: 863.17, kp: 76.78 };
+                    // estimate kvb
+                    estimateKvb(initial, [file], 25);
+                    // check result
+                    expect(initial.kvb).toBeCloseTo(50.0, 2);
+                    // done
+                    done();
+                    // exit
+                    return;
+                }
+                // fail
+                fail('Failed to parse test data');
                 // done
                 done();
             })
