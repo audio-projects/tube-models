@@ -605,7 +605,7 @@ export class TubeComponent implements OnInit, AfterViewInit {
             worker.postMessage({
                 files: this.tube.files,
                 maximumPlateDissipation: this.tube.maximumPlateDissipation || 1000, // Default to 1000W if not specified
-                secondaryEmission: false, // Default to false, could be made configurable
+                secondaryEmission: this.tube.derkModelParameters?.secondaryEmission || false, // Use the actual checkbox value
                 algorithm: 1,  // 0 = Levenberg-Marquardt, 1 = Powell
                 trace: undefined
             });

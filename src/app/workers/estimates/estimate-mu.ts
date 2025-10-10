@@ -1,6 +1,6 @@
 import { File, Point } from '../../files';
-import { Trace } from '../trace';
 import { Initial } from '../initial';
+import { Trace } from '../trace';
 
 // estimateMu
 export const estimateMu = function (initial: Initial, files: File[], maxW: number, trace?: Trace) {
@@ -40,36 +40,33 @@ export const estimateMu = function (initial: Initial, files: File[], maxW: numbe
         let muCount = 0;
         // loop files
         for (const f of files) {
-            // check measurement type (triode plate characteristics)
-            if (f.measurementType === 'IP_VA_VG_VH' || f.measurementType === 'IPIS_VAVS_VG_VH') {
-                // loop series
-                for (const s of f.series) {
-                    // series points must be sorted by the X axis (EP)
-                    s.points.sort((p1, p2) => p1.ep - p2.ep);
-                    // points around ipmu
-                    let lower = null,
-                        upper = null;
+            // loop series
+            for (const s of f.series) {
+                // series points must be sorted by the X axis (EP)
+                s.points.sort((p1, p2) => p1.ep - p2.ep);
+                // points around ipmu
+                let lower = null,
+                    upper = null;
                     // loop points
-                    for (let m = 0; (!lower || !upper || upper.ip < ipmu) && m < s.points.length; m++) {
-                        lower = upper;
-                        upper = {
-                            ip: s.points[m].ip + (s.points[m].is ?? 0),
-                            ep: s.points[m].ep,
-                            eg: (s.eg ?? 0) + f.egOffset,
-                        };
-                    }
-                    // check data is available
-                    if (lower && upper && lower.ip <= ipmu && upper.ip >= ipmu) {
-                        // slope & intercept (y = mx + n)
-                        const slope = (upper.ip - lower.ip) / (upper.ep - lower.ep);
-                        const n = upper.ip - slope * upper.ep;
-                        // extrapolate point for ipmu
-                        mup.push({
-                            ip: ipmu,
-                            eg: lower.eg,
-                            ep: (ipmu - n) / slope,
-                        });
-                    }
+                for (let m = 0; (!lower || !upper || upper.ip < ipmu) && m < s.points.length; m++) {
+                    lower = upper;
+                    upper = {
+                        ip: s.points[m].ip + (s.points[m].is ?? 0),
+                        ep: s.points[m].ep,
+                        eg: (s.eg ?? 0) + f.egOffset,
+                    };
+                }
+                // check data is available
+                if (lower && upper && lower.ip <= ipmu && upper.ip >= ipmu) {
+                    // slope & intercept (y = mx + n)
+                    const slope = (upper.ip - lower.ip) / (upper.ep - lower.ep);
+                    const n = upper.ip - slope * upper.ep;
+                    // extrapolate point for ipmu
+                    mup.push({
+                        ip: ipmu,
+                        eg: lower.eg,
+                        ep: (ipmu - n) / slope,
+                    });
                 }
             }
         }
