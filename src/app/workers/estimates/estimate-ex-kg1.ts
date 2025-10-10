@@ -1,4 +1,3 @@
-import { DefaultPowellOptions, powell, PowellOptions } from '../algorithms/powell';
 import { File } from '../../files';
 import { Initial } from '../initial';
 import { Trace } from '../trace';
@@ -29,74 +28,71 @@ export const estimateExKg1 = function (initial: Initial, files: File[], maxW: nu
         const mu = initial.mu;
         // loop files
         for (const file of files) {
-            // check measurement type (plate characteristics of a triode)
-            if (file.measurementType === 'IP_VA_VG_VH' || file.measurementType === 'IPIS_VAVS_VG_VH') {
+            // check measurement type (plate characteristics of a triode and pentode)
+            if (file.measurementType === 'IP_VA_VG_VH' || file.measurementType === 'IPIS_VAVS_VG_VH' || file.measurementType === 'IPIS_VA_VG_VS_VH' || file.measurementType === 'IPIS_VG_VA_VS_VH' || file.measurementType === 'IPIS_VG_VAVS_VH') {
                 // loop series
                 for (const series of file.series) {
                     // series points must be sorted by the X axis (EP)
                     series.points.sort((p1, p2) => p1.ep - p2.ep);
-                    // least squares function
-                    const leastSquares = function (x: number[]): number {
-                        // get parameters
-                        const ex = Math.abs(x[0]);
-                        const kg1 = Math.abs(x[1]);
-                        // result
-                        let r = 0;
-                        // number of points to use
-                        let c = 0;
-                        // loop points (use large Ep, loop backwards)
-                        for (let k = series.points.length - 1; k >= 0 && c < 6; k--) {
-                            // current point
-                            const p = series.points[k];
-                            // check point meets power criteria
-                            if (p.ip * p.ep * 1e-3 < maxW) {
-                                // check point meets criteria
-                                if (p.ep / mu > -(p.eg + file.egOffset)) {
-                                    // compute error
-                                    const e = -Math.log((p.ip + (p.is ?? 0)) * 1e-3) - Math.log(kg1) + ex * Math.log(p.ep / mu + p.eg + file.egOffset);
-                                    // compute residual
-                                    r += e * e;
-                                    // increment number of points
-                                    c++;
-                                }
-                                else {
-                                    // exit loop
-                                    break;
+                    // collect data points for linear regression
+                    const xData: number[] = [];
+                    const yData: number[] = [];
+                    // loop points (use large Ep for high voltage condition)
+                    for (let k = series.points.length - 1; k >= 0; k--) {
+                        // current point
+                        const p = series.points[k];
+                        // check point meets power criteria
+                        if (p.ip * p.ep * 1e-3 < maxW) {
+                            // effective voltage: Va/mu + Vg
+                            const veff = p.ep / mu + (p.eg + file.egOffset);
+                            // check Derk Reefman condition: Va/mu > -Vg
+                            if (p.ep / mu > -(p.eg + file.egOffset) && veff > 0) {
+                                // total current (plate + screen for pentodes)
+                                const itotal = (p.ip + (p.is ?? 0)) * 1e-3;
+                                if (itotal > 0) {
+                                    // linear regression data: ln(Ia) vs ln(Va/mu + Vg)
+                                    xData.push(Math.log(veff));
+                                    yData.push(Math.log(itotal));
                                 }
                             }
                         }
-                        return r;
-                    };
-                    // powell optimization options
-                    const options: PowellOptions = {
-                        absoluteThreshold: DefaultPowellOptions.absoluteThreshold,
-                        relativeThreshold: 1e-4,
-                        iterations: 500,
-                        traceEnabled: false,
-                    };
-                    // optimize leastSquares
-                    const result = powell([initial.ex || 1.3, initial.kg1 || 1000], leastSquares, options);
-                    // check result
-                    if (result.converged) {
-                        // update trace
-                        if (trace) {
-                            // append averages
-                            trace.estimates.ex?.average.push({
-                                file: file.name,
-                                ex: Math.abs(result.x[0]),
-                                eg: (series.eg ?? 0) + file.egOffset,
-                            });
-                            trace.estimates.kg1?.average.push({
-                                file: file.name,
-                                kg1: Math.abs(result.x[1]),
-                                eg: (series.eg ?? 0) + file.egOffset,
-                            });
+                    }
+                    // perform linear regression if we have enough points
+                    if (xData.length >= 3) {
+                        // calculate linear regression: y = slope * x + intercept
+                        const n = xData.length;
+                        const sumX = xData.reduce((a, b) => a + b, 0);
+                        const sumY = yData.reduce((a, b) => a + b, 0);
+                        const sumXY = xData.reduce((sum, x, i) => sum + x * yData[i], 0);
+                        const sumXX = xData.reduce((sum, x) => sum + x * x, 0);
+                        // linear regression formulas
+                        const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+                        const intercept = (sumY - slope * sumX) / n;
+                        // extract parameters
+                        const exEst = slope; // Ex is the slope
+                        const kg1Est = Math.exp(-intercept); // Kg1 = exp(-intercept)
+                        // ensure physically reasonable values
+                        if (exEst > 0.1 && exEst < 5.0 && kg1Est > 0.01 && kg1Est < 1000000) {
+                            // update trace
+                            if (trace) {
+                                // append averages
+                                trace.estimates.ex?.average.push({
+                                    file: file.name,
+                                    ex: exEst,
+                                    eg: (series.eg ?? 0) + file.egOffset,
+                                });
+                                trace.estimates.kg1?.average.push({
+                                    file: file.name,
+                                    kg1: kg1Est,
+                                    eg: (series.eg ?? 0) + file.egOffset,
+                                });
+                            }
+                            // append to sums
+                            exSum += exEst;
+                            kg1Sum += kg1Est;
+                            // increment count
+                            count++;
                         }
-                        // append to sums
-                        exSum += Math.abs(result.x[0]);
-                        kg1Sum += Math.abs(result.x[1]);
-                        // increment count
-                        count++;
                     }
                 }
             }
