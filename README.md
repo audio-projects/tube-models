@@ -269,6 +269,43 @@ This is extracted from measurement points where the plate current approaches zer
 - Calculate ratio of plate to grid voltage for multiple points
 - Average the results to obtain robust estimate
 
+**Practical Example: ECC82 μ Estimation**
+
+Using actual ECC82 measurement data, the following table shows cutoff region points where plate current is minimal (≤ 0.05 mA):
+
+| Curve | $I_p$ (mA) | $V_g$ (V) | $V_a$ (V) | $\mu = -V_a/V_g$ |
+|-------|------------|-----------|-----------|------------------|
+| 1     | 0.02       | -4.0      | 49.1      | 12.28            |
+| 2     | 0.03       | -5.0      | 62.4      | 12.48            |
+| 3     | 0.01       | -6.0      | 69.2      | 11.54            |
+| 3     | 0.03       | -6.0      | 75.7      | 12.62            |
+| 4     | 0.01       | -7.0      | 82.5      | 11.79            |
+| 4     | 0.03       | -7.0      | 89.0      | 12.72            |
+| 5     | 0.01       | -8.0      | 95.8      | 11.98            |
+| 5     | 0.03       | -8.0      | 102.3     | 12.79            |
+| 6     | 0.01       | -9.0      | 109.1     | 12.13            |
+| 6     | 0.04       | -9.0      | 115.6     | 12.85            |
+
+**Analysis:**
+
+- **Individual μ estimates range**: 11.54 to 12.85
+- **Average μ**: ~12.3 (consistent with ECC82 datasheet value of ~12.5)
+- **Data validation**: All measurements at true cutoff (plate current < 0.05 mA)
+- **Voltage range**: Covers practical operating region (-4V to -9V grid bias)
+
+This demonstrates the direct application of the $\mu = -V_a/V_g$ relationship at cutoff conditions, providing excellent agreement with published tube specifications.
+
+**Measurement Types Used:**
+
+The μ estimation algorithm processes the following uTracer measurement configurations:
+- **Triode plate characteristics**: `Ia(Va, Vg) with Vh constant` - Plate current vs. plate voltage with constant grid voltage and heater voltage
+- **Triode with screen measurements**: `Ia(Va=Vs, Vg) + Is(Va=Vs, Vg) with Vh constant` - Combined plate/screen current with plate and screen voltages equal
+- **Pentode plate characteristics**: `Ia(Va, Vg), Is(Va, Vg) with Vs constant, Vh constant` - Plate/screen current vs. plate voltage with constant grid, screen, and heater voltages
+- **Pentode grid characteristics**: `Ia(Vg, Va), Is(Vg, Va) with Vs constant, Vh constant` - Plate/screen current vs. grid voltage with constant plate, screen, and heater voltages
+- **Combined pentode measurements**: `Ia(Vg, Va=Vs) + Is(Vg, Va=Vs) with Vh constant` - Combined current vs. grid voltage with plate voltage equal to screen voltage
+
+These measurement types ensure μ estimation works for both triode and pentode tube configurations, utilizing all available cutoff region data for maximum accuracy.
+
 #### 2. Perveance Parameters ($E_x$ and $K_{g1}$)
 
 The perveance parameter $E_x$ and the grid voltage scaling factor $K_{g1}$ are estimated together using the log-linear relationship in the space charge limited region.
