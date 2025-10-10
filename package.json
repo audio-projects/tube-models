@@ -13,7 +13,7 @@
   "dependencies": {
     "@angular/common": "^19.2.7",
     "@angular/compiler": "^19.2.7",
-    "@angular/core": "^19.2.7",
+    "@angular/core": "^20.3.4",
     "@angular/fire": "^17.1.0",
     "@angular/forms": "^19.2.7",
     "@angular/platform-browser": "^19.2.7",
