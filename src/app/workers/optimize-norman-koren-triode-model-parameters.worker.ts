@@ -25,19 +25,16 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
         let index = 0;
         // loop data files
         for (const file of files) {
-            // check measurement type
-            if (file.measurementType === 'IP_VA_VG_VH' || file.measurementType === 'IP_VG_VA_VH' || file.measurementType === 'IPIS_VG_VAVS_VH' || file.measurementType === 'IPIS_VAVS_VG_VH') {
-                // loop series
-                for (const series of file.series) {
-                    // loop points
-                    for (const point of series.points) {
-                        // check we can use this point in calculations (max power dissipation and different than zero)
-                        if (point.ip + (point.is ?? 0) > 0 && point.ep * (point.ip + (point.is ?? 0)) * 1e-3 <= maximumPlateDissipation) {
-                            // calculate currents
-                            const currents = normanKorenTriodeModel(point.ep, point.eg + file.egOffset, kp * x3, mu * x0, kvb * x4, ex * x1, kg1 * x2);
-                            // residual for point
-                            r[index++] = currents.ip - (point.ip + (point.is ?? 0));
-                        }
+            // loop series
+            for (const series of file.series) {
+                // loop points
+                for (const point of series.points) {
+                    // check we can use this point in calculations (max power dissipation and different than zero)
+                    if (point.ip + (point.is ?? 0) > 0 && point.ep * (point.ip + (point.is ?? 0)) * 1e-3 <= maximumPlateDissipation) {
+                        // calculate currents
+                        const currents = normanKorenTriodeModel(point.ep, point.eg + file.egOffset, kp * x3, mu * x0, kvb * x4, ex * x1, kg1 * x2);
+                        // residual for point
+                        r[index++] = currents.ip - (point.ip + (point.is ?? 0));
                     }
                 }
             }
@@ -48,7 +45,7 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
     // log information
     self.postMessage({
         type: 'log',
-        text: `Optimizing Triode Model parameters using the Levenberg-Marquardt algorithm, Objective function value: ${(normanKorenTriodeModelError(files, kp, mu, kvb, ex, kg1, maximumPlateDissipation) * 1e-6).toExponential()}`,
+        text: `Optimizing Triode Model parameters using the Levenberg-Marquardt algorithm, Objective function value: ${(normanKorenTriodeModelError(files, kp, mu, kvb, ex, kg1, maximumPlateDissipation)).toExponential()}`,
     });
     // optimize
     const result = levmar(R, [1, 1, 1, 1, 1], { trace: trace, tolerance: 1e-5, kmax: 500 });
@@ -67,7 +64,7 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
         // log values
         self.postMessage({
             type: 'log',
-            text: `Triode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, Objective function value: ${(normanKorenTriodeModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, maximumPlateDissipation) * 1e-6).toExponential()}, iterations: ${result.iterations}`,
+            text: `Triode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, Objective function value: ${(normanKorenTriodeModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, maximumPlateDissipation)).toExponential()}, iterations: ${result.iterations}`,
         });
         // return model parameters
         return parameters;
@@ -80,7 +77,7 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
     // log information
     postMessage({
         type: 'log',
-        text: `Optimizing Triode Model parameters using the Powell algorithm, Objective function value: ${(normanKorenTriodeModelError(files, kp, mu, kvb, ex, kg1, maximumPlateDissipation) * 1e-6).toExponential()}`,
+        text: `Optimizing Triode Model parameters using the Powell algorithm, Objective function value: ${(normanKorenTriodeModelError(files, kp, mu, kvb, ex, kg1, maximumPlateDissipation)).toExponential()}`,
     });
     // least square problem
     const leastSquares = function (x: number[]): number {
@@ -118,7 +115,7 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
         // log values
         postMessage({
             type: 'log',
-            text: `Triode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, Objective function value: ${(normanKorenTriodeModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, maximumPlateDissipation) * 1e-6).toExponential()}, iterations: ${result.iterations}`,
+            text: `Triode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, Objective function value: ${(normanKorenTriodeModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, maximumPlateDissipation)).toExponential()}, iterations: ${result.iterations}`,
         });
         // return model parameters
         return parameters;
@@ -134,8 +131,16 @@ addEventListener('message', ({ data }) => {
     const trace = data.trace;
     // initial parameters
     const initial: Initial = {};
+    // triode files
+    const triodeFiles: File[] = [];
+    // loop files
+    for (const f of files) {
+        // find a file that correspond to a triode measurement
+        if (f.measurementType === 'IP_VA_VG_VH' || f.measurementType === 'IP_VG_VA_VH' || f.measurementType === 'IPIS_VG_VAVS_VH' || f.measurementType === 'IPIS_VAVS_VG_VH')
+            triodeFiles.push(f);
+    }
     // estimate parameters
-    const estimates = estimateTriodeParameters(initial, files, maximumPlateDissipation, trace);
+    const estimates = estimateTriodeParameters(initial, triodeFiles, maximumPlateDissipation, trace);
     // update parameters
     const mu = Math.abs(estimates.mu ?? 0);
     const ex = Math.abs(estimates.ex ?? 0);
@@ -152,11 +157,11 @@ addEventListener('message', ({ data }) => {
     // check algorithm
     if (algorithm === 0) {
         // use Levenberg-Marquardt
-        parameters = optimizeWithLevenbergMarquardt(files, maximumPlateDissipation, mu, ex, kg1, kp, kvb, trace);
+        parameters = optimizeWithLevenbergMarquardt(triodeFiles, maximumPlateDissipation, mu, ex, kg1, kp, kvb, trace);
     }
     else {
         // use Powell
-        parameters = optimizeWithPowell(files, maximumPlateDissipation, mu, ex, kg1, kp, kvb, trace);
+        parameters = optimizeWithPowell(triodeFiles, maximumPlateDissipation, mu, ex, kg1, kp, kvb, trace);
     }
     // notify completion/failure
     postMessage({

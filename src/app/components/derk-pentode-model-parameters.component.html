@@ -4,6 +4,22 @@
     <i class="bi bi-info-circle me-1"></i>
     SPICE model parameters have not been calculated yet.
   </p>
+  
+  <!-- Model Options -->
+  <div class="mb-3">
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" 
+             [checked]="secondaryEmission" 
+             (change)="onSecondaryEmissionChange($event)"
+             id="secondaryEmissionCheck">
+      <label class="form-check-label" for="secondaryEmissionCheck">
+        <i class="bi bi-lightning-charge me-1"></i>
+        Include Secondary Emission Effects
+      </label>
+    </div>
+    <div class="form-text">Enable advanced secondary emission modeling for improved accuracy</div>
+  </div>
+  
   <button type="button" class="btn btn-outline-success" (click)="calculateSpiceModelParameters()" [disabled]="!canCalculate"><i class="bi bi-calculator me-1"></i>Calculate SPICE Parameters</button>
   <div class="form-text mt-2">Requires pentode measurement data files to calculate Derk Reefman model parameters</div>
 </div>
@@ -22,75 +38,27 @@
 
 <!-- Calculated state -->
 <div *ngIf="tube?.derkModelParameters?.calculatedOn">
-  <div class="row">
-    <div class="col-md-6">
-      <div class="mb-3">
-        <label class="form-label fw-bold"><i class="bi bi-arrow-up-right me-1"></i>μ (Amplification Factor)</label>
-        <div class="form-control-plaintext fw-bold text-primary">
-          {{ tube?.derkModelParameters?.mu | number : "1.3-3" }}
-        </div>
-        <div class="form-text">Voltage amplification factor</div>
-      </div>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="text-muted">
+      <i class="bi bi-check-circle-fill text-success me-1"></i>
+      SPICE model parameters calculated
     </div>
-    <div class="col-md-6">
-      <div class="mb-3">
-        <label class="form-label fw-bold"><i class="bi bi-lightning me-1"></i>EX (Exponent)</label>
-        <div class="form-control-plaintext fw-bold text-primary">
-          {{ tube?.derkModelParameters?.ex | number : "1.3-3" }}
-        </div>
-        <div class="form-text">Current law exponent</div>
-      </div>
-    </div>
+    <button type="button" class="btn btn-outline-success btn-sm" (click)="calculateSpiceModelParameters()" [disabled]="isCalculating || !canCalculate" title="Recalculate SPICE Parameters"><i class="bi bi-arrow-clockwise me-1" [class.spin]="isCalculating"></i>Recalculate</button>
   </div>
 
-  <div class="row">
-    <div class="col-md-6">
-      <div class="mb-3">
-        <label class="form-label fw-bold"><i class="bi bi-gear me-1"></i>KG1 (Grid Scaling)</label>
-        <div class="form-control-plaintext fw-bold text-primary">
-          {{ tube?.derkModelParameters?.kg1 | number : "1.3-3" }}
-        </div>
-        <div class="form-text">Grid current scaling factor</div>
-      </div>
+  <!-- Model Options -->
+  <div class="mb-3">
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" 
+             [checked]="secondaryEmission" 
+             (change)="onSecondaryEmissionChange($event)"
+             id="secondaryEmissionCheckCalculated">
+      <label class="form-check-label" for="secondaryEmissionCheckCalculated">
+        <i class="bi bi-lightning-charge me-1"></i>
+        Include Secondary Emission Effects
+      </label>
     </div>
-    <div class="col-md-6">
-      <div class="mb-3">
-        <label class="form-label fw-bold"><i class="bi bi-sliders me-1"></i>KP (Plate Scaling)</label>
-        <div class="form-control-plaintext fw-bold text-primary">
-          {{ tube?.derkModelParameters?.kp | number : "1.3-3" }}
-        </div>
-        <div class="form-text">Plate current scaling factor</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="col-md-6">
-      <div class="mb-3">
-        <label class="form-label fw-bold"><i class="bi bi-diagram-3 me-1"></i>KVB (Knee Voltage)</label>
-        <div class="form-control-plaintext fw-bold text-primary">
-          {{ tube?.derkModelParameters?.kvb | number : "1.3-3" }}
-        </div>
-        <div class="form-text">Knee voltage parameter</div>
-      </div>
-    </div>
-    <div class="col-md-6">
-      <div class="mb-3">
-        <label class="form-label fw-bold"><i class="bi bi-grid-3x3 me-1"></i>KG2 (Screen Grid Scaling)</label>
-        <div class="form-control-plaintext fw-bold text-primary">
-          {{ tube?.derkModelParameters?.kg2 | number : "1.3-3" }}
-        </div>
-        <div class="form-text">Screen grid current scaling factor</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="col-md-12">
-      <div class="text-center">
-        <button type="button" class="btn btn-outline-success btn-sm me-2" (click)="calculateSpiceModelParameters()" [disabled]="isCalculating || !canCalculate" title="Recalculate SPICE Parameters"><i class="bi bi-arrow-clockwise me-1" [class.spin]="isCalculating"></i>Recalculate</button>
-      </div>
-    </div>
+    <div class="form-text">Enable advanced secondary emission modeling for improved accuracy. Click Recalculate to apply changes.</div>
   </div>
 
   <!-- SPICE Model Code Display -->

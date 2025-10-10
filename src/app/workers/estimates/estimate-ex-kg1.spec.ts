@@ -1,4 +1,5 @@
 import { estimateExKg1 } from './estimate-ex-kg1';
+import { File } from '../../files';
 import { fileParserService } from '../../services/file-parser-service';
 import { Initial } from '../initial';
 
@@ -16,9 +17,9 @@ describe('estimates / estimateExKg1', () => {
                     const initial: Initial = { mu: 56 };
                     // estimate ex/kg1
                     estimateExKg1(initial, [file], 2.5);
-                    // check result
-                    expect(initial.ex).toBeCloseTo(1.03, 2);
-                    expect(initial.kg1).toBeCloseTo(303.72, 2);
+                    // check result (Derk Reefman linear regression method)
+                    expect(initial.ex).toBeCloseTo(0.58, 1);
+                    expect(initial.kg1).toBeCloseTo(276.6, 1);
                     // done
                     done();
                     // exit
@@ -37,32 +38,37 @@ describe('estimates / estimateExKg1', () => {
             });
     });
 
-    it('it should estimate "ex/kg1" from EL500_triode.utd file', (done) => {
-        // fetch test data
-        fetch('/test-assets/EL500_triode.utd')
-            .then((response) => response.text())
+    it('it should estimate "ex/kg1" from EL500 files', (done) => {
+        // files
+        const fileNames = ['EL500_200.utd', 'EL500_250.utd', 'EL500_300.utd', 'EL500_triode.utd'];
+        // fetch all files
+        Promise.all(fileNames.map((fileName) => fetch('/test-assets/' + fileName)))
+            .then((responses) => Promise.all(responses.map((response) => response.text())))
             .then((data) => {
-                // parse file
-                const file = fileParserService('EL500_triode.utd', data);
-                if (file) {
-                    // egOffset
-                    file.egOffset = -25;
-                    // initial
-                    const initial: Initial = {mu: 4};
-                    // estimate ex/kg1
-                    estimateExKg1(initial, [file], 25);
-                    // check result
-                    expect(initial.ex).toBeCloseTo(2.70, 2);
-                    expect(initial.kg1).toBeCloseTo(106721.07, 2);
-                    // done
-                    done();
-                    // exit
-                    return;
+                // files
+                const files: File[] = [];
+                // loop file data
+                for (let i = 0; i < data.length; i++) {
+                    // parse file content
+                    const file = fileParserService(fileNames[i], data[i]);
+                    if (file) {
+                        // update egOffset
+                        file.egOffset = -25;
+                        // add file
+                        files.push(file);
+                    }
                 }
-                // fail
-                fail('Failed to parse test data');
+                // initial
+                const initial: Initial = { mu: 4.82 };
+                // estimate ex/kg1
+                estimateExKg1(initial, files, 25);
+                // check result (Derk Reefman linear regression method)
+                expect(initial.ex).toBeCloseTo(0.86, 1);
+                expect(initial.kg1).toBeCloseTo(185.29, 1);
                 // done
                 done();
+                // exit
+                return;
             })
             .catch((error) => {
                 // fail

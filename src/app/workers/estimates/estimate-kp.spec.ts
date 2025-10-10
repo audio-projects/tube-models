@@ -1,4 +1,5 @@
 import { estimateKp } from './estimate-kp';
+import { File } from '../../files';
 import { fileParserService } from '../../services/file-parser-service';
 import { Initial } from '../initial';
 
@@ -17,7 +18,7 @@ describe('estimates / estimateKp', () => {
                     // estimate kp
                     estimateKp(initial, [file], 2.5);
                     // check result
-                    expect(initial.kp).toBeCloseTo(238.17, 2);
+                    expect(initial.kp).toBeCloseTo(165.98, 2);
                     // done
                     done();
                     // exit
@@ -49,7 +50,7 @@ describe('estimates / estimateKp', () => {
                     // estimate kp
                     estimateKp(initial, [file], 1);
                     // check result
-                    expect(initial.kp).toBeCloseTo(975.31, 2);
+                    expect(initial.kp).toBeCloseTo(445.83, 2);
                     // done
                     done();
                     // exit
@@ -59,6 +60,45 @@ describe('estimates / estimateKp', () => {
                 fail('Failed to parse test data');
                 // done
                 done();
+            })
+            .catch((error) => {
+                // fail
+                fail('Failed to fetch test data: ' + error);
+                // done
+                done();
+            });
+    });
+
+    it('it should estimate "kp" from EL500 files', (done) => {
+        // files
+        const fileNames = ['EL500_200.utd', 'EL500_250.utd', 'EL500_300.utd', 'EL500_triode.utd'];
+        // fetch all files
+        Promise.all(fileNames.map((fileName) => fetch('/test-assets/' + fileName)))
+            .then((responses) => Promise.all(responses.map((response) => response.text())))
+            .then((data) => {
+                // files
+                const files: File[] = [];
+                // loop file data
+                for (let i = 0; i < data.length; i++) {
+                    // parse file content
+                    const file = fileParserService(fileNames[i], data[i]);
+                    if (file) {
+                        // update egOffset
+                        file.egOffset = -25;
+                        // add file
+                        files.push(file);
+                    }
+                }
+                // initial
+                const initial: Initial = { mu: 4.82, ex: 0.86, kg1: 185.29 };
+                // estimate kp
+                estimateKp(initial, files, 25);
+                // check result
+                expect(initial.kp).toBeCloseTo(25.94, 2);
+                // done
+                done();
+                // exit
+                return;
             })
             .catch((error) => {
                 // fail

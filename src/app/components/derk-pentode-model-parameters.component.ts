@@ -23,6 +23,31 @@ export class DerkPentodeModelParametersComponent {
 
     constructor(private toastService: ToastService) {}
 
+    // Get/set secondary emission checkbox value
+    get secondaryEmission(): boolean {
+        return this.tube?.derkModelParameters?.secondaryEmission || false;
+    }
+
+    set secondaryEmission(value: boolean) {
+        if (this.tube) {
+            if (!this.tube.derkModelParameters) {
+                this.tube.derkModelParameters = {};
+            }
+            this.tube.derkModelParameters.secondaryEmission = value;
+        }
+    }
+
+    // Handle checkbox change event
+    onSecondaryEmissionChange(event: Event): void {
+        const checkbox = event.target as HTMLInputElement;
+        this.secondaryEmission = checkbox.checked;
+
+        // Invalidate the current model parameters since the calculation input has changed
+        if (this.tube?.derkModelParameters) {
+            this.tube.derkModelParameters.calculatedOn = undefined;
+        }
+    }
+
     // Computed properties for SPICE model template
     get spiceSubcktLine(): string {
         const cleanTubeName = (this.tube?.name || 'PENTODE').toUpperCase().replace(/[^A-Z0-9]/g, '_');

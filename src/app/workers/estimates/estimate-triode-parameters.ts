@@ -12,26 +12,15 @@ export const estimateTriodeParameters = function (initial: Initial, files: File[
         // estimates
         trace.estimates = trace.estimates || {};
     }
-    // triode files
-    const triodeFiles: File[] = [];
-    // loop files
-    for (const f of files) {
-        // find a file that correspond to triode characteristics
-        if (f.measurementType === 'IP_VA_VG_VH' || f.measurementType === 'IP_VG_VA_VH' || f.measurementType === 'IPIS_VG_VAVS_VH' || f.measurementType === 'IPIS_VAVS_VG_VH') {
-            // it is a triode like graph, use it
-            triodeFiles.push(f);
-        }
-    }
-    // check we have at leat one file
-    if (triodeFiles.length > 0) {
-        // estimate mu (use all files)
+    if (files.length > 0) {
+        // estimate mu
         estimateMu(initial, files, maxW, trace);
-        // extimate ex and kg1
-        estimateExKg1(initial, triodeFiles, maxW, trace);
+        // estimate ex and kg1
+        estimateExKg1(initial, files, maxW, trace);
         // estimate kp
-        estimateKp(initial, triodeFiles, maxW, trace);
+        estimateKp(initial, files, maxW, trace);
         // estimate kvb
-        estimateKvb(initial, triodeFiles, maxW, trace);
+        estimateKvb(initial, files, maxW, trace);
         // return estimates
         return initial;
     }
