@@ -96,7 +96,7 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
     // log information
     postMessage({
         type: 'log',
-        text: `Optimizing Derk Model parameters using the Powell algorithm, Root Mean Square Error: ${derkEModelError(files, kp, mu, kvb, ex, kg1, kg2, a, alphaS, beta, secondaryEmission, s, alphaP, lambda, v, w, maximumPlateDissipation).rmse.toExponential()}`,
+        text: `Optimizing Derk E Model parameters using the Powell algorithm, Root Mean Square Error: ${derkEModelError(files, kp, mu, kvb, ex, kg1, kg2, a, alphaS, beta, secondaryEmission, s, alphaP, lambda, v, w, maximumPlateDissipation).rmse.toExponential()}`,
     });
     // least square problem (optimize parameters not affecting the Koren current)
     let sumOfSquaredErrors = function (x: number[]): number {
@@ -232,7 +232,7 @@ addEventListener('message', ({ data }) => {
     // log initial values
     postMessage({
         type: 'log',
-        text: `Initial Derk Model parameters (secondary emissions=${secondaryEmission}): mu=${mu}, ex=${ex}, kg1=${kg1}, kp=${kp}, kvb=${kvb}, kg2=${kg2} a=${a}, alphaS=${alphaS}, beta=${beta}, s=${s}, alphaP=${alphaP}, lambda=${lambda}, v=${v}, w=${w}`,
+        text: `Initial Derk E Model parameters (secondary emissions=${secondaryEmission}): mu=${mu}, ex=${ex}, kg1=${kg1}, kp=${kp}, kvb=${kvb}, kg2=${kg2} a=${a}, alphaS=${alphaS}, beta=${beta}, s=${s}, alphaP=${alphaP}, lambda=${lambda}, v=${v}, w=${w}`,
     });
     // optimized model parameters
     let parameters;

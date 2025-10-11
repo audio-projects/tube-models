@@ -27,5 +27,5 @@ export const derkModelError = function (files: File[], kp: number, mu: number, k
         }
     }
     // return large number in case paramaters are not allowed (Infinite, NaN)
-    return isFinite(error) ? {sse: error, rmse: Math.sqrt(error / count)} : {sse: Number.MAX_VALUE / 2, rmse: Number.MAX_VALUE / 2};
+    return isFinite(error) && count > 0 ? {sse: error, rmse: Math.sqrt(error / count)} : {sse: Number.MAX_VALUE / 2, rmse: Number.MAX_VALUE / 2};
 };
