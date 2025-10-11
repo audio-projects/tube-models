@@ -30,7 +30,7 @@ describe('estimates / estimateA', () => {
                 // estimate a
                 estimateA(initial, files, 25);
                 // check result
-                expect(initial.a).toBeCloseTo(0.0054, 4);
+                expect(initial.a).toBeCloseTo(0.00039, 5);
                 // done
                 done();
             })
@@ -63,7 +63,7 @@ describe('estimates / estimateA', () => {
                 // estimate a
                 estimateA(initial, files, 100);
                 // check result
-                expect(initial.a).toBeCloseTo(0.0057, 4);
+                expect(initial.a).toBeCloseTo(0.00056, 5);
                 // done
                 done();
             })

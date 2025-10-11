@@ -157,7 +157,7 @@ function mnbrak(ax: number, bx: number, f: (x: number) => number): { ax: number;
 }
 
 /**
- * Given a function f and a bracketing triplet of abscissas ax, bx, cx (such that bx is between ax and cx, and f9bx) is less than
+ * Given a function f and a bracketing triplet of abscissas ax, bx, cx (such that bx is between ax and cx, and f(bx) is less than
  * both f(ax) and f(cx)), this routine isolates the minimum to a fractional precision of about tol using Brent's method.
  *
  * Numerical Recipes in C, Chapter 10.2
@@ -201,7 +201,8 @@ function brent(ax: number, bx: number, cx: number, f: (x: number) => number, tol
             let q = (x - v) * (fx - fw);
             let p = (x - v) * q - (x - w) * r;
             q = 2 * (q - r);
-            if (q > 0) p = -p;
+            if (q > 0)
+                p = -p;
             q = Math.abs(q);
             const etemp = e;
             e = d;
@@ -224,8 +225,10 @@ function brent(ax: number, bx: number, cx: number, f: (x: number) => number, tol
         // function evaluation
         const fu = f(u);
         if (fu <= fx) {
-            if (u >= x) a = x;
-            else b = x;
+            if (u >= x)
+                a = x;
+            else
+                b = x;
             // shift values
             v = w;
             w = x;
@@ -236,8 +239,10 @@ function brent(ax: number, bx: number, cx: number, f: (x: number) => number, tol
             fx = fu;
         }
         else {
-            if (u < x) a = u;
-            else b = u;
+            if (u < x)
+                a = u;
+            else
+                b = u;
             if (fu <= fw || w == x) {
                 v = w;
                 w = u;
@@ -339,7 +344,8 @@ export const powell = (p: number[], f: (x: number[]) => number, options: PowellO
     let fret = f(p);
     // copy of initial point
     const pt: number[] = [];
-    for (let j = 0; j < n; j++) pt[j] = p[j];
+    for (let j = 0; j < n; j++)
+        pt[j] = p[j];
     // iteration
     let iteration = 0;
     // vector
@@ -358,7 +364,8 @@ export const powell = (p: number[], f: (x: number[]) => number, options: PowellO
             // loop over all directions in the set
             for (let i = 0; i < n; i++) {
                 // copy direction
-                for (let j = 0; j < n; j++) xit[j] = xi[j][i];
+                for (let j = 0; j < n; j++)
+                    xit[j] = xi[j][i];
                 // store function value
                 const fptt = fret;
                 // minimize
@@ -414,7 +421,8 @@ export const powell = (p: number[], f: (x: number[]) => number, options: PowellO
                 }
             }
             // reset directions if needed
-            if (iteration % n === 0) xi = initialDirections(n);
+            if (iteration % n === 0)
+                xi = initialDirections(n);
         }
     }
     catch (e) {
@@ -431,7 +439,8 @@ export const powell = (p: number[], f: (x: number[]) => number, options: PowellO
         };
     }
     // update trace if needed
-    if (trace) trace.iterations += iteration;
+    if (trace)
+        trace.iterations += iteration;
     // return
     return {
         converged: false,

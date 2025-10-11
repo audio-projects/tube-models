@@ -456,7 +456,8 @@ export class TubeComponent implements OnInit, AfterViewInit {
                             kg2: params.kg2 || 0,
                             kp: params.kp || 0,
                             kvb: params.kvb || 0,
-                            calculatedOn: new Date().toISOString()
+                            calculatedOn: new Date().toISOString(),
+                            rmse: params.rmse || Number.MAX_VALUE,
                         };
                         // update flag
                         this.isCalculatingSpiceParameters = false;
@@ -540,7 +541,8 @@ export class TubeComponent implements OnInit, AfterViewInit {
                             kg1: params.kg1 || 0,
                             kp: params.kp || 0,
                             kvb: params.kvb || 0,
-                            calculatedOn: new Date().toISOString()
+                            calculatedOn: new Date().toISOString(),
+                            rmse: params.rmse || Number.MAX_VALUE,
                         };
                         // update flag
                         this.isCalculatingSpiceParameters = false;
@@ -618,6 +620,7 @@ export class TubeComponent implements OnInit, AfterViewInit {
                     // Extract parameters from the worker result
                     const params = result.parameters;
                     if (params) {
+                        // update model
                         this.tube!.derkModelParameters = {
                             mu: params.mu || 0,
                             ex: params.ex || 0,
@@ -634,7 +637,8 @@ export class TubeComponent implements OnInit, AfterViewInit {
                             lambda: params.lambda || 0,
                             v: params.v || 0,
                             w: params.w || 0,
-                            calculatedOn: new Date().toISOString()
+                            calculatedOn: new Date().toISOString(),
+                            rmse: params.rmse || Number.MAX_VALUE,
                         };
                         // notify user
                         this.toastService.success('Derk model parameters calculated successfully!', 'Calculation Complete');

@@ -345,7 +345,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                         fill: false,
                         tension: 0.1,
                         pointRadius: 2,
-                        pointHoverRadius: 4,
+                        pointHoverRadius: 3,
                         yAxisID: 'y', // Single axis for combined measurement
                     });
                 }
@@ -355,22 +355,21 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                 const primaryData = series.points
                     .filter((point) => this.getPointValue(point, axesConfig.xField) !== undefined && this.getPointValue(point, axesConfig.yField) !== undefined)
                     .map((point) => {
+                        // x, y values
                         let xValue = this.getPointValue(point, axesConfig.xField) as number;
                         let yValue = this.getPointValue(point, axesConfig.yField) as number;
-
                         // Apply egOffset to grid voltage values when plotting
-                        if (axesConfig.xField === 'eg') {
+                        if (axesConfig.xField === 'eg')
                             xValue += this.file!.egOffset;
-                        }
-                        if (axesConfig.yField === 'eg') {
+                        if (axesConfig.yField === 'eg')
                             yValue += this.file!.egOffset;
-                        }
-
+                        // Create data point
                         return { x: xValue, y: yValue };
                     })
                     .sort((a, b) => a.x - b.x);
 
                 if (primaryData.length > 0) {
+                    // append dataset
                     datasets.push({
                         label: seriesLabel, // Same series label for both axes
                         data: primaryData,
@@ -378,7 +377,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                         backgroundColor: color,
                         fill: false,
                         pointRadius: 2,
-                        pointHoverRadius: 4,
+                        pointHoverRadius: 3,
                         showLine: showLines,
                         tension: 0.1,
                         yAxisID: 'y', // Left axis
@@ -388,20 +387,19 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
 
             // Create secondary Y-axis dataset (right axis) if dual axis
             if (axesConfig.hasDualYAxis && axesConfig.rightYField) {
+                // secondary Y-axis dataset
                 const secondaryData = series.points
                     .filter((point) => this.getPointValue(point, axesConfig.xField) !== undefined && this.getPointValue(point, axesConfig.rightYField!) !== undefined)
                     .map((point) => {
+                        // x, y values
                         let xValue = this.getPointValue(point, axesConfig.xField) as number;
                         let yValue = this.getPointValue(point, axesConfig.rightYField!) as number;
-
                         // Apply egOffset to grid voltage values when plotting
-                        if (axesConfig.xField === 'eg') {
+                        if (axesConfig.xField === 'eg')
                             xValue += this.file!.egOffset;
-                        }
-                        if (axesConfig.rightYField === 'eg') {
+                        if (axesConfig.rightYField === 'eg')
                             yValue += this.file!.egOffset;
-                        }
-
+                        // Create data point
                         return { x: xValue, y: yValue };
                     })
                     .sort((a, b) => a.x - b.x);
@@ -413,10 +411,10 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                         data: secondaryData,
                         borderColor: color,
                         backgroundColor: color,
-                        borderDash: [5, 5], // Dashed line to distinguish from primary
+                        borderDash: [2, 1], // Dashed line to distinguish from primary
                         fill: false,
                         pointRadius: 2,
-                        pointHoverRadius: 4,
+                        pointHoverRadius: 3,
                         showLine: showLines,
                         tension: 0.1,
                         yAxisID: 'y1', // Right axis
@@ -466,7 +464,6 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                     tension: 0.1,
                     pointRadius: 0, // No points for model lines
                     borderWidth: 2,
-                    borderDash: [5, 5], // Dashed line for model
                     yAxisID: 'y',
                 });
                 // exit
@@ -483,7 +480,6 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                 tension: 0.1,
                 pointRadius: 0, // No points for model lines
                 borderWidth: 2,
-                borderDash: [5, 5], // Dashed line for model
                 yAxisID: 'y',
             });
             // create right Y axis dataset if dual axis
@@ -499,7 +495,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                     tension: 0.1,
                     pointRadius: 0, // No points for model lines
                     borderWidth: 2,
-                    borderDash: [5, 5], // Dashed line for model
+                    borderDash: [2, 1], // Dashed line to distinguish from primary
                     yAxisID: 'y1',
                 });
             }

@@ -6,4 +6,6 @@ export interface PentodeModelParameters {
     kp?: number;
     kvb?: number;
     calculatedOn?: string; // ISO-8601 datetime string with timezone
+    // root mean square error
+    rmse?: number;
 }

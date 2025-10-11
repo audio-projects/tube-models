@@ -205,11 +205,15 @@ Derivative-free optimization method for parameter fitting, selected for its robu
 
 **Mathematical Foundation:**
 
-The Powell algorithm uses conjugate direction methods to minimize the objective function without requiring gradient calculations:
+The Powell algorithm uses conjugate direction methods to minimize the **Sum of Squared Errors (SSE)**, also known as **Residual Sum of Squares (RSS)**, without requiring gradient calculations:
 
-$$\min_{x} F(x) = \frac{1}{2} \sum_{i=1}^{m} r_i(x)^2$$
+$$\min_{x} F(x) = \sum_{i=1}^{m} r_i(x)^2 = \text{SSE}$$
 
-where $r_i(x)$ are the residuals between measured and modeled currents.
+where $r_i(x)$ are the residuals between measured and modeled currents:
+
+$$r_i(x) = I_{measured,i} - I_{model}(V_{p,i}, V_{g,i}, V_{s,i}; x)$$
+
+This objective function directly represents the total squared error between the model predictions and experimental measurements.
 
 **Key Features:**
 
@@ -482,8 +486,9 @@ Rather than using algebraic approximations, the implementation uses a direct emp
    - Calculate model predictions using complete Norman-Koren equations:
      $$E_1 = \frac{V_p}{K_p} \ln\left(1 + \exp\left(K_p\left(\frac{1}{\mu} + \frac{V_g}{\sqrt{K_{vb,c} + V_p^2}}\right)\right)\right)$$
      $$I_{p,model} = \frac{E_1^{E_x}}{K_{g1}}$$
-   - Compute RMS error: 
-     $$RMS_{error} = \sqrt{\frac{1}{N}\sum_{i=1}^{N}(I_{p,model,i} - I_{p,measured,i})^2}$$
+   - Compute SSE and RMS error:
+     $$SSE = \sum_{i=1}^{N}(I_{p,model,i} - I_{p,measured,i})^2$$
+     $$RMS_{error} = \sqrt{\frac{SSE}{N}} = \sqrt{\frac{1}{N}\sum_{i=1}^{N}(I_{p,model,i} - I_{p,measured,i})^2}$$
 
 3. **Select optimal value**:
 
@@ -491,7 +496,8 @@ Rather than using algebraic approximations, the implementation uses a direct emp
 
 **Implementation Details:**
 
-- **Consistency**: Uses `normanKorenTriodeModelError()` function - the same error calculation as the Powell optimizer
+- **Objective Function**: Uses the same **Sum of Squared Errors (SSE)** as the Powell optimizer for consistency
+- **Error Calculation**: Uses `normanKorenTriodeModelError()` function - identical error calculation as the Powell optimizer
 - **Full model**: No approximations - complete Norman-Koren triode equations for all points
 - **Power filtering**: Only uses measurement points where $P = I_p \cdot V_p \leq P_{max}$
 - **Robustness**: Handles edge cases (infinite values, NaN, zero counts)
@@ -582,6 +588,52 @@ Where:
 
 This two-stage approach provides robust initial estimates for the complete pentode model parameter set.
 
+#### Plate Voltage Coefficient ($A$) - Derk Models Only
+
+The parameter $A$ models the direct effect of plate voltage on current distribution in the **Derk pentode models**, representing non-zero "Durchgriff" (penetration factor). This parameter is **not used** in Norman-Koren pentode models.
+
+**Physical Principle:**
+
+In an ideal pentode, the screen grid completely shields the control grid from plate voltage variations, resulting in flat plate characteristics. In reality, plate voltage has a small direct influence on plate current, modeled by the $A$ parameter.
+
+**Estimation Method:**
+
+For high anode voltages, the slope of plate current with respect to plate voltage is determined by:
+
+$$\frac{\partial I_a(V_a \gg 1)}{\partial V_a} = I_{P,Koren} \cdot \frac{A}{K_{g1}}$$
+
+**Solution for $A$:**
+
+$$\left(\frac{A}{K_{g1}}\right)_{est} = \left\langle \frac{1}{I_{P,Koren,est}(V_{g1}, V_{g2})} \cdot \frac{\partial I_{a,obs}(V_a)}{\partial V_a} \right\rangle_{(V_{g1}, V_{g2})}$$
+
+$$A_{est} = K_{g1,est} \cdot \left(\frac{A}{K_{g1}}\right)_{est}$$
+
+**Implementation Strategy:**
+
+1. **Calculate derivative**: Compute $\frac{\partial I_a}{\partial V_a}$ numerically using finite differences at high plate voltages
+2. **Calculate Koren current**: Use $I_{pk} = E_1^{E_x}$ with triode parameters for each measurement point
+3. **Compute ratio**: For each series, calculate $\frac{1}{I_{P,Koren}} \cdot \frac{\partial I_a}{\partial V_a}$ to get $\frac{A}{K_{g1}}$
+4. **Average and scale**: Average across all $(V_{g1}, V_{g2})$ combinations and multiply by $K_{g1,est}$
+
+**Prerequisites:**
+
+- Triode parameters: $\mu$, $E_x$, $K_{g1}$, $K_p$, $K_{vb}$ (from triode-strapped measurements)
+
+**Physical Interpretation:**
+
+- **$A = 0$**: Perfect screen grid shielding (ideal pentode with flat characteristics)
+- **Small positive $A$** (< 0.1): Typical for real pentodes - slight increase in plate current with plate voltage
+- **Larger $A$**: More triode-like behavior, important for beam tetrodes
+- **Default value**: 0.001 (safe small positive value when estimation fails)
+
+**Model Applicability:**
+
+- ✅ **Derk Pentode Model**: Uses $A$ parameter
+- ✅ **DerkE Pentode Model**: Uses $A$ parameter  
+- ❌ **Norman-Koren Pentode Models**: Do not use $A$ parameter
+
+**Note:** This is an advanced parameter for modeling complex plate-screen interactions in tubes exhibiting non-ideal pentode behavior.
+
 #### Estimation Sequence
 
 The complete parameter estimation follows this order:
@@ -592,6 +644,7 @@ The complete parameter estimation follows this order:
 4. **$K_{vb}$ Estimation**: Apply direct algebraic solution with all previous parameters
 
 **Validation Features:**
+
 - **Physical Bounds Checking**: Ensures all parameters remain within realistic ranges
 - **Cross-Validation**: Compares estimates across different measurement regions
 - **Iterative Refinement**: Improves estimates through multiple passes

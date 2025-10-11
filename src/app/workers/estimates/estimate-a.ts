@@ -7,10 +7,10 @@ import { Trace } from '../trace';
 export const estimateA = function (initial: Initial, files: File[], maxW: number, trace?: Trace) {
     // check we need to estimate a
     if (!initial.a) {
-        // mu must be initialized
+        // mu, kp, kvb, ex and kg1 must be initialized
         if (!initial.kp || !initial.mu || !initial.kvb || !initial.ex || !initial.kg1) {
-            // cannot estimate ex and kg1 without mu
-            throw new Error('Cannot estimate kp without kp, mu, kvb, ex and kg1');
+            // cannot estimate a without these parameters
+            throw new Error('Cannot estimate a without kp, mu, kvb, ex and kg1');
         }
         // initialize trace
         if (trace) {
@@ -43,7 +43,7 @@ export const estimateA = function (initial: Initial, files: File[], maxW: number
                             l = u;
                             u = p;
                             // check we can use these points, make sure ip are different and with a positive slope (saturation)
-                            if (l && u && l.ip > u.ip) {
+                            if (l && u && u.ip > l.ip) {
                                 // IPk
                                 const ip = ipk(l.eg + file.egOffset, l.es ?? 0, initial.kp, initial.mu, initial.kvb, initial.ex);
                                 // estimate A
@@ -57,7 +57,7 @@ export const estimateA = function (initial: Initial, files: File[], maxW: number
                                         eg: (series.eg ?? 0) + file.egOffset
                                     });
                                 }
-                                // average values
+                                // average values (use absolute value to ensure A is always positive)
                                 sum += Math.abs(a);
                                 count++;
                                 // exit
