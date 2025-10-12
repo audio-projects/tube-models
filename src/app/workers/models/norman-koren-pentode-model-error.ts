@@ -1,10 +1,11 @@
 import { File } from '../../files';
 import { normanKorenPentodeModel } from './norman-koren-pentode-model';
 
-// normanKorenPentodeModelError
-export const normanKorenPentodeModelError = function (files: File[], kp: number, mu: number, kvb: number, ex: number, kg1: number, kg2: number, maximumPlateDissipation: number) {
+// normanKorenPentodeModelError, sum of squared errors (SSE) and root mean square error (RMS)
+export const normanKorenPentodeModelError = function (files: File[], kp: number, mu: number, kvb: number, ex: number, kg1: number, kg2: number, maximumPlateDissipation: number): {sse: number, rmse: number} {
     // result
-    let r = 0;
+    let error = 0;
+    let count = 0;
     // loop data files
     for (const file of files) {
         // loop series
@@ -19,11 +20,12 @@ export const normanKorenPentodeModelError = function (files: File[], kp: number,
                     const ipr = c.ip - point.ip;
                     const isr = c.is - (point.is ?? 0);
                     // least squares
-                    r += ipr * ipr + isr * isr;
+                    error += ipr * ipr + isr * isr;
+                    count++;
                 }
             }
         }
     }
     // return large number in case paramaters are not allowed (Infinite, NaN)
-    return isFinite(r) ? r : Number.MAX_VALUE / 2;
+    return isFinite(error) && count > 0 ? {sse: error, rmse: Math.sqrt(error / count)} : {sse: Number.MAX_VALUE / 2, rmse: Number.MAX_VALUE / 2};
 };

@@ -29,7 +29,7 @@ export const estimateDerkS = function (initial: Initial, screenCurrentFeaturePoi
             // ipk
             const ip = ipk(p.eg, p.es, initial.kp, initial.mu, initial.kvb, initial.ex);
             // calculate Psec estimate @ Vamax
-            const Psec = p.is * 1e-3 * initial.kg2 / ip - (1 + initial.alphaS / (1 + initial.alphaS / (1 + initial.beta * p.epmax)));
+            const Psec = p.is * 1e-3 * initial.kg2 / ip - (1 + initial.alphaS / (1 + initial.beta * p.epmax));
             // calculate s
             const s = initial.kg2 * Psec / (2 * p.epmax * ip);
             if (s >= 0) {

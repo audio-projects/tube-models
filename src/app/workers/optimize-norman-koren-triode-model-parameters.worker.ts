@@ -45,7 +45,7 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
     // log information
     self.postMessage({
         type: 'log',
-        text: `Optimizing Triode Model parameters using the Levenberg-Marquardt algorithm, Objective function value: ${(normanKorenTriodeModelError(files, kp, mu, kvb, ex, kg1, maximumPlateDissipation)).toExponential()}`,
+        text: `Optimizing Triode Model parameters using the Levenberg-Marquardt algorithm, Root Mean Square Error: ${normanKorenTriodeModelError(files, kp, mu, kvb, ex, kg1, maximumPlateDissipation).rmse.toExponential()}`,
     });
     // optimize
     const result = levmar(R, [1, 1, 1, 1, 1], { trace: trace, tolerance: 1e-5, kmax: 500 });
@@ -64,7 +64,7 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
         // log values
         self.postMessage({
             type: 'log',
-            text: `Triode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, Objective function value: ${(normanKorenTriodeModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, maximumPlateDissipation)).toExponential()}, iterations: ${result.iterations}`,
+            text: `Triode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, Root Mean Square Error: ${normanKorenTriodeModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, maximumPlateDissipation).rmse.toExponential()}, iterations: ${result.iterations}`,
         });
         // return model parameters
         return parameters;
@@ -77,10 +77,10 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
     // log information
     postMessage({
         type: 'log',
-        text: `Optimizing Triode Model parameters using the Powell algorithm, Objective function value: ${(normanKorenTriodeModelError(files, kp, mu, kvb, ex, kg1, maximumPlateDissipation)).toExponential()}`,
+        text: `Optimizing Triode Model parameters using the Powell algorithm, Root Mean Square Error: ${normanKorenTriodeModelError(files, kp, mu, kvb, ex, kg1, maximumPlateDissipation).rmse.toExponential()}`,
     });
-    // least square problem
-    const leastSquares = function (x: number[]): number {
+    // error function (function to optimize)
+    const sumOfSquaredErrors = function (x: number[]): number {
         // update parameters
         const mu = Math.abs(x[0]);
         const ex = Math.abs(x[1]);
@@ -88,7 +88,7 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
         const kp = Math.abs(x[3]);
         const kvb = Math.abs(x[4]);
         // evaluate target function
-        return normanKorenTriodeModelError(files, kp, mu, kvb, ex, kg1, maximumPlateDissipation);
+        return normanKorenTriodeModelError(files, kp, mu, kvb, ex, kg1, maximumPlateDissipation).sse;
     };
     // powell optimization options
     const options: PowellOptions = {
@@ -101,7 +101,7 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
     // create variable vector
     const x = [mu, ex, kg1, kp, kvb];
     // optimize f1
-    const result = powell(x, leastSquares, options);
+    const result = powell(x, sumOfSquaredErrors, options);
     // check result
     if (result.converged) {
         // create model parameters
@@ -111,11 +111,15 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
             kg1: Math.abs(result.x[2]),
             kp: Math.abs(result.x[3]),
             kvb: Math.abs(result.x[4]),
+            // root mean square error
+            rmse: 0,
         };
+        // calculate Root Mean Square Error
+        parameters.rmse = normanKorenTriodeModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, maximumPlateDissipation).rmse;
         // log values
         postMessage({
             type: 'log',
-            text: `Triode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, Objective function value: ${(normanKorenTriodeModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, maximumPlateDissipation)).toExponential()}, iterations: ${result.iterations}`,
+            text: `Triode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, Root Mean Square Error: ${parameters.rmse.toExponential()}, iterations: ${result.iterations}`,
         });
         // return model parameters
         return parameters;

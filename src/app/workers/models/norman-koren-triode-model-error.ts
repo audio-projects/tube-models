@@ -1,8 +1,8 @@
 import { File } from '../../files';
 import { normanKorenTriodeModel } from './norman-koren-triode-model';
 
-// normanKorenTriodeModelError
-export const normanKorenTriodeModelError = function (files: File[], kp: number, mu: number, kvb: number, ex: number, kg1: number, maximumPlateDissipation: number) {
+// normanKorenTriodeModelError, sum of squared errors (SSE) and root mean square error (RMS)
+export const normanKorenTriodeModelError = function (files: File[], kp: number, mu: number, kvb: number, ex: number, kg1: number, maximumPlateDissipation: number): {sse: number, rmse: number} {
     // result
     let error = 0;
     let count = 0;
@@ -18,12 +18,11 @@ export const normanKorenTriodeModelError = function (files: File[], kp: number, 
                     const currents = normanKorenTriodeModel(point.ep, point.eg + file.egOffset, kp, mu, kvb, ex, kg1);
                     // error
                     error += (currents.ip - point.ip - (point.is ?? 0)) * (currents.ip - point.ip - (point.is ?? 0));
-                    // count
                     count++;
                 }
             }
         }
     }
     // return large number in case paramaters are not allowed (Infinite, NaN)
-    return isFinite(error) && count > 0 ? Math.sqrt(error / count) : Number.MAX_VALUE / 2;
+    return isFinite(error) && count > 0 ? {sse: error, rmse: Math.sqrt(error / count)} : {sse: Number.MAX_VALUE / 2, rmse: Number.MAX_VALUE / 2};
 };

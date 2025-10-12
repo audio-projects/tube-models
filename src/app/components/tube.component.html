@@ -366,7 +366,7 @@
       <!-- Derk Pentode Model Parameters Card -->
       <div class="card mb-4" *ngIf="tube.type === 'Pentode'">
         <div class="card-header bg-info text-white">
-          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Pentode Model (Derk Reefman)</h5>
+          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Pentode Model (Derk Model)</h5>
         </div>
         <div class="card-body derk-pentode-model-parameters">
           <app-derk-pentode-model-parameters 
@@ -378,14 +378,18 @@
         </div>
       </div>
 
-      <!-- Help Card -->
-      <div class="card">
-        <div class="card-header bg-light">
-          <h6 class="card-title mb-0"><i class="bi bi-question-circle me-2"></i>Need Help?</h6>
+      <!-- Derk E Pentode Model Parameters Card -->
+      <div class="card mb-4" *ngIf="tube.type === 'Pentode'">
+        <div class="card-header bg-info text-white">
+          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Pentode Model (Derk E Model)</h5>
         </div>
-        <div class="card-body">
-          <p class="card-text small mb-2"><strong>Required fields</strong> are marked with an asterisk (*).</p>
-          <p class="card-text small mb-0">Fill in the tube specifications to maintain accurate records for your vacuum tube database.</p>
+        <div class="card-body derk-pentode-model-parameters">
+          <app-derke-pentode-model-parameters 
+            [tube]="tube"
+            [isCalculating]="isCalculatingDerkEParameters"
+            [canCalculate]="tube.files && tube.files.length > 0"
+            (calculateRequested)="calculateDerkEModelParameters()">
+          </app-derke-pentode-model-parameters>
         </div>
       </div>
     </div>

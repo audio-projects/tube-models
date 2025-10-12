@@ -9,14 +9,15 @@ import {
 } from '@angular/core';
 import { AuthService } from '../services/auth.service';
 import { CommonModule } from '@angular/common';
+import { DerkEPentodeModelParametersComponent } from './derke-pentode-model-parameters.component';
+import { DerkPentodeModelParametersComponent } from './derk-pentode-model-parameters.component';
 import { File as TubeFile, Series } from '../files';
 import { fileParserService } from '../services/file-parser-service';
 import { FirebaseTubeService } from '../services/firebase-tube.service';
 import { FormsModule } from '@angular/forms';
 import { NormanKorenPentodeModelParametersComponent } from './norman-koren-pentode-model-parameters.component';
-import { ToastService } from '../services/toast.service';
 import { NormanKorenTriodeModelParametersComponent } from './norman-koren-triode-model-parameters.component';
-import { DerkPentodeModelParametersComponent } from './derk-pentode-model-parameters.component';
+import { ToastService } from '../services/toast.service';
 import { TubeInformation } from './tube-information';
 import { TubePlotComponent } from './tube-plot.component';
 
@@ -24,7 +25,7 @@ import { TubePlotComponent } from './tube-plot.component';
     selector: 'app-tube',
     templateUrl: './tube.component.html',
     styleUrl: './tube.component.scss',
-    imports: [FormsModule, CommonModule, RouterLink, TubePlotComponent, NormanKorenPentodeModelParametersComponent, NormanKorenTriodeModelParametersComponent, DerkPentodeModelParametersComponent],
+    imports: [FormsModule, CommonModule, RouterLink, TubePlotComponent, NormanKorenPentodeModelParametersComponent, NormanKorenTriodeModelParametersComponent, DerkPentodeModelParametersComponent, DerkEPentodeModelParametersComponent],
 })
 export class TubeComponent implements OnInit, AfterViewInit {
 
@@ -38,6 +39,7 @@ export class TubeComponent implements OnInit, AfterViewInit {
     selectedFileForPlot: TubeFile | null = null; // Track file selected for plotting
     isCalculatingSpiceParameters = false; // Track calculation state
     isCalculatingDerkParameters = false; // Track Derk model calculation state
+    isCalculatingDerkEParameters = false; // Track Derk-E model calculation state
 
     constructor(
         private route: ActivatedRoute,
@@ -422,92 +424,6 @@ export class TubeComponent implements OnInit, AfterViewInit {
         this.selectedFileForPlot = null;
     }
 
-    // Calculate SPICE model parameters for pentodes
-    calculatePentodeModelParameters() {
-        // check files are available
-        if (!this.tube || this.tube.type !== 'Pentode' || !this.tube.files || this.tube.files.length === 0)
-            return;
-
-        this.isCalculatingSpiceParameters = true;
-
-        try {
-            // Create a web worker for pentode calculation
-            const worker = new Worker(new URL('../workers/optimize-norman-koren-new-pentode-model-parameters.worker.ts', import.meta.url), { type: 'module' });
-
-            worker.postMessage({
-                files: this.tube.files,
-                maximumPlateDissipation: this.tube.maximumPlateDissipation || 1000, // Default to 1000W if not specified
-                algorithm: 1,  // 0 = Levenberg-Marquardt, 1 = Powell
-                trace: undefined
-            });
-
-            worker.onmessage = (e) => {
-                // data
-                const result = e.data;
-                // Handle different message types from worker
-                if (result.type === 'succeeded') {
-                    // Extract parameters from the worker result
-                    const params = result.parameters;
-                    if (params) {
-                        this.tube!.pentodeModelParameters = {
-                            mu: params.mu || 0,
-                            ex: params.ex || 0,
-                            kg1: params.kg1 || 0,
-                            kg2: params.kg2 || 0,
-                            kp: params.kp || 0,
-                            kvb: params.kvb || 0,
-                            calculatedOn: new Date().toISOString()
-                        };
-                        // update flag
-                        this.isCalculatingSpiceParameters = false;
-                        // notify user
-                        this.toastService.success('SPICE model parameters calculated successfully!', 'Calculation Complete');
-                    }
-                    else {
-                        // update flag
-                        this.isCalculatingSpiceParameters = false;
-                        // notify user
-                        this.toastService.error('Failed to calculate SPICE model parameters. Invalid result.', 'Calculation Failed');
-                    }
-                    // end worker
-                    worker.terminate();
-                }
-                else if (result.type === 'failed') {
-                    // update flag
-                    this.isCalculatingSpiceParameters = false;
-                    // notify user
-                    this.toastService.error('Failed to calculate SPICE model parameters. Please check your measurement data.', 'Calculation Failed');
-                    // end worker
-                    worker.terminate();
-                }
-                else if (result.type === 'notification' || result.type === 'log') {
-                    // log message
-                    console.log(`${result.type}: ${result.text}`);
-                }
-            };
-
-            worker.onerror = (error) => {
-                // log error
-                console.error('Worker error:', error);
-                // update flag
-                this.isCalculatingSpiceParameters = false;
-                // notify user
-                this.toastService.error('An error occurred while calculating SPICE model parameters.', 'Calculation Error');
-                // end worker
-                worker.terminate();
-            };
-
-        }
-        catch (error) {
-            // log error
-            console.error('Error creating worker:', error);
-            // notify user
-            this.toastService.error('Failed to initialize calculation worker.', 'Worker Error');
-            // update flag
-            this.isCalculatingSpiceParameters = false;
-        }
-    }
-
     calculateTriodeModelParameters() {
         // check files are available
         if (!this.tube || !this.tube.files || this.tube.files.length === 0)
@@ -540,7 +456,8 @@ export class TubeComponent implements OnInit, AfterViewInit {
                             kg1: params.kg1 || 0,
                             kp: params.kp || 0,
                             kvb: params.kvb || 0,
-                            calculatedOn: new Date().toISOString()
+                            calculatedOn: new Date().toISOString(),
+                            rmse: params.rmse || Number.MAX_VALUE,
                         };
                         // update flag
                         this.isCalculatingSpiceParameters = false;
@@ -591,9 +508,95 @@ export class TubeComponent implements OnInit, AfterViewInit {
         }
     }
 
+    calculatePentodeModelParameters() {
+        // check files are available
+        if (!this.tube || this.tube.type === 'Triode' || !this.tube.files || this.tube.files.length === 0)
+            return;
+
+        this.isCalculatingSpiceParameters = true;
+
+        try {
+            // Create a web worker for pentode calculation
+            const worker = new Worker(new URL('../workers/optimize-norman-koren-new-pentode-model-parameters.worker.ts', import.meta.url), { type: 'module' });
+
+            worker.postMessage({
+                files: this.tube.files,
+                maximumPlateDissipation: this.tube.maximumPlateDissipation || 1000, // Default to 1000W if not specified
+                algorithm: 1,  // 0 = Levenberg-Marquardt, 1 = Powell
+                trace: undefined
+            });
+
+            worker.onmessage = (e) => {
+                // data
+                const result = e.data;
+                // Handle different message types from worker
+                if (result.type === 'succeeded') {
+                    // Extract parameters from the worker result
+                    const params = result.parameters;
+                    if (params) {
+                        this.tube!.pentodeModelParameters = {
+                            mu: params.mu || 0,
+                            ex: params.ex || 0,
+                            kg1: params.kg1 || 0,
+                            kg2: params.kg2 || 0,
+                            kp: params.kp || 0,
+                            kvb: params.kvb || 0,
+                            calculatedOn: new Date().toISOString(),
+                            rmse: params.rmse || Number.MAX_VALUE,
+                        };
+                        // update flag
+                        this.isCalculatingSpiceParameters = false;
+                        // notify user
+                        this.toastService.success('SPICE model parameters calculated successfully!', 'Calculation Complete');
+                    }
+                    else {
+                        // update flag
+                        this.isCalculatingSpiceParameters = false;
+                        // notify user
+                        this.toastService.error('Failed to calculate SPICE model parameters. Invalid result.', 'Calculation Failed');
+                    }
+                    // end worker
+                    worker.terminate();
+                }
+                else if (result.type === 'failed') {
+                    // update flag
+                    this.isCalculatingSpiceParameters = false;
+                    // notify user
+                    this.toastService.error('Failed to calculate SPICE model parameters. Please check your measurement data.', 'Calculation Failed');
+                    // end worker
+                    worker.terminate();
+                }
+                else if (result.type === 'notification' || result.type === 'log') {
+                    // log message
+                    console.log(`${result.type}: ${result.text}`);
+                }
+            };
+
+            worker.onerror = (error) => {
+                // log error
+                console.error('Worker error:', error);
+                // update flag
+                this.isCalculatingSpiceParameters = false;
+                // notify user
+                this.toastService.error('An error occurred while calculating SPICE model parameters.', 'Calculation Error');
+                // end worker
+                worker.terminate();
+            };
+
+        }
+        catch (error) {
+            // log error
+            console.error('Error creating worker:', error);
+            // notify user
+            this.toastService.error('Failed to initialize calculation worker.', 'Worker Error');
+            // update flag
+            this.isCalculatingSpiceParameters = false;
+        }
+    }
+
     calculateDerkModelParameters() {
         // check files are available
-        if (!this.tube || this.tube.type !== 'Pentode' || !this.tube.files || this.tube.files.length === 0)
+        if (!this.tube || this.tube.type === 'Triode' || !this.tube.files || this.tube.files.length === 0)
             return;
 
         this.isCalculatingDerkParameters = true;
@@ -618,6 +621,7 @@ export class TubeComponent implements OnInit, AfterViewInit {
                     // Extract parameters from the worker result
                     const params = result.parameters;
                     if (params) {
+                        // update model
                         this.tube!.derkModelParameters = {
                             mu: params.mu || 0,
                             ex: params.ex || 0,
@@ -634,7 +638,8 @@ export class TubeComponent implements OnInit, AfterViewInit {
                             lambda: params.lambda || 0,
                             v: params.v || 0,
                             w: params.w || 0,
-                            calculatedOn: new Date().toISOString()
+                            calculatedOn: new Date().toISOString(),
+                            rmse: params.rmse || Number.MAX_VALUE,
                         };
                         // notify user
                         this.toastService.success('Derk model parameters calculated successfully!', 'Calculation Complete');
@@ -681,6 +686,101 @@ export class TubeComponent implements OnInit, AfterViewInit {
             this.toastService.error('Failed to initialize Derk model calculation worker.', 'Worker Error');
             // update flag
             this.isCalculatingDerkParameters = false;
+        }
+    }
+
+    calculateDerkEModelParameters() {
+        // check files are available
+        if (!this.tube || this.tube.type === 'Triode' || !this.tube.files || this.tube.files.length === 0)
+            return;
+
+        this.isCalculatingDerkEParameters = true;
+
+        try {
+            // Create a web worker for Derk model calculation
+            const worker = new Worker(new URL('../workers/optimize-derke-model-parameters.worker.ts', import.meta.url), { type: 'module' });
+
+            worker.postMessage({
+                files: this.tube.files,
+                maximumPlateDissipation: this.tube.maximumPlateDissipation || 1000, // Default to 1000W if not specified
+                secondaryEmission: this.tube.derkEModelParameters?.secondaryEmission || false, // Use the actual checkbox value
+                algorithm: 1,  // 0 = Levenberg-Marquardt, 1 = Powell
+                trace: undefined
+            });
+
+            worker.onmessage = (e) => {
+                // data
+                const result = e.data;
+                // Handle different message types from worker
+                if (result.type === 'succeeded') {
+                    // Extract parameters from the worker result
+                    const params = result.parameters;
+                    if (params) {
+                        // update model
+                        this.tube!.derkEModelParameters = {
+                            mu: params.mu || 0,
+                            ex: params.ex || 0,
+                            kg1: params.kg1 || 0,
+                            kg2: params.kg2 || 0,
+                            kp: params.kp || 0,
+                            kvb: params.kvb || 0,
+                            a: params.a || 0,
+                            alphaS: params.alphaS || 0,
+                            beta: params.beta || 0,
+                            secondaryEmission: params.secondaryEmission || false,
+                            s: params.s || 0,
+                            alphaP: params.alphaP || 0,
+                            lambda: params.lambda || 0,
+                            v: params.v || 0,
+                            w: params.w || 0,
+                            calculatedOn: new Date().toISOString(),
+                            rmse: params.rmse || Number.MAX_VALUE,
+                        };
+                        // notify user
+                        this.toastService.success('Derk model parameters calculated successfully!', 'Calculation Complete');
+                    }
+                    else {
+                        // notify user
+                        this.toastService.error('Failed to calculate Derk model parameters. Invalid result.', 'Calculation Failed');
+                    }
+                    // update flag
+                    this.isCalculatingDerkEParameters = false;
+                    // end worker
+                    worker.terminate();
+                }
+                else if (result.type === 'failed') {
+                    // update flag
+                    this.isCalculatingDerkEParameters = false;
+                    // notify user
+                    this.toastService.error('Failed to calculate Derk model parameters. Please check your measurement data.', 'Calculation Failed');
+                    // end worker
+                    worker.terminate();
+                }
+                else if (result.type === 'notification' || result.type === 'log') {
+                    // log message
+                    console.log(`${result.type}: ${result.text}`);
+                }
+            };
+
+            worker.onerror = (error) => {
+                // log error
+                console.error('Derk model worker error:', error);
+                // update flag
+                this.isCalculatingDerkEParameters = false;
+                // notify user
+                this.toastService.error('An error occurred while calculating Derk model parameters.', 'Calculation Error');
+                // end worker
+                worker.terminate();
+            };
+
+        }
+        catch (error) {
+            // log error
+            console.error('Error creating Derk model worker:', error);
+            // notify user
+            this.toastService.error('Failed to initialize Derk model calculation worker.', 'Worker Error');
+            // update flag
+            this.isCalculatingDerkEParameters = false;
         }
     }
 

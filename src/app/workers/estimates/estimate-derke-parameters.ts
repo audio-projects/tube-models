@@ -1,7 +1,10 @@
 import { DefaultPowellOptions, powell } from '../algorithms/powell';
 import { estimateA } from './estimate-a';
 import { estimateDerkES } from './estimate-derke-s';
+import { estimateExKg1 } from './estimate-ex-kg1';
 import { estimateKg2 } from './estimate-kg2';
+import { estimateKp } from './estimate-kp';
+import { estimateMu } from './estimate-mu';
 import { estimateSecondaryEmissionParameters } from './estimate-secondary-emission-parameters';
 import { File } from '../../files';
 import { Initial } from '../initial';
@@ -21,7 +24,15 @@ export const estimateDerkEParameters = function (initial: Initial, files: File[]
             average: []
         };
     }
-    // estimate pentode parameters
+    // estimate mu
+    estimateMu(initial, files, maxW, trace);
+    // estimate ex and kg1
+    estimateExKg1(initial, files, maxW, trace);
+    // estimate kp
+    estimateKp(initial, files, maxW, trace);
+    // kvb is not estimated for pentodes, it uses a hardcoded value
+    initial.kvb = 100;
+    // estimate kg2
     estimateKg2(initial, files, maxW, trace);
     // estimate a
     estimateA(initial, files, maxW, trace);
@@ -66,8 +77,8 @@ export const estimateDerkEParameters = function (initial: Initial, files: File[]
                             if (p.is && p.es && p.ip * p.ep * 1e-3 < maxW) {
                                 // ipk
                                 const ip = ipk(p.eg + file.egOffset, p.es, kp, mu, kvb, ex);
-                                // difference (11.2.4)
-                                const d = -Math.log(p.is * 1e-3 * kg2 / ip - 1) + a * Math.pow(p.ep, 1.5) + b;
+                                // difference
+                                const d = Math.log(p.is * 1e-3 * kg2 / ip - 1) - (a * Math.pow(p.ep, 1.5) + b);
                                 // least squares
                                 r += d * d;
                                 // update points used
