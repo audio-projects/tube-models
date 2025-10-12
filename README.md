@@ -33,12 +33,7 @@ TubeModels implements sophisticated mathematical models to characterize vacuum t
 
 $$E_1 = \frac{V_p \cdot \ln\left(1 + \exp\left(K_p \cdot \left(\frac{1}{\mu} + \frac{V_g}{\sqrt{K_{vb} + V_p^2}}\right)\right)\right)}{K_p}$$
 
-$$
-I_p = \begin{cases} 
-\frac{E_1^{E_x}}{K_{g1}} & \text{if } E_1 > 0 \\ 
-0 & \text{otherwise} 
-\end{cases}
-$$
+$$I_p = \frac{E_1^{E_x}}{K_{g1}} \quad \text{when } E_1 > 0, \text{ otherwise } I_p = 0$$
 
 📖 **[Full documentation](docs/norman-koren-triode-model.md)**
 
