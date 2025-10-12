@@ -33,7 +33,12 @@ TubeModels implements sophisticated mathematical models to characterize vacuum t
 
 $$E_1 = \frac{V_p \cdot \ln\left(1 + \exp\left(K_p \cdot \left(\frac{1}{\mu} + \frac{V_g}{\sqrt{K_{vb} + V_p^2}}\right)\right)\right)}{K_p}$$
 
-$$I_p = \frac{E_1^{E_x}}{K_{g1}} \quad \text{when } E_1 > 0, \text{ otherwise } I_p = 0$$
+$$
+I_p = \begin{cases} 
+\frac{E_1^{E_x}}{K_{g1}} & \text{if } E_1 > 0 \\ 
+0 & \text{otherwise} 
+\end{cases}
+$$
 
 📖 **[Full documentation](docs/norman-koren-triode-model.md)**
 
@@ -59,7 +64,12 @@ $$I_s = \frac{{(V_g + \frac{V_s}{\mu})}^{E_x}}{K_{g2}}$$
 
 $$E_1 = \frac{V_s \cdot \ln\left(1 + \exp\left(K_p \cdot \left(\frac{1}{\mu} + \frac{V_g}{\sqrt{K_{vb} + V_s^2}}\right)\right)\right)}{K_p}$$
 
-$$I_{pk} = \begin{cases} E_1^{E_x} & \text{if } E_1 > 0 \\ 0 & \text{otherwise} \end{cases}$$
+$$
+I_{pk} = \begin{cases} 
+E_1^{E_x} & \text{if } E_1 > 0 \\ 
+0 & \text{otherwise} 
+\end{cases}
+$$
 
 $$I_p = \frac{I_{pk} \cdot \arctan\left(\frac{V_p}{K_{vb}}\right)}{K_{g1}}$$
 
@@ -73,7 +83,12 @@ $$I_s = \frac{I_{pk}}{K_{g2}}$$
 
 $$E_1 = \frac{V_s \cdot \ln\left(1 + \exp\left(K_p \cdot \left(\frac{1}{\mu} + \frac{V_g}{\sqrt{K_{vb} + V_s^2}}\right)\right)\right)}{K_p}$$
 
-$$I_{pk} = \begin{cases} E_1^{E_x} & \text{if } E_1 > 0 \\ 0 & \text{otherwise} \end{cases}$$
+$$
+I_{pk} = \begin{cases} 
+E_1^{E_x} & \text{if } E_1 > 0 \\ 
+0 & \text{otherwise} 
+\end{cases}
+$$
 
 $$S_E = s \cdot V_p \cdot \left(1 + \tanh\left(-\alpha_p \cdot \left(V_p - \left(\frac{V_s}{\lambda} - v \cdot V_g - w\right)\right)\right)\right)$$
 
@@ -89,7 +104,12 @@ $$I_s = \frac{I_{pk} \cdot \left(1 + \frac{\alpha_s}{1 + \beta \cdot V_p} + S_E\
 
 $$E_1 = \frac{V_s \cdot \ln\left(1 + \exp\left(K_p \cdot \left(\frac{1}{\mu} + \frac{V_g}{\sqrt{K_{vb} + V_s^2}}\right)\right)\right)}{K_p}$$
 
-$$I_{pk} = \begin{cases} E_1^{E_x} & \text{if } E_1 > 0 \\ 0 & \text{otherwise} \end{cases}$$
+$$
+I_{pk} = \begin{cases} 
+E_1^{E_x} & \text{if } E_1 > 0 \\ 
+0 & \text{otherwise} 
+\end{cases}
+$$
 
 $$I_{g2}(V_a) = \frac{I_{pk}}{K_{g2}} \left(1 + \alpha_s e^{-(\beta V_a)^{3/2}} + P_{sec}\right)$$
 

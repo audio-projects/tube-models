@@ -34,7 +34,12 @@ Enhanced pentode model using the $I_{pk}$ current function, which provides impro
 
 $$E_1 = \frac{V_s \cdot \ln\left(1 + \exp\left(K_p \cdot \left(\frac{1}{\mu} + \frac{V_g}{\sqrt{K_{vb} + V_s^2}}\right)\right)\right)}{K_p}$$
 
-$$I_{pk} = \begin{cases} E_1^{E_x} & \text{if } E_1 > 0 \\ 0 & \text{otherwise} \end{cases}$$
+$$
+I_{pk} = \begin{cases} 
+E_1^{E_x} & \text{if } E_1 > 0 \\ 
+0 & \text{otherwise} 
+\end{cases}
+$$
 
 $$I_p = \frac{I_{pk} \cdot \arctan\left(\frac{V_p}{K_{vb}}\right)}{K_{g1}}$$
 
