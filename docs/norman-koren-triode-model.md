@@ -10,7 +10,7 @@ The triode model is based on the Child-Langmuir space charge law and accounts fo
 
 $$E_1 = \frac{V_p \cdot \ln\left(1 + \exp\left(K_p \cdot \left(\frac{1}{\mu} + \frac{V_g}{\sqrt{K_{vb} + V_p^2}}\right)\right)\right)}{K_p}$$
 
-$$I_p = \frac{E_1^{E_x}}{K_{g1}} \quad \text{when } E_1 > 0$$
+$$I_p = \begin{cases} \frac{E_1^{E_x}}{K_{g1}} & \text{if } E_1 > 0 \\ 0 & \text{otherwise} \end{cases}$$
 
 ## Model Parameters (Physical Interpretation)
 
