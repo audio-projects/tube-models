@@ -34,7 +34,7 @@ export const estimateKvb = function (initial: Initial, files: File[], maxW: numb
         for (const kvbCandidate of candidateKvbs) {
             // Use the normanKorenTriodeModelError function to calculate RMS error
             // This is the same error function used by the optimizer
-            const rmsError = normanKorenTriodeModelError(files, kp, mu, kvbCandidate, ex, kg1, maxW);
+            const rmsError = normanKorenTriodeModelError(files, kp, mu, kvbCandidate, ex, kg1, maxW).rmse;
             // compare error
             if (rmsError < bestError) {
                 bestError = rmsError;

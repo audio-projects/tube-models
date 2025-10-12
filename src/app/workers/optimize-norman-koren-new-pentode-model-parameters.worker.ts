@@ -47,7 +47,7 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
     // log information
     self.postMessage({
         type: 'log',
-        text: `Optimizing Pentode Model parameters using the Levenberg-Marquardt algorithm, Objective function value: ${(normanKorenNewPentodeModelError(files, kp, mu, kvb, ex, kg1, kg2, maximumPlateDissipation) * 1e-6).toExponential()}`
+        text: `Optimizing Pentode Model parameters using the Levenberg-Marquardt algorithm, Root Mean Square Error: ${normanKorenNewPentodeModelError(files, kp, mu, kvb, ex, kg1, kg2, maximumPlateDissipation).rmse.toExponential()}`
     });
     // optimize
     const result = levmar(R, [1, 1, 1, 1, 1, 1], {trace: trace, tolerance: 1e-4, kmax: 500});
@@ -67,7 +67,7 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
         // log values
         self.postMessage({
             type: 'log',
-            text: `Pentode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, kg2=${parameters.kg2}, Objective function value: ${(normanKorenNewPentodeModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, parameters.kg2, maximumPlateDissipation) * 1e-6).toExponential()}, iterations: ${result.iterations}`,
+            text: `Pentode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, kg2=${parameters.kg2}, Root Mean Square Error: ${normanKorenNewPentodeModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, parameters.kg2, maximumPlateDissipation).rmse.toExponential()}, iterations: ${result.iterations}`,
         });
         // return model parameters
         return parameters;
@@ -80,10 +80,10 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
     // log information
     postMessage({
         type: 'log',
-        text: `Optimizing Pentode Model parameters using the Powell algorithm, Objective function value: ${(normanKorenNewPentodeModelError(files, kp, mu, kvb, ex, kg1, kg2, maximumPlateDissipation) * 1e-6).toExponential()}`,
+        text: `Optimizing Pentode Model parameters using the Powell algorithm, Root Mean Square Error: ${normanKorenNewPentodeModelError(files, kp, mu, kvb, ex, kg1, kg2, maximumPlateDissipation).rmse.toExponential()}`,
     });
-    // least square problem
-    const leastSquares = function (x: number[]): number {
+    // error function (function to optimize)
+    const sumOfSquaredErrors = function (x: number[]): number {
         // update parameters
         const mu = Math.abs(x[0]);
         const ex = Math.abs(x[1]);
@@ -92,7 +92,7 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
         const kvb = Math.abs(x[4]);
         const kg2 = Math.abs(x[5]);
         // evaluate target function
-        return normanKorenNewPentodeModelError(files, kp, mu, kvb, ex, kg1, kg2, maximumPlateDissipation);
+        return normanKorenNewPentodeModelError(files, kp, mu, kvb, ex, kg1, kg2, maximumPlateDissipation).sse;
     };
     // powell optimization options
     const options: PowellOptions = {
@@ -105,7 +105,7 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
     // create variable vector
     const x = [mu, ex, kg1, kp, kvb, kg2];
     // optimize f1
-    const result = powell(x, leastSquares, options);
+    const result = powell(x, sumOfSquaredErrors, options);
     // check result
     if (result.converged) {
         // create model parameters
@@ -116,11 +116,15 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
             kp: Math.abs(result.x[3]),
             kvb: Math.abs(result.x[4]),
             kg2: Math.abs(result.x[5]),
+            // root mean square error
+            rmse: 0,
         };
+        // calculate Root Mean Square Error
+        parameters.rmse = normanKorenNewPentodeModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, parameters.kg2, maximumPlateDissipation).rmse;
         // log values
         postMessage({
             type: 'log',
-            text: `Pentode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, kg2=${parameters.kg2}, Objective function value: ${(normanKorenNewPentodeModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, parameters.kg2, maximumPlateDissipation) * 1e-6).toExponential()}, iterations: ${result.iterations}`,
+            text: `Pentode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, kg2=${parameters.kg2}, Root Mean Square Error: ${parameters.rmse.toExponential()}, iterations: ${result.iterations}`,
         });
         // return model parameters
         return parameters;

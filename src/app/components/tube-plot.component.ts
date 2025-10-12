@@ -10,11 +10,21 @@ import {
 } from '@angular/core';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { CommonModule } from '@angular/common';
+import { derkEModel } from '../workers/models/derke-model';
+import { derkEModelError } from '../workers/models/derke-model-error';
 import { derkModel } from '../workers/models/derk-model';
-import { File as TubeFile, Point, Series } from '../files';
+import { derkModelError } from '../workers/models/derk-model-error';
+import {
+    File as TubeFile,
+    File,
+    Point,
+    Series
+} from '../files';
 import { FormsModule } from '@angular/forms';
 import { normanKorenNewPentodeModel } from '../workers/models/norman-koren-new-pentode-model';
+import { normanKorenNewPentodeModelError } from '../workers/models/norman-koren-new-pentode-model-error';
 import { normanKorenTriodeModel } from '../workers/models/norman-koren-triode-model';
+import { normanKorenTriodeModelError } from '../workers/models/norman-koren-triode-model-error';
 import { TubeInformation } from './tube-information';
 
 Chart.register(...registerables);
@@ -48,6 +58,12 @@ Chart.register(...registerables);
                 <canvas #chartCanvas></canvas>
             </div>
 
+            <!-- Model RMSE Display -->
+            <div *ngIf="modelRmse !== null" class="alert alert-info mt-3 mb-0" role="alert">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Model Fit Quality:</strong> Root Mean Square Error (RMSE) = <strong>{{ modelRmse.toFixed(4) }}</strong> mA
+            </div>
+
             <div *ngIf="!file" class="text-center py-4">
                 <i class="bi bi-graph-up display-6 text-muted"></i>
                 <p class="text-muted mt-2 mb-0">No file selected</p>
@@ -77,6 +93,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
     private viewInitialized = false;
     selectedModel = '';
     availableModels: { key: string; name: string }[] = [];
+    modelRmse: number | null = null;
 
     ngAfterViewInit() {
         // update flag
@@ -282,7 +299,8 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
 
     private createDatasets(axesConfig: ReturnType<typeof this.getAxesForMeasurementType>) {
         // check file is selected
-        if (!this.file) return [];
+        if (!this.file)
+            return [];
         // colors
         const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'];
         // Show lines connecting points when no model is selected
@@ -345,7 +363,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                         fill: false,
                         tension: 0.1,
                         pointRadius: 2,
-                        pointHoverRadius: 4,
+                        pointHoverRadius: 3,
                         yAxisID: 'y', // Single axis for combined measurement
                     });
                 }
@@ -355,22 +373,21 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                 const primaryData = series.points
                     .filter((point) => this.getPointValue(point, axesConfig.xField) !== undefined && this.getPointValue(point, axesConfig.yField) !== undefined)
                     .map((point) => {
+                        // x, y values
                         let xValue = this.getPointValue(point, axesConfig.xField) as number;
                         let yValue = this.getPointValue(point, axesConfig.yField) as number;
-
                         // Apply egOffset to grid voltage values when plotting
-                        if (axesConfig.xField === 'eg') {
+                        if (axesConfig.xField === 'eg')
                             xValue += this.file!.egOffset;
-                        }
-                        if (axesConfig.yField === 'eg') {
+                        if (axesConfig.yField === 'eg')
                             yValue += this.file!.egOffset;
-                        }
-
+                        // Create data point
                         return { x: xValue, y: yValue };
                     })
                     .sort((a, b) => a.x - b.x);
 
                 if (primaryData.length > 0) {
+                    // append dataset
                     datasets.push({
                         label: seriesLabel, // Same series label for both axes
                         data: primaryData,
@@ -378,7 +395,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                         backgroundColor: color,
                         fill: false,
                         pointRadius: 2,
-                        pointHoverRadius: 4,
+                        pointHoverRadius: 3,
                         showLine: showLines,
                         tension: 0.1,
                         yAxisID: 'y', // Left axis
@@ -388,20 +405,19 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
 
             // Create secondary Y-axis dataset (right axis) if dual axis
             if (axesConfig.hasDualYAxis && axesConfig.rightYField) {
+                // secondary Y-axis dataset
                 const secondaryData = series.points
                     .filter((point) => this.getPointValue(point, axesConfig.xField) !== undefined && this.getPointValue(point, axesConfig.rightYField!) !== undefined)
                     .map((point) => {
+                        // x, y values
                         let xValue = this.getPointValue(point, axesConfig.xField) as number;
                         let yValue = this.getPointValue(point, axesConfig.rightYField!) as number;
-
                         // Apply egOffset to grid voltage values when plotting
-                        if (axesConfig.xField === 'eg') {
+                        if (axesConfig.xField === 'eg')
                             xValue += this.file!.egOffset;
-                        }
-                        if (axesConfig.rightYField === 'eg') {
+                        if (axesConfig.rightYField === 'eg')
                             yValue += this.file!.egOffset;
-                        }
-
+                        // Create data point
                         return { x: xValue, y: yValue };
                     })
                     .sort((a, b) => a.x - b.x);
@@ -413,10 +429,10 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                         data: secondaryData,
                         borderColor: color,
                         backgroundColor: color,
-                        borderDash: [5, 5], // Dashed line to distinguish from primary
+                        borderDash: [2, 1], // Dashed line to distinguish from primary
                         fill: false,
                         pointRadius: 2,
-                        pointHoverRadius: 4,
+                        pointHoverRadius: 3,
                         showLine: showLines,
                         tension: 0.1,
                         yAxisID: 'y1', // Right axis
@@ -434,6 +450,9 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             // maximum plate dissipation line
             datasets.push(...this.createMaximumPlateDissipationDatasets(minX, maxX) );
         }
+        // calculate and store RMS error for model
+        this.modelRmse = this.selectedModel && this.tube ? this.calculateModelRootMeanSquareError(this.file) : null;
+        // datasets
         return datasets;
     }
 
@@ -466,7 +485,6 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                     tension: 0.1,
                     pointRadius: 0, // No points for model lines
                     borderWidth: 2,
-                    borderDash: [5, 5], // Dashed line for model
                     yAxisID: 'y',
                 });
                 // exit
@@ -483,7 +501,6 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                 tension: 0.1,
                 pointRadius: 0, // No points for model lines
                 borderWidth: 2,
-                borderDash: [5, 5], // Dashed line for model
                 yAxisID: 'y',
             });
             // create right Y axis dataset if dual axis
@@ -499,7 +516,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                     tension: 0.1,
                     pointRadius: 0, // No points for model lines
                     borderWidth: 2,
-                    borderDash: [5, 5], // Dashed line for model
+                    borderDash: [2, 1], // Dashed line to distinguish from primary
                     yAxisID: 'y1',
                 });
             }
@@ -507,6 +524,62 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             return modelDatasets;
         }
         return [];
+    }
+
+    private calculateModelRootMeanSquareError(file: File): number | null {
+        // triode
+        if (this.selectedModel === 'norman-koren-triode') {
+            // check model has been calculated
+            if (!this.tube?.triodeModelParameters?.calculatedOn)
+                return null;
+            // model parameters
+            const params = this.tube?.triodeModelParameters;
+            // Check if all required parameters are available
+            if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb)
+                return null;
+            // calculate RMS error
+            return normanKorenTriodeModelError([file], params.kp, params.mu, params.kvb, params.ex, params.kg1, this.tube?.maximumPlateDissipation || Number.MAX_VALUE).rmse;
+        }
+        // pentode
+        if (this.selectedModel === 'norman-koren-pentode') {
+            // check model has been calculated
+            if (!this.tube?.pentodeModelParameters?.calculatedOn)
+                return null;
+            // model parameters
+            const params = this.tube?.pentodeModelParameters;
+            // Check if all required parameters are available
+            if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb || !params.kg2)
+                return null;
+            // calculate RMS error
+            return normanKorenNewPentodeModelError([file], params.kp, params.mu, params.kvb, params.ex, params.kg1, params.kg2, this.tube?.maximumPlateDissipation || Number.MAX_VALUE).rmse;
+        }
+        // derk model
+        if (this.selectedModel === 'derk-pentode') {
+            // check model has been calculated
+            if (!this.tube?.derkModelParameters?.calculatedOn)
+                return null;
+            // model parameters
+            const params = this.tube?.derkModelParameters;
+            // Check if all required parameters are available
+            if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb || !params.kg2 || !params.a || !params.alphaS || !params.beta)
+                return null;
+            // evaluate model, when no screen current use Pentode connected as a Triode
+            return derkModelError([file], params.kp, params.mu, params.kvb, params.ex, params.kg1, params.kg2, params.a, params.alphaS, params.beta, params.secondaryEmission || false, params.s || 0, params.alphaP || 0, params.lambda || 0, params.v || 0, params.w || 0, this.tube?.maximumPlateDissipation || Number.MAX_VALUE).rmse;
+        }
+        // derke model
+        if (this.selectedModel === 'derke-pentode') {
+            // check model has been calculated
+            if (!this.tube?.derkEModelParameters?.calculatedOn)
+                return null;
+            // model parameters
+            const params = this.tube?.derkEModelParameters;
+            // Check if all required parameters are available
+            if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb || !params.kg2 || !params.a || !params.alphaS || !params.beta)
+                return null;
+            // evaluate model, when no screen current use Pentode connected as a Triode
+            return derkEModelError([file], params.kp, params.mu, params.kvb, params.ex, params.kg1, params.kg2, params.a, params.alphaS, params.beta, params.secondaryEmission || false, params.s || 0, params.alphaP || 0, params.lambda || 0, params.v || 0, params.w || 0, this.tube?.maximumPlateDissipation || Number.MAX_VALUE).rmse;
+        }
+        return null;
     }
 
     private generatePlateCharacteristicCurve(series: Series): { x: number; y1: number, y2: number }[] {
@@ -585,6 +658,33 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
                 try {
                     // evaluate model, when no screen current use Pentode connected as a Triode
                     const result = derkModel(plateVoltage, gridVoltage, screenVoltage || plateVoltage, params.kp, params.mu, params.kvb, params.ex, params.kg1, params.kg2, params.a, params.alphaS, params.beta, params.secondaryEmission || false, params.s || 0, params.alphaP || 0, params.lambda || 0, params.v || 0, params.w || 0);
+                    // values
+                    points.push({ x: plateVoltage, y1: result.ip, y2: result.is });
+                }
+                catch {
+                    // Skip invalid points
+                    continue;
+                }
+            }
+            return points;
+        }
+        // derke model
+        if (this.selectedModel === 'derke-pentode') {
+            // check model has been calculated
+            if (!this.tube?.derkEModelParameters?.calculatedOn)
+                return [];
+            // model parameters
+            const params = this.tube?.derkEModelParameters;
+            // Check if all required parameters are available
+            if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb || !params.kg2 || !params.a || !params.alphaS || !params.beta)
+                return [];
+            // screen voltage
+            const screenVoltage = (series.es || 0);
+            // x values
+            for (let plateVoltage = 0; plateVoltage <= maxPlateVoltage; plateVoltage += stepSize) {
+                try {
+                    // evaluate model, when no screen current use Pentode connected as a Triode
+                    const result = derkEModel(plateVoltage, gridVoltage, screenVoltage || plateVoltage, params.kp, params.mu, params.kvb, params.ex, params.kg1, params.kg2, params.a, params.alphaS, params.beta, params.secondaryEmission || false, params.s || 0, params.alphaP || 0, params.lambda || 0, params.v || 0, params.w || 0);
                     // values
                     points.push({ x: plateVoltage, y1: result.ip, y2: result.is });
                 }
@@ -1001,6 +1101,9 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             // derk model
             if (this.tube.derkModelParameters?.calculatedOn)
                 this.availableModels.push({key: 'derk-pentode', name: 'Derk Pentode Model'});
+            // derke model
+            if (this.tube.derkEModelParameters?.calculatedOn)
+                this.availableModels.push({key: 'derke-pentode', name: 'Derk E Pentode Model'});
         }
     }
 

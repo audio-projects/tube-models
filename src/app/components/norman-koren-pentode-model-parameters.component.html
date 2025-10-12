@@ -39,6 +39,7 @@
     <pre class="bg-dark text-light p-3 rounded-3" style="font-size: 0.85em; overflow-x: auto" *ngIf="tube?.pentodeModelParameters?.calculatedOn"
       >{{ spiceSubcktLine }}
 {{ spiceCommentLine }}
+* Root Mean Square Error: {{ tube?.pentodeModelParameters?.rmse?.toExponential() }}
 * Parameters calculated on: {{ tube?.pentodeModelParameters?.calculatedOn | date : "short" }} (https://audio-projects.us/tube-models/tube/{{ tube?.id }})
 X1 P G2 G1 K BTetrodeK {{ spiceParamLine }}
 .ENDS

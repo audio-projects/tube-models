@@ -7,10 +7,10 @@ import { Trace } from '../trace';
 export const estimateA = function (initial: Initial, files: File[], maxW: number, trace?: Trace) {
     // check we need to estimate a
     if (!initial.a) {
-        // mu must be initialized
+        // mu, kp, kvb, ex and kg1 must be initialized
         if (!initial.kp || !initial.mu || !initial.kvb || !initial.ex || !initial.kg1) {
-            // cannot estimate ex and kg1 without mu
-            throw new Error('Cannot estimate kp without kp, mu, kvb, ex and kg1');
+            // cannot estimate a without these parameters
+            throw new Error('Cannot estimate a without kp, mu, kvb, ex and kg1');
         }
         // initialize trace
         if (trace) {
@@ -31,9 +31,13 @@ export const estimateA = function (initial: Initial, files: File[], maxW: number
                 for (const series of file.series) {
                     // series points must be sorted by the X axis (EP)
                     series.points.sort((p1, p2) => p1.ep - p2.ep);
+                    // accumulate estimates for this series using weighted averaging
+                    let seriesSum = 0;
+                    let seriesCount = 0;
+                    let seriesWeightSum = 0;
                     // points with high EP
                     let l: Point | null = null, u: Point | null = null;
-                    // loop points (backwards)
+                    // loop points (backwards from highest voltage)
                     for (let k = series.points.length - 1; k >= 0; k--) {
                         // current point
                         const p = series.points[k];
@@ -43,27 +47,45 @@ export const estimateA = function (initial: Initial, files: File[], maxW: number
                             l = u;
                             u = p;
                             // check we can use these points, make sure ip are different and with a positive slope (saturation)
-                            if (l && u && l.ip > u.ip) {
-                                // IPk
-                                const ip = ipk(l.eg + file.egOffset, l.es ?? 0, initial.kp, initial.mu, initial.kvb, initial.ex);
-                                // estimate A
+                            if (l && u && u.ip > l.ip) {
+                                // calculate midpoint values for more accurate ipk evaluation
+                                // Using midpoint reduces approximation error in the finite difference
+                                const egMid = ((l.eg + u.eg) / 2) + file.egOffset;
+                                const esMid = ((l.es ?? 0) + (u.es ?? 0)) / 2;
+                                // IPk at midpoint - more accurate than using single endpoint
+                                const ip = ipk(egMid, esMid, initial.kp, initial.mu, initial.kvb, initial.ex);
+                                // estimate A using finite difference approximation
                                 const a = initial.kg1 * (u.ip - l.ip) * 1e-3 / (ip * (u.ep - l.ep));
-                                // update trace if needed
-                                if (trace) {
-                                    // append estimate
-                                    trace.estimates.a?.average.push({
-                                        file: file.name,
-                                        a: a,
-                                        eg: (series.eg ?? 0) + file.egOffset
-                                    });
+                                // weight by voltage span - larger spans give more reliable slope estimates
+                                // and reduce the impact of measurement noise
+                                const weight = u.ep - l.ep;
+                                // accumulate weighted estimate
+                                seriesSum += Math.abs(a) * weight;
+                                seriesWeightSum += weight;
+                                seriesCount++;
+                                // collect up to 3 point pairs per series for better noise rejection
+                                // multiple samples provide statistical robustness
+                                if (seriesCount >= 3) {
+                                    break;
                                 }
-                                // average values
-                                sum += Math.abs(a);
-                                count++;
-                                // exit
-                                break;
                             }
                         }
+                    }
+                    // if we have estimates for this series, add weighted average to global sum
+                    if (seriesCount > 0) {
+                        const seriesAverage = seriesSum / seriesWeightSum;
+                        // update trace if needed
+                        if (trace) {
+                            // append weighted average estimate for this series
+                            trace.estimates.a?.average.push({
+                                file: file.name,
+                                a: seriesAverage,
+                                eg: (series.eg ?? 0) + file.egOffset
+                            });
+                        }
+                        // add series average to global average
+                        sum += seriesAverage;
+                        count++;
                     }
                 }
             }
