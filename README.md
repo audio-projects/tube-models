@@ -595,6 +595,12 @@ Lower values indicate better screen grid shielding and more ideal pentode behavi
 
 **Note:** This is an advanced parameter for modeling complex plate-screen interactions in tubes exhibiting non-ideal pentode behavior. The enhanced estimation method provides production-quality accuracy suitable for precision circuit simulation.
 
+**Detailed Parameter Estimation Documentation:**
+
+For comprehensive documentation on space charge parameter estimation:
+- [Derk Model αs and β Estimation](docs/derk/estimate-alphas-beta.md) - Hyperbolic decay for general pentodes
+- [DerkE Model αs and β Estimation](docs/derke/estimate-alphas-beta.md) - Exponential decay for beam tetrodes
+
 #### Estimation Sequence
 
 The complete parameter estimation follows this order:

@@ -197,7 +197,7 @@ export const estimateSecondaryEmissionParameters = function (initial: Initial, f
                 // loop screenCurrentFeaturePoints
                 for (const p of screenCurrentFeaturePoints) {
                     // difference
-                    const d = -p.epmax + p.ip / (initial.lambda || 1) - v * p.eg - w;
+                    const d = -p.epmax + p.es / (initial.lambda || 1) - v * p.eg - w;
                     // update r
                     r += d * d;
                 }

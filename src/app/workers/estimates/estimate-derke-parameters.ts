@@ -77,8 +77,8 @@ export const estimateDerkEParameters = function (initial: Initial, files: File[]
                             if (p.is && p.es && p.ip * p.ep * 1e-3 < maxW) {
                                 // ipk
                                 const ip = ipk(p.eg + file.egOffset, p.es, kp, mu, kvb, ex);
-                                // difference (11.2.4)
-                                const d = -Math.log(p.is * 1e-3 * kg2 / ip - 1) + a * Math.pow(p.ep, 1.5) + b;
+                                // difference
+                                const d = Math.log(p.is * 1e-3 * kg2 / ip - 1) - (a * Math.pow(p.ep, 1.5) + b);
                                 // least squares
                                 r += d * d;
                                 // update points used

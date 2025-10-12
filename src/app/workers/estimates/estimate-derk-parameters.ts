@@ -78,7 +78,7 @@ export const estimateDerkParameters = function (initial: Initial, files: File[],
                                 // ipk
                                 const ip = ipk(p.eg + file.egOffset, p.es, kp, mu, kvb, ex);
                                 // difference
-                                const d = -1 / (p.is * 1e-3 * kg2 / ip - 1) + a * p.ep + b;
+                                const d = 1 / (p.is * 1e-3 * kg2 / ip - 1) - (a * p.ep + b);
                                 // least squares
                                 r += d * d;
                                 // update points used
