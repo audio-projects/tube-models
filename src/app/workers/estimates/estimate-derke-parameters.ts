@@ -56,7 +56,7 @@ export const estimateDerkEParameters = function (initial: Initial, files: File[]
         let count = 0;
         // loop all files
         for (const file of files) {
-            // check measurement type (ep is in the X-axis), do not use triode files
+            // check measurement type (ep is in the X-axis)
             if (file.measurementType === 'IPIS_VA_VG_VS_VH' || file.measurementType === 'IPIS_VA_VS_VG_VH' || file.measurementType === 'IPIS_VAVS_VG_VH') {
                 // loop series
                 for (const series of file.series) {
