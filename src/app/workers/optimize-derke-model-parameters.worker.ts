@@ -10,7 +10,7 @@ import { numberValueAt, Vector } from './algorithms/vector';
 import { Trace } from './trace';
 
 // LM algorithm
-const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDissipation: number, mu: number, ex: number, kg1: number, kp: number, kvb: number, kg2: number, a: number, alphaS: number, beta: number, secondaryEmission: boolean, s: number, alphaP: number, lambda: number, v: number, w: number, trace?: Trace) {
+const optimizeWithLevenbergMarquardt = function (files: File[], mu: number, ex: number, kg1: number, kp: number, kvb: number, kg2: number, a: number, alphaS: number, beta: number, secondaryEmission: boolean, s: number, alphaP: number, lambda: number, v: number, w: number, trace?: Trace) {
     // residuals function (function to optimize)
     const R = function (x: Vector): Vector {
         // x vector values (abs)
@@ -37,8 +37,8 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
             for (const series of file.series) {
                 // loop points
                 for (const point of series.points) {
-                    // check we can use this point in calculations (max power dissipation and different than zero)
-                    if ((point.ip + (point.is ?? 0)) > 0 && point.ep * (point.ip + (point.is ?? 0)) * 1e-3 <= maximumPlateDissipation) {
+                    // check we can use this point in calculations
+                    if ((point.ip + (point.is ?? 0)) > 0) {
                         // calculate currents
                         const currents = derkEModel(point.ep, point.eg + file.egOffset, point.es ?? 0, kp * x3, mu * x0, kvb * x4, ex * x1, kg1 * x2, kg2 * x5, a * x6, alphaS * x7, beta * x8, secondaryEmission, s * x9, alphaP * x10, lambda * x11, v * x12, w * x13);
                         // residuals
@@ -54,7 +54,7 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
     // log information
     self.postMessage({
         type: 'log',
-        text: `Optimizing Derk Model parameters using the Levenberg-Marquardt algorithm, Root Mean Square Error: ${derkEModelError(files, kp, mu, kvb, ex, kg1, kg2, a, alphaS, beta, secondaryEmission, s, alphaP, lambda, v, w, maximumPlateDissipation).rmse.toExponential()}`
+        text: `Optimizing Derk Model parameters using the Levenberg-Marquardt algorithm, Root Mean Square Error: ${derkEModelError(files, kp, mu, kvb, ex, kg1, kg2, a, alphaS, beta, secondaryEmission, s, alphaP, lambda, v, w).rmse.toExponential()}`
     });
     // optimize
     const result = levmar(R, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], {trace: trace, tolerance: 1e-4, kmax: 500});
@@ -83,7 +83,7 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
         // log values
         self.postMessage({
             type: 'log',
-            text: `Derk Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, kg2=${parameters.kg2}, a=${parameters.a}, alphaS=${parameters.alphaS}, beta=${parameters.beta}, secondaryEmission=${parameters.secondaryEmission}, s=${parameters.s}, alphaP=${parameters.alphaP}, lambda=${parameters.lambda}, v=${parameters.v}, w=${parameters.w}, Root Mean Square Error: ${derkEModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, parameters.kg2, parameters.a, parameters.alphaS, parameters.beta, parameters.secondaryEmission, parameters.s, parameters.alphaP, parameters.lambda, parameters.v, parameters.w, maximumPlateDissipation).rmse.toExponential()}, iterations: ${result.iterations}`,
+            text: `Derk Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, kg2=${parameters.kg2}, a=${parameters.a}, alphaS=${parameters.alphaS}, beta=${parameters.beta}, secondaryEmission=${parameters.secondaryEmission}, s=${parameters.s}, alphaP=${parameters.alphaP}, lambda=${parameters.lambda}, v=${parameters.v}, w=${parameters.w}, Root Mean Square Error: ${derkEModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, parameters.kg2, parameters.a, parameters.alphaS, parameters.beta, parameters.secondaryEmission, parameters.s, parameters.alphaP, parameters.lambda, parameters.v, parameters.w).rmse.toExponential()}, iterations: ${result.iterations}`,
         });
         // return model parameters
         return parameters;
@@ -92,11 +92,11 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
 };
 
 // Powell algorithm
-const optimizeWithPowell = function (files: File[], maximumPlateDissipation: number, mu: number, ex: number, kg1: number, kp: number, kvb: number, kg2: number, a: number, alphaS: number, beta: number, secondaryEmission: boolean, s: number, alphaP: number, lambda: number, v: number, w: number, trace?: Trace) {
+const optimizeWithPowell = function (files: File[], mu: number, ex: number, kg1: number, kp: number, kvb: number, kg2: number, a: number, alphaS: number, beta: number, secondaryEmission: boolean, s: number, alphaP: number, lambda: number, v: number, w: number, trace?: Trace) {
     // log information
     postMessage({
         type: 'log',
-        text: `Optimizing Derk E Model parameters using the Powell algorithm, Root Mean Square Error: ${derkEModelError(files, kp, mu, kvb, ex, kg1, kg2, a, alphaS, beta, secondaryEmission, s, alphaP, lambda, v, w, maximumPlateDissipation).rmse.toExponential()}`,
+        text: `Optimizing Derk E Model parameters using the Powell algorithm, Root Mean Square Error: ${derkEModelError(files, kp, mu, kvb, ex, kg1, kg2, a, alphaS, beta, secondaryEmission, s, alphaP, lambda, v, w).rmse.toExponential()}`,
     });
     // powell optimization options
     const options: PowellOptions = {
@@ -127,10 +127,10 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
             const v = Math.abs(x[12]);
             const w = Math.abs(x[13]);
             // evaluate target function
-            return derkEModelError(files, kp, mu, kvb, ex, kg1, kg2, a, alphaS, beta, secondaryEmission, s, alphaP, lambda, v, w, maximumPlateDissipation).sse;
+            return derkEModelError(files, kp, mu, kvb, ex, kg1, kg2, a, alphaS, beta, secondaryEmission, s, alphaP, lambda, v, w).sse;
         }
         // evaluate target function
-        return derkEModelError(files, kp, mu, kvb, ex, kg1, kg2, a, alphaS, beta, false, 0, 0, 0, 0, 0, maximumPlateDissipation).sse;
+        return derkEModelError(files, kp, mu, kvb, ex, kg1, kg2, a, alphaS, beta, false, 0, 0, 0, 0, 0).sse;
     };
     // optimize f1
     const result = powell(secondaryEmission ? [mu, ex, kg1, kp, kvb, kg2, a, alphaS, beta, s, alphaP, lambda, v, w] : [mu, ex, kg1, kp, kvb, kg2, a, alphaS, beta], sumOfSquaredErrors, options);
@@ -158,7 +158,7 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
             rmse: 0,
         };
         // calculate Root Mean Square Error
-        parameters.rmse = derkEModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, parameters.kg2, parameters.a, parameters.alphaS, parameters.beta, secondaryEmission, parameters.s, parameters.alphaP, parameters.lambda, parameters.v, parameters.w, maximumPlateDissipation).rmse;
+        parameters.rmse = derkEModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, parameters.kg2, parameters.a, parameters.alphaS, parameters.beta, secondaryEmission, parameters.s, parameters.alphaP, parameters.lambda, parameters.v, parameters.w).rmse;
         // log values
         postMessage({
             type: 'log',
@@ -173,12 +173,11 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
 addEventListener('message', ({ data }) => {
     // get state
     const files = data.files;
-    const maximumPlateDissipation = data.maximumPlateDissipation;
     const secondaryEmission = data.secondaryEmission;
     const algorithm = data.algorithm;
     const trace = data.trace;
     // estimate parameters
-    const estimates = estimateDerkEParameters({}, files, maximumPlateDissipation, secondaryEmission, trace);
+    const estimates = estimateDerkEParameters({}, files, secondaryEmission, trace);
     // update parameters
     const mu = Math.abs(estimates.mu ?? 0);
     const ex = Math.abs(estimates.ex ?? 0);
@@ -205,11 +204,11 @@ addEventListener('message', ({ data }) => {
     // check algorithm
     if (algorithm === 0) {
         // use Levenberg-Marquardt
-        parameters = optimizeWithLevenbergMarquardt(files, maximumPlateDissipation, mu, ex, kg1, kp, kvb, kg2, a, alphaS, beta, secondaryEmission, s, alphaP, lambda, v, w, trace);
+        parameters = optimizeWithLevenbergMarquardt(files, mu, ex, kg1, kp, kvb, kg2, a, alphaS, beta, secondaryEmission, s, alphaP, lambda, v, w, trace);
     }
     else {
         // use Powell
-        parameters = optimizeWithPowell(files, maximumPlateDissipation, mu, ex, kg1, kp, kvb, kg2, a, alphaS, beta, secondaryEmission, s, alphaP, lambda, v, w, trace);
+        parameters = optimizeWithPowell(files, mu, ex, kg1, kp, kvb, kg2, a, alphaS, beta, secondaryEmission, s, alphaP, lambda, v, w, trace);
     }
     // notify completion/failure
     postMessage({

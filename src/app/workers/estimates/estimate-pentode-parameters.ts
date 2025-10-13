@@ -6,22 +6,22 @@ import { File } from '../../files';
 import { Initial } from '../initial';
 import { Trace } from '../trace';
 
-export const estimatePentodeParameters = function (initial: Initial, files: File[], maxW: number, trace?: Trace): Initial {
+export const estimatePentodeParameters = function (initial: Initial, files: File[], trace?: Trace): Initial {
     // initialize trace
     if (trace) {
         // estimates
         trace.estimates = trace.estimates || {};
     }
     // estimate mu
-    estimateMu(initial, files, maxW, trace);
+    estimateMu(initial, files, trace);
     // extimate ex and kg1
-    estimateExKg1(initial, files, maxW, trace);
+    estimateExKg1(initial, files, trace);
     // estimate kp
-    estimateKp(initial, files, maxW, trace);
+    estimateKp(initial, files, trace);
     // kvb is not estimated for pentodes, it uses a hardcoded value
     initial.kvb = 100;
     // estimate kg2
-    estimateKg2(initial, files, maxW, trace);
+    estimateKg2(initial, files, trace);
     // return estimates
     return {
         kp: initial.kp,

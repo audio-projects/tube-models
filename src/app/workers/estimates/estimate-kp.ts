@@ -2,7 +2,7 @@ import { File } from '../../files';
 import { Initial } from '../initial';
 import { Trace } from '../trace';
 
-export const estimateKp = function (initial: Initial, files: File[], maxW: number, trace?: Trace) {
+export const estimateKp = function (initial: Initial, files: File[], trace?: Trace) {
     // check we need to estimate kp
     if (!initial.kp) {
         // mu must be initialized
@@ -34,21 +34,18 @@ export const estimateKp = function (initial: Initial, files: File[], maxW: numbe
                 const dataPoints: { x: number; y: number }[] = [];
                 // loop points to collect high voltage data
                 for (const p of series.points) {
-                    // check point meets power criteria
-                    if (p.ip * p.ep * 1e-3 <= maxW) {
-                        // check point meets criteria (high Va, Va/μ > -Vg condition)
-                        if (p.ep / mu > -(p.eg + file.egOffset)) {
-                            // calculate e1 estimate
-                            const e1 = Math.pow(((p.ip + (p.is ?? 0)) * kg1) / 2000, 1 / ex);
-                            // check e1 is valid
-                            if (e1 > 0) {
-                                // x-axis: (1/μ + Vg/Va)
-                                const x = 1 / mu + (p.eg + file.egOffset) / p.ep;
-                                // y-axis: ln(E1)
-                                const y = Math.log(e1);
-                                // add data point
-                                dataPoints.push({ x, y });
-                            }
+                    // check point meets criteria (high Va, Va/μ > -Vg condition)
+                    if (p.ep / mu > -(p.eg + file.egOffset)) {
+                        // calculate e1 estimate
+                        const e1 = Math.pow(((p.ip + (p.is ?? 0)) * kg1) / 2000, 1 / ex);
+                        // check e1 is valid
+                        if (e1 > 0) {
+                            // x-axis: (1/μ + Vg/Va)
+                            const x = 1 / mu + (p.eg + file.egOffset) / p.ep;
+                            // y-axis: ln(E1)
+                            const y = Math.log(e1);
+                            // add data point
+                            dataPoints.push({ x, y });
                         }
                     }
                 }

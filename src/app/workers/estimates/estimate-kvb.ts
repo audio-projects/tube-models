@@ -3,7 +3,7 @@ import { Initial } from '../initial';
 import { normanKorenTriodeModelError } from '../models/norman-koren-triode-model-error';
 import { Trace } from '../trace';
 
-export const estimateKvb = function (initial: Initial, files: File[], maxW: number, trace?: Trace) {
+export const estimateKvb = function (initial: Initial, files: File[], trace?: Trace) {
     // check we need to estimate kvb
     if (!initial.kvb) {
         // mu, kp, kg1, and ex must be initialized
@@ -34,7 +34,7 @@ export const estimateKvb = function (initial: Initial, files: File[], maxW: numb
         for (const kvbCandidate of candidateKvbs) {
             // Use the normanKorenTriodeModelError function to calculate RMS error
             // This is the same error function used by the optimizer
-            const rmsError = normanKorenTriodeModelError(files, kp, mu, kvbCandidate, ex, kg1, maxW).rmse;
+            const rmsError = normanKorenTriodeModelError(files, kp, mu, kvbCandidate, ex, kg1).rmse;
             // compare error
             if (rmsError < bestError) {
                 bestError = rmsError;

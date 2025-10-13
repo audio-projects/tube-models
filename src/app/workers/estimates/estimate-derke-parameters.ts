@@ -12,7 +12,7 @@ import { ipk } from '../models/ipk';
 import { Trace } from '../trace';
 
 // estimateDerkEParameters
-export const estimateDerkEParameters = function (initial: Initial, files: File[], maxW: number, secondaryEmission: boolean, trace?: Trace): Initial {
+export const estimateDerkEParameters = function (initial: Initial, files: File[], secondaryEmission: boolean, trace?: Trace): Initial {
     // initialize trace
     if (trace) {
         // estimates
@@ -25,17 +25,17 @@ export const estimateDerkEParameters = function (initial: Initial, files: File[]
         };
     }
     // estimate mu
-    estimateMu(initial, files, maxW, trace);
+    estimateMu(initial, files, trace);
     // estimate ex and kg1
-    estimateExKg1(initial, files, maxW, trace);
+    estimateExKg1(initial, files, trace);
     // estimate kp
-    estimateKp(initial, files, maxW, trace);
+    estimateKp(initial, files, trace);
     // kvb is not estimated for pentodes, it uses a hardcoded value
     initial.kvb = 100;
     // estimate kg2
-    estimateKg2(initial, files, maxW, trace);
+    estimateKg2(initial, files, trace);
     // estimate a
-    estimateA(initial, files, maxW, trace);
+    estimateA(initial, files, trace);
     // check we need to estimate parameters
     if (!initial.alphaS || !initial.beta) {
         // mu, ex, kp and kvb must be initialized
@@ -73,22 +73,28 @@ export const estimateDerkEParameters = function (initial: Initial, files: File[]
                         let c = 0;
                         // loop points (very small values of Va, where secondary emission is visible in plate characteristics)
                         for (const p of series.points) {
-                            // check point meets power criteria
-                            if (p.is && p.es && p.ip * p.ep * 1e-3 < maxW) {
+                            // "is" and "es" must be defined
+                            if (p.is && p.es) {
                                 // ipk
                                 const ip = ipk(p.eg + file.egOffset, p.es, kp, mu, kvb, ex);
-                                // difference
-                                const d = Math.log(p.is * 1e-3 * kg2 / ip - 1) - (a * Math.pow(p.ep, 1.5) + b);
-                                // least squares
-                                r += d * d;
-                                // update points used
-                                c++;
+                                // Calculate ratio - for DerkE model, we need Is*kg2/Ip > 1
+                                // This means space charge effects are visible (screen current enhanced)
+                                const ratio = p.is * 1e-3 * kg2 / ip;
+                                if (ratio > 1) {
+                                    // difference
+                                    const d = Math.log(ratio - 1) - (a * Math.pow(p.ep, 1.5) + b);
+                                    // least squares
+                                    r += d * d;
+                                    // update points used
+                                    c++;
+                                    // use 4 points
+                                    if (c >= 4)
+                                        break;
+                                }
                             }
-                            // use 4 points
-                            if (c >= 4)
-                                break;
                         }
-                        return r;
+                        // If no valid points found, return large error to indicate bad fit
+                        return c > 0 ? r : 1e10;
                     };
                     // optimize leastSquares
                     const result = powell([5, 0.05], leastSquares, DefaultPowellOptions);
@@ -124,7 +130,9 @@ export const estimateDerkEParameters = function (initial: Initial, files: File[]
         }
         // calculate estimates
         initial.alphaS = count > 0 ? Math.exp(bSum / count) : 5;
-        initial.beta = count > 0 ?  Math.pow(-aSum / count, 2 / 3) : 0.001;
+        // beta = (-a)^(2/3) where a should be negative (space charge decreases with voltage)
+        // Use absolute value to ensure valid result even if fit gives wrong sign
+        initial.beta = count > 0 ? Math.pow(Math.abs(aSum / count), 2 / 3) : 0.001;
     }
     // process secondary emission
     estimateSecondaryEmissionParameters(initial, files, secondaryEmission, estimateDerkES, trace);

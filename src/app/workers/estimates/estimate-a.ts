@@ -4,7 +4,7 @@ import { ipk } from '../models/ipk';
 import { Trace } from '../trace';
 
 // estimateA
-export const estimateA = function (initial: Initial, files: File[], maxW: number, trace?: Trace) {
+export const estimateA = function (initial: Initial, files: File[], trace?: Trace) {
     // check we need to estimate a
     if (!initial.a) {
         // mu, kp, kvb, ex and kg1 must be initialized
@@ -41,33 +41,30 @@ export const estimateA = function (initial: Initial, files: File[], maxW: number
                     for (let k = series.points.length - 1; k >= 0; k--) {
                         // current point
                         const p = series.points[k];
-                        // check point meets power criteria
-                        if (p.ip * p.ep * 1e-3 < maxW) {
-                            // update lower and upper points
-                            l = u;
-                            u = p;
-                            // check we can use these points, make sure ip are different and with a positive slope (saturation)
-                            if (l && u && u.ip > l.ip) {
-                                // calculate midpoint values for more accurate ipk evaluation
-                                // Using midpoint reduces approximation error in the finite difference
-                                const egMid = ((l.eg + u.eg) / 2) + file.egOffset;
-                                const esMid = ((l.es ?? 0) + (u.es ?? 0)) / 2;
-                                // IPk at midpoint - more accurate than using single endpoint
-                                const ip = ipk(egMid, esMid, initial.kp, initial.mu, initial.kvb, initial.ex);
-                                // estimate A using finite difference approximation
-                                const a = initial.kg1 * (u.ip - l.ip) * 1e-3 / (ip * (u.ep - l.ep));
-                                // weight by voltage span - larger spans give more reliable slope estimates
-                                // and reduce the impact of measurement noise
-                                const weight = u.ep - l.ep;
-                                // accumulate weighted estimate
-                                seriesSum += Math.abs(a) * weight;
-                                seriesWeightSum += weight;
-                                seriesCount++;
-                                // collect up to 3 point pairs per series for better noise rejection
-                                // multiple samples provide statistical robustness
-                                if (seriesCount >= 3) {
-                                    break;
-                                }
+                        // update lower and upper points
+                        l = u;
+                        u = p;
+                        // check we can use these points, make sure ip are different and with a positive slope (saturation)
+                        if (l && u && u.ip > l.ip) {
+                            // calculate midpoint values for more accurate ipk evaluation
+                            // Using midpoint reduces approximation error in the finite difference
+                            const egMid = ((l.eg + u.eg) / 2) + file.egOffset;
+                            const esMid = ((l.es ?? 0) + (u.es ?? 0)) / 2;
+                            // IPk at midpoint - more accurate than using single endpoint
+                            const ip = ipk(egMid, esMid, initial.kp, initial.mu, initial.kvb, initial.ex);
+                            // estimate A using finite difference approximation
+                            const a = initial.kg1 * (u.ip - l.ip) * 1e-3 / (ip * (u.ep - l.ep));
+                            // weight by voltage span - larger spans give more reliable slope estimates
+                            // and reduce the impact of measurement noise
+                            const weight = u.ep - l.ep;
+                            // accumulate weighted estimate
+                            seriesSum += Math.abs(a) * weight;
+                            seriesWeightSum += weight;
+                            seriesCount++;
+                            // collect up to 3 point pairs per series for better noise rejection
+                            // multiple samples provide statistical robustness
+                            if (seriesCount >= 3) {
+                                break;
                             }
                         }
                     }

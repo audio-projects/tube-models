@@ -11,7 +11,7 @@ import { numberValueAt, Vector } from './algorithms/vector';
 import { Trace } from './trace';
 
 // LM algorithm
-const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDissipation: number, mu: number, ex: number, kg1: number, kp: number, kvb: number, kg2: number, trace?: Trace) {
+const optimizeWithLevenbergMarquardt = function (files: File[], mu: number, ex: number, kg1: number, kp: number, kvb: number, kg2: number, trace?: Trace) {
     // residuals function (function to optimize)
     const R = function (x: Vector): Vector {
         // x vector values (abs)
@@ -30,8 +30,8 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
             for (const series of file.series) {
                 // loop points
                 for (const point of series.points) {
-                    // check we can use this point in calculations (max power dissipation and different than zero)
-                    if ((point.ip + (point.is ?? 0)) > 0 && point.ep * (point.ip + (point.is ?? 0)) * 1e-3 <= maximumPlateDissipation) {
+                    // check we can use this point in calculations
+                    if ((point.ip + (point.is ?? 0)) > 0) {
                         // calculate currents
                         const currents = normanKorenNewPentodeModel(point.ep, point.eg + file.egOffset, point.es ?? 0, kp * x3, mu * x0, kvb * x4, ex * x1, kg1 * x2, kg2 * x5);
                         // residuals
@@ -47,7 +47,7 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
     // log information
     self.postMessage({
         type: 'log',
-        text: `Optimizing Pentode Model parameters using the Levenberg-Marquardt algorithm, Root Mean Square Error: ${normanKorenNewPentodeModelError(files, kp, mu, kvb, ex, kg1, kg2, maximumPlateDissipation).rmse.toExponential()}`
+        text: `Optimizing Pentode Model parameters using the Levenberg-Marquardt algorithm, Root Mean Square Error: ${normanKorenNewPentodeModelError(files, kp, mu, kvb, ex, kg1, kg2).rmse.toExponential()}`
     });
     // optimize
     const result = levmar(R, [1, 1, 1, 1, 1, 1], {trace: trace, tolerance: 1e-4, kmax: 500});
@@ -67,7 +67,7 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
         // log values
         self.postMessage({
             type: 'log',
-            text: `Pentode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, kg2=${parameters.kg2}, Root Mean Square Error: ${normanKorenNewPentodeModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, parameters.kg2, maximumPlateDissipation).rmse.toExponential()}, iterations: ${result.iterations}`,
+            text: `Pentode Model parameters: mu=${parameters.mu}, ex=${parameters.ex}, kg1=${parameters.kg1}, kp=${parameters.kp}, kvb=${parameters.kvb}, kg2=${parameters.kg2}, Root Mean Square Error: ${normanKorenNewPentodeModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, parameters.kg2).rmse.toExponential()}, iterations: ${result.iterations}`,
         });
         // return model parameters
         return parameters;
@@ -76,11 +76,11 @@ const optimizeWithLevenbergMarquardt = function (files: File[], maximumPlateDiss
 };
 
 // Powell algorithm
-const optimizeWithPowell = function (files: File[], maximumPlateDissipation: number, mu: number, ex: number, kg1: number, kp: number, kvb: number, kg2: number, trace?: Trace) {
+const optimizeWithPowell = function (files: File[], mu: number, ex: number, kg1: number, kp: number, kvb: number, kg2: number, trace?: Trace) {
     // log information
     postMessage({
         type: 'log',
-        text: `Optimizing Pentode Model parameters using the Powell algorithm, Root Mean Square Error: ${normanKorenNewPentodeModelError(files, kp, mu, kvb, ex, kg1, kg2, maximumPlateDissipation).rmse.toExponential()}`,
+        text: `Optimizing Pentode Model parameters using the Powell algorithm, Root Mean Square Error: ${normanKorenNewPentodeModelError(files, kp, mu, kvb, ex, kg1, kg2).rmse.toExponential()}`,
     });
     // error function (function to optimize)
     const sumOfSquaredErrors = function (x: number[]): number {
@@ -92,7 +92,7 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
         const kvb = Math.abs(x[4]);
         const kg2 = Math.abs(x[5]);
         // evaluate target function
-        return normanKorenNewPentodeModelError(files, kp, mu, kvb, ex, kg1, kg2, maximumPlateDissipation).sse;
+        return normanKorenNewPentodeModelError(files, kp, mu, kvb, ex, kg1, kg2).sse;
     };
     // powell optimization options
     const options: PowellOptions = {
@@ -120,7 +120,7 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
             rmse: 0,
         };
         // calculate Root Mean Square Error
-        parameters.rmse = normanKorenNewPentodeModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, parameters.kg2, maximumPlateDissipation).rmse;
+        parameters.rmse = normanKorenNewPentodeModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, parameters.kg2).rmse;
         // log values
         postMessage({
             type: 'log',
@@ -135,13 +135,12 @@ const optimizeWithPowell = function (files: File[], maximumPlateDissipation: num
 addEventListener('message', ({ data }) => {
     // get state
     const files = data.files;
-    const maximumPlateDissipation = data.maximumPlateDissipation;
     const algorithm = data.algorithm;
     const trace = data.trace;
     // initial parameters
     const initial: Initial = {};
     // estimate parameters
-    const estimates = estimatePentodeParameters(initial, files, maximumPlateDissipation, trace);
+    const estimates = estimatePentodeParameters(initial, files, trace);
     // update parameters
     const mu = Math.abs(estimates.mu ?? 0);
     const ex = Math.abs(estimates.ex ?? 0);
@@ -159,11 +158,11 @@ addEventListener('message', ({ data }) => {
     // check algorithm
     if (algorithm === 0) {
         // use Levenberg-Marquardt
-        parameters = optimizeWithLevenbergMarquardt(files, maximumPlateDissipation, mu, ex, kg1, kp, kvb, kg2, trace);
+        parameters = optimizeWithLevenbergMarquardt(files, mu, ex, kg1, kp, kvb, kg2, trace);
     }
     else {
         // use Powell
-        parameters = optimizeWithPowell(files, maximumPlateDissipation, mu, ex, kg1, kp, kvb, kg2, trace);
+        parameters = optimizeWithPowell(files, mu, ex, kg1, kp, kvb, kg2, trace);
     }
     // notify completion/failure
     postMessage({

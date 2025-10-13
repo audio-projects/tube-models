@@ -28,9 +28,9 @@ describe('estimates / estimateA', () => {
                 // initial
                 const initial: Initial = { mu: 4.82, ex: 1.58, kg1: 863.17, kp: 76.78, kvb: 10323.40 };
                 // estimate a
-                estimateA(initial, files, 25);
+                estimateA(initial, files);
                 // check result - updated to reflect improved accuracy with midpoint evaluation and weighted averaging
-                expect(initial.a).toBeCloseTo(0.00031, 5);
+                expect(initial.a).toBeCloseTo(0.00032, 5);
                 // done
                 done();
             })
@@ -61,7 +61,7 @@ describe('estimates / estimateA', () => {
                 // initial
                 const initial: Initial = { mu: 56, ex: 1.18, kp: 315, kg1: 126.0, kvb: 4155 };
                 // estimate a
-                estimateA(initial, files, 100);
+                estimateA(initial, files);
                 // check result - updated to reflect improved accuracy with midpoint evaluation and weighted averaging
                 expect(initial.a).toBeCloseTo(0.00047, 5);
                 // done
