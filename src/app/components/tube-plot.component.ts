@@ -61,7 +61,7 @@ Chart.register(...registerables);
             <!-- Model RMSE Display -->
             <div *ngIf="modelRmse !== null" class="alert alert-info mt-3 mb-0" role="alert">
                 <i class="bi bi-info-circle me-2"></i>
-                <strong>Model Fit Quality:</strong> Root Mean Square Error (RMSE) = <strong>{{ modelRmse.toFixed(4) }}</strong> mA
+                <strong>Model Fit Quality (current file):</strong> Root Mean Square Error (RMSE) = <strong>{{ modelRmse.toFixed(4) }}</strong> mA
             </div>
 
             <div *ngIf="!file" class="text-center py-4">

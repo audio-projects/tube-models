@@ -33,9 +33,11 @@ export class ModelService {
             'G1 1 3 VALUE={0.5*PWR(V(7),EX)*(1+SGN(V(7)))*ATAN(V(1,3)/KVB)/KG1}',
             'G2 4 3 VALUE={0.5*PWR(V(7),EX)*(1+SGN(V(7)))/KG2}',
             'R2 1 3 1G',
-            'C1 2 3 {CCG}',
-            'C2 2 1 {CGP}',
-            'C3 3 1 {CCP}',
+            'C1 3 2 {CCG}',
+            'C2 3 4 {CCS}',
+            'C3 2 4 {CGS}',
+            'C4 2 1 {CGP}',
+            'C5 3 1 {CCP}',
             'R3 2 5 {RGI}',
             'D3 5 3 DX',
             '.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)',
@@ -58,9 +60,11 @@ export class ModelService {
                 'R3 1 3 1G',
                 'G2 4 3 VALUE={(0.5*PWR(V(7),EX)*(1+SGN(V(7))))*(1+ALPHAS/(1+BETA*V(1,3))+V(8))/KG2}',
                 'R4 4 3 1G',
-                'C1 2 3 {CCG}',
-                'C2 2 1 {CGP}',
-                'C3 3 1 {CCP}',
+                'C1 3 2 {CCG}',
+                'C2 3 4 {CCS}',
+                'C3 2 4 {CGS}',
+                'C4 2 1 {CGP}',
+                'C5 3 1 {CCP}',
                 'R5 2 5 {RGI}',
                 'D3 5 3 DX',
                 '.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)',
@@ -77,9 +81,11 @@ export class ModelService {
             'R2 1 3 1G',
             'G2 4 3 VALUE={(0.5*PWR(V(7),EX)*(1+SGN(V(7))))*(1+ALPHAS/(1+BETA*V(1,3)))/KG2}',
             'R3 4 3 1G',
-            'C1 2 3 {CCG}',
-            'C2 2 1 {CGP}',
-            'C3 3 1 {CCP}',
+            'C1 3 2 {CCG}',
+            'C2 3 4 {CCS}',
+            'C3 2 4 {CGS}',
+            'C4 2 1 {CGP}',
+            'C5 3 1 {CCP}',
             'R4 2 5 {RGI}',
             'D3 5 3 DX',
             '.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)',
@@ -102,9 +108,11 @@ export class ModelService {
                 'R3 1 3 1G',
                 'G2 4 3 VALUE={(0.5*PWR(V(7),EX)*(1+SGN(V(7))))*(1+ALPHAS*EXP(-PWR(BETA*V(1,3),1.5))+V(8))/KG2}',
                 'R4 4 3 1G',
-                'C1 2 3 {CCG}',
-                'C2 2 1 {CGP}',
-                'C3 3 1 {CCP}',
+                'C1 3 2 {CCG}',
+                'C2 3 4 {CCS}',
+                'C3 2 4 {CGS}',
+                'C4 2 1 {CGP}',
+                'C5 3 1 {CCP}',
                 'R5 2 5 {RGI}',
                 'D3 5 3 DX',
                 '.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)',
@@ -121,9 +129,11 @@ export class ModelService {
             'R2 1 3 1G',
             'G2 4 3 VALUE={(0.5*PWR(V(7),EX)*(1+SGN(V(7))))*(1+ALPHAS*EXP(-PWR(BETA*V(1,3),1.5)))/KG2}',
             'R3 4 3 1G',
-            'C1 2 3 {CCG}',
-            'C2 2 1 {CGP}',
-            'C3 3 1 {CCP}',
+            'C1 3 2 {CCG}',
+            'C2 3 4 {CCS}',
+            'C3 2 4 {CGS}',
+            'C4 2 1 {CGP}',
+            'C5 3 1 {CCP}',
             'R4 2 5 {RGI}',
             'D3 5 3 DX',
             '.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)',
@@ -146,9 +156,9 @@ export class ModelService {
         return [
             `.SUBCKT ${cleanTubeName}${suffix} P G K`,
             `* ${tube.name} Triode Model (Norman Koren)`,
-            `* Root Mean Square Error: ${params.rmse?.toExponential()}`,
+            `* Root Mean Square Error: ${params.rmse?.toFixed(4)} mA`,
             `* Parameters calculated on: ${calculatedOn}${tube.id ? ` (https://audio-projects.us/tube-models/#/tube/${tube.id})` : ''}`,
-            `X1 P G K TriodeK MU=${params.mu} EX=${params.ex} KG1=${params.kg1} KP=${params.kp} KVB=${params.kvb} CCG=${tube.ccg1 || 0} CGP=${tube.cg1p || 0} CCP=${tube.ccp || 0} RGI=2000`,
+            `X1 P G K TriodeK MU=${(params.mu ?? 0).toFixed(6)} EX=${(params.ex ?? 0).toFixed(6)} KG1=${(params.kg1 ?? 0).toFixed(6)} KP=${(params.kp ?? 0).toFixed(6)} KVB=${(params.kvb ?? 0).toFixed(6)} CCG=${tube.ccg1 || 0} CGP=${tube.cg1p || 0} CCP=${tube.ccp || 0} RGI=2000`,
             `.ENDS`
         ].join('\n');
     }
@@ -166,9 +176,9 @@ export class ModelService {
         return [
             `.SUBCKT ${cleanTubeName} P G K S`,
             `* ${tube.name} Pentode Model (Norman Koren)`,
-            `* Root Mean Square Error: ${params.rmse?.toExponential()}`,
+            `* Root Mean Square Error: ${params.rmse?.toFixed(4)} mA`,
             `* Parameters calculated on: ${calculatedOn}${tube.id ? ` (https://audio-projects.us/tube-models/#/tube/${tube.id})` : ''}`,
-            `X1 P G K S PentodeK MU=${params.mu} EX=${params.ex} KG1=${params.kg1} KP=${params.kp} KVB=${params.kvb} KG2=${params.kg2} CCG=${tube.ccg1 || 0} CGP=${tube.cg1p || 0} CCP=${tube.ccp || 0} RGI=2000`,
+            `X1 P G K S PentodeK MU=${(params.mu ?? 0).toFixed(6)} EX=${(params.ex ?? 0).toFixed(6)} KG1=${(params.kg1 ?? 0).toFixed(6)} KP=${(params.kp ?? 0).toFixed(6)} KVB=${(params.kvb ?? 0).toFixed(6)} KG2=${(params.kg2 ?? 0).toFixed(6)} CCG=${tube.ccg1 || 0} CCS=${tube.ccg2 || 0} CGS=${tube.cg1g2 || 0} CGP=${tube.cg1p || 0} CCP=${tube.ccp || 0} RGI=2000`,
             `.ENDS`
         ].join('\n');
     }
@@ -188,9 +198,9 @@ export class ModelService {
         return [
             `.SUBCKT ${cleanTubeName} P G K S`,
             `* ${tube.name} Derk Model (Derk Reefman)`,
-            `* Root Mean Square Error: ${params.rmse?.toExponential()}`,
+            `* Root Mean Square Error: ${params.rmse?.toFixed(4)} mA`,
             `* Parameters calculated on: ${calculatedOn}${tube.id ? ` (https://audio-projects.us/tube-models/#/tube/${tube.id})` : ''}`,
-            `X1 P G K S Derk${params.secondaryEmission ? '_SE' : ''} MU=${params.mu} EX=${params.ex} KG1=${params.kg1} KP=${params.kp} KVB=${params.kvb} KG2=${params.kg2} A=${params.a} ALPHAS=${params.alphaS} BETA=${params.beta} ALPHA=${alpha}${params.secondaryEmission ? ` S=${params.s} ALPHAP=${params.alphaP} LAMBDA=${params.lambda} V=${params.v} W=${params.w}` : ''} CCG=${tube.ccg1 || 0} CGP=${tube.cg1p || 0} CCP=${tube.ccp || 0} RGI=2000`,
+            `X1 P G K S Derk${params.secondaryEmission ? '_SE' : ''} MU=${(params.mu ?? 0).toFixed(6)} EX=${(params.ex ?? 0).toFixed(6)} KG1=${(params.kg1 ?? 0).toFixed(6)} KP=${(params.kp ?? 0).toFixed(6)} KVB=${(params.kvb ?? 0).toFixed(6)} KG2=${(params.kg2 ?? 0).toFixed(6)} A=${(params.a ?? 0).toFixed(6)} ALPHAS=${(params.alphaS ?? 0).toFixed(6)} BETA=${(params.beta ?? 0).toFixed(6)} ALPHA=${alpha.toFixed(6)}${params.secondaryEmission ? ` S=${(params.s ?? 0).toFixed(6)} ALPHAP=${(params.alphaP ?? 0).toFixed(6)} LAMBDA=${(params.lambda ?? 0).toFixed(6)} V=${(params.v ?? 0).toFixed(6)} W=${(params.w ?? 0).toFixed(6)}` : ''} CCG=${tube.ccg1 || 0} CCS=${tube.ccg2 || 0} CGS=${tube.cg1g2 || 0} CGP=${tube.cg1p || 0} CCP=${tube.ccp || 0} RGI=2000`,
             `.ENDS`
         ].join('\n');
     }
@@ -210,9 +220,9 @@ export class ModelService {
         return [
             `.SUBCKT ${cleanTubeName} P G K S`,
             `* ${tube.name} DerkE Model (Derk Reefman)`,
-            `* Root Mean Square Error: ${params.rmse?.toExponential()}`,
+            `* Root Mean Square Error: ${params.rmse?.toFixed(4)} mA`,
             `* Parameters calculated on: ${calculatedOn}${tube.id ? ` (https://audio-projects.us/tube-models/#/tube/${tube.id})` : ''}`,
-            `X1 P G K S DerkE${params.secondaryEmission ? '_SE' : ''} MU=${params.mu} EX=${params.ex} KG1=${params.kg1} KP=${params.kp} KVB=${params.kvb} KG2=${params.kg2} A=${params.a} ALPHAS=${params.alphaS} BETA=${params.beta} ALPHA=${alpha}${params.secondaryEmission ? ` S=${params.s} ALPHAP=${params.alphaP} LAMBDA=${params.lambda} V=${params.v} W=${params.w}` : ''} CCG=${tube.ccg1 || 0} CGP=${tube.cg1p || 0} CCP=${tube.ccp || 0} RGI=2000`,
+            `X1 P G K S DerkE${params.secondaryEmission ? '_SE' : ''} MU=${(params.mu ?? 0).toFixed(6)} EX=${(params.ex ?? 0).toFixed(6)} KG1=${(params.kg1 ?? 0).toFixed(6)} KP=${(params.kp ?? 0).toFixed(6)} KVB=${(params.kvb ?? 0).toFixed(6)} KG2=${(params.kg2 ?? 0).toFixed(6)} A=${(params.a ?? 0).toFixed(6)} ALPHAS=${(params.alphaS ?? 0).toFixed(6)} BETA=${(params.beta ?? 0).toFixed(6)} ALPHA=${alpha.toFixed(6)}${params.secondaryEmission ? ` S=${(params.s ?? 0).toFixed(6)} ALPHAP=${(params.alphaP ?? 0).toFixed(6)} LAMBDA=${(params.lambda ?? 0).toFixed(6)} V=${(params.v ?? 0).toFixed(6)} W=${(params.w ?? 0).toFixed(6)}` : ''} CCG=${tube.ccg1 || 0} CCS=${tube.ccg2 || 0} CGS=${tube.cg1g2 || 0} CGP=${tube.cg1p || 0} CCP=${tube.ccp || 0} RGI=2000`,
             `.ENDS`
         ].join('\n');
     }
