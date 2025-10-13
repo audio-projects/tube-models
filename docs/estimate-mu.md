@@ -2,7 +2,7 @@
 
 ## Overview
 
-The amplification factor (μ) estimation is a critical first step in vacuum tube parameter extraction. This document describes the implementation of the Derk Reefman methodology for estimating μ using measurement data at 5% of maximum plate current, as described in "Spice models for vacuum tubes using the uTracer" (page 35).
+The amplification factor (μ) estimation is a critical first step in vacuum tube parameter extraction. This document describes the implementation of the Derk Reefman methodology for estimating μ using measurement data at 5% of maximum plate current, as described in "Spice models for vacuum tubes using the uTracer" (page 35). The estimator only runs when `initial.mu` is unset; pre-seeded values bypass the calculation.
 
 ## Theoretical Foundation
 
@@ -66,23 +66,17 @@ This level ensures:
 For each measurement series (representing a constant grid voltage curve):
 
 **Data Organization:**
-- Points are sorted by increasing plate voltage
+- Points are sorted in-place by increasing plate voltage (`ep`)
 - For each series, identify two consecutive measurement points that bracket the target current
 
 **Current Calculation:**
 
-For **triodes**:
-$$I_{total} = I_p$$
-
-For **pentodes and tetrodes**:
-$$I_{total} = I_p + I_s$$
-
-where $I_s$ is the screen current. Using total cathode current provides a better measure of space charge effects.
+The implementation combines plate and optional screen currents for every point. For **triodes**, the screen current term is undefined, so the total reduces to the measured plate current. For **pentodes and tetrodes**, the screen contribution is automatically included, providing a better measure of the cathode current controlled by the grid voltage.
 
 **Grid Voltage Adjustment:**
-$$V_{g,corrected} = V_{g,measured} + V_{g,offset}$$
+$$V_{g,corrected} = (V_{g,measured} \text{ or } 0) + V_{g,offset}$$
 
-The offset corrects for measurement calibration differences between files.
+The offset corrects for measurement calibration differences between files. If a series omits an explicit grid voltage, the implementation treats the missing value as 0 before applying the file-level offset.
 
 ### 4. Linear Interpolation
 
@@ -157,16 +151,10 @@ The function processes the following uTracer measurement configurations:
 ## Current Calculation Strategy
 
 ### Triodes
-Uses plate current only:
-```typescript
-ip = s.points[m].ip
-```
+Uses plate current only.
 
 ### Pentodes
-Uses total cathode current (plate + screen):
-```typescript
-ip = s.points[m].ip + (s.points[m].is ?? 0)
-```
+Uses total cathode current (plate + screen).
 
 **Rationale:** In pentodes, electrons are collected by both plate and screen. Using total current provides a better measure of space charge effects controlled by the grid voltage.
 
@@ -261,9 +249,9 @@ Requires at least **2 series** at different grid voltages to calculate the volta
 ### Zero or Negative Currents
 
 **Handling strategy**:
-- Points with zero current are naturally excluded by the bracketing condition
-- Negative current measurements (noise) are treated as zero
-- The upper bound condition ($I_{p,upper} < I_{target}$) ensures only valid positive currents are used
+- Points with zero current cannot bracket the positive target current and therefore do not contribute
+- Negative current measurements are not clamped; they may appear as the lower bound, but only series that cross the target current influence the result
+- The bracketing requirement ($I_{p,lower} \leq I_{target} \leq I_{p,upper}$) ensures the calculation proceeds only when the series reaches or exceeds the target current
 
 ## Advantages Over Traditional Methods
 

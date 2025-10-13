@@ -250,38 +250,20 @@ After obtaining triode-strapped parameters, estimate the pentode-specific parame
 
 #### Screen Grid Parameter ($K_{g2}$)
 
-The screen grid scaling parameter is estimated using high anode voltage measurements where screen current behavior is most stable.
+The screen grid scaling parameter is estimated using high plate voltage measurements where screen current behavior is most stable. This pentode-specific parameter requires previously estimated triode parameters.
 
-**Estimation Method:**
+**Key Method Features:**
+- Uses highest plate voltage point per series for stability
+- Calculates fundamental current: $I_{pk} = E_1^{E_x}$ using triode parameters
+- Direct calculation: $K_{g2} = \frac{I_{pk} \times 1000}{I_{s,measured}}$
+- Requires pentode measurements with screen current data
+- Averages across multiple grid voltage series
 
-For high anode voltages, the screen current approximates:
+**Two-Stage Workflow**:
+1. Measure pentode in **triode mode** (screen connected to plate) → estimate ($\mu$, $E_x$, $K_{g1}$, $K_p$, $K_{vb}$)
+2. Measure pentode in **pentode mode** (separate screen voltage) → estimate $K_{g2}$
 
-$$I_{g2}(V_a \gg 1) \approx \frac{I_{P,Koren}(V_{g1}, V_{g2})}{K_{g2}}$$
-
-**Solution for $K_{g2}$:**
-
-$$K_{g2,est} = \left\langle \frac{I_{P,Koren,est}(V_{g1}, V_{g2})}{I_{g2,obs}} \right\rangle_{V_{g1}, V_{g2}}$$
-
-Where:
-
-- $I_{P,Koren,est} = I_{pk} = E_1^{E_x}$: Koren current calculated using triode parameters ($\mu_{est}$, $E_{x,est}$, $K_{p,est}$, $K_{vb,est}$)
-- $I_{g2,obs}$: Measured screen current from pentode data
-- $\langle \rangle$: Average over multiple grid voltage combinations
-
-**Implementation Notes:**
-
-- Select measurement points with **high plate voltage** (Va >> Vg2) for best accuracy
-- Use **pentode or triode-strapped measurement data** with separate plate and screen currents
-- For each series (grid voltage), selects highest plate voltage point meeting power criteria
-- Average multiple estimates across different operating points
-- Typical range: $K_{g2}$ = 100-10000 depending on tube type
-
-**Practical Workflow:**
-1. Measure pentode in **triode mode** → estimate (μ, Ex, Kg1, Kp, Kvb)
-2. Measure pentode in **pentode mode** → estimate $K_{g2}$ using triode parameters
-3. Use all parameters as initial values for pentode model optimization
-
-This two-stage approach provides robust initial estimates for the complete pentode model parameter set.
+📖 **[Complete Kg2 estimation documentation](docs/estimate-kg2.md)**
 
 #### Plate Voltage Coefficient ($A$) - Derk Models Only
 
