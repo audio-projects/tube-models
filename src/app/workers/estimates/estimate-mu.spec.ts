@@ -16,9 +16,9 @@ describe('estimates / estimateMu', () => {
                     // initial
                     const initial: Initial = {};
                     // estimate mu
-                    estimateMu(initial, [file], 2.5);
+                    estimateMu(initial, [file]);
                     // check result
-                    expect(initial.mu).toBeCloseTo(41.57, 1);
+                    expect(initial.mu).toBeCloseTo(41.51, 1);
                     // done
                     done();
                     // exit
@@ -48,9 +48,9 @@ describe('estimates / estimateMu', () => {
                     // initial
                     const initial: Initial = {};
                     // estimate mu
-                    estimateMu(initial, [file], 2.5);
+                    estimateMu(initial, [file]);
                     // check result
-                    expect(initial.mu).toBeCloseTo(14.56, 1);
+                    expect(initial.mu).toBeCloseTo(15.29, 1);
                     // done
                     done();
                     // exit
@@ -80,9 +80,9 @@ describe('estimates / estimateMu', () => {
                     // initial
                     const initial: Initial = {};
                     // estimate mu
-                    estimateMu(initial, [file], 1);
+                    estimateMu(initial, [file]);
                     // check result
-                    expect(initial.mu).toBeCloseTo(93.82, 1);
+                    expect(initial.mu).toBeCloseTo(94.93, 1);
                     // done
                     done();
                     // exit
@@ -124,9 +124,9 @@ describe('estimates / estimateMu', () => {
                 // initial
                 const initial: Initial = {};
                 // estimate mu
-                estimateMu(initial, files, 25);
+                estimateMu(initial, files);
                 // check result
-                expect(initial.mu).toBeCloseTo(4.82, 1);
+                expect(initial.mu).toBeCloseTo(4.89, 1);
                 // done
                 done();
                 // exit

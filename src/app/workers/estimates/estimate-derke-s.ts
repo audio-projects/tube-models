@@ -43,6 +43,11 @@ export const estimateDerkES = function (initial: Initial, screenCurrentFeaturePo
         }
         // calculate initial
         initial.s = count > 0 ? sum / count : 0.05;
+        // Validate s: typical range is 0 to 0.1 (dimensionless)
+        // Values > 0.2 are unrealistic and indicate estimation issues
+        if (initial.s > 0.2) {
+            initial.s = 0.05;
+        }
         // update trace
         if (trace?.estimates?.secondaryEmission?.s)
             trace.estimates.secondaryEmission.s.s = initial.s;

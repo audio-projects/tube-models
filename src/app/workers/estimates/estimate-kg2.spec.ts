@@ -9,7 +9,7 @@ describe('estimates / estimateKg2', () => {
         // initial
         const initial: Initial = { mu: 56, ex: 1.4, kp: 100, kvb: 1000 };
         // estimate kg2
-        estimateKg2(initial, [], 100);
+        estimateKg2(initial, []);
         // check result
         expect(initial.kg2).toBeCloseTo(1000, 2);
     });
@@ -33,9 +33,9 @@ describe('estimates / estimateKg2', () => {
                 // initial
                 const initial: Initial = { mu: 56, ex: 1.18, kp: 315, kvb: 4155 };
                 // estimate kg2
-                estimateKg2(initial, files, 2.5);
+                estimateKg2(initial, files);
                 // check result
-                expect(initial.kg2).toBeCloseTo(626.23, 2);
+                expect(initial.kg2).toBeCloseTo(638.46, 2);
                 // done
                 done();
             })
@@ -70,9 +70,9 @@ describe('estimates / estimateKg2', () => {
                 // initial
                 const initial: Initial = { mu: 5.5, ex: 1.59, kp: 54.05, kvb: 6122.6 };
                 // estimate kg2
-                estimateKg2(initial, files, 25);
+                estimateKg2(initial, files);
                 // check result
-                expect(initial.kg2).toBeCloseTo(8788.79, 2);
+                expect(initial.kg2).toBeCloseTo(11428.22, 2);
                 // done
                 done();
             })

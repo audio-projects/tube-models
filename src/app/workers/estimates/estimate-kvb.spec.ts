@@ -15,7 +15,7 @@ describe('estimates / estimateKvb', () => {
                     // initial
                     const initial: Initial = { mu: 41.50982026143785, ex: 1.5262372799919646, kg1: 968.0718249400395, kp: 238.17163161359613 };
                     // estimate kvb
-                    estimateKvb(initial, [file], 2.5);
+                    estimateKvb(initial, [file]);
                     // check result
                     expect(initial.kvb).toBeCloseTo(800.0, 2);
                     // done
@@ -47,9 +47,9 @@ describe('estimates / estimateKvb', () => {
                     // initial
                     const initial: Initial = { mu: 14.56, ex: 1.11, kg1: 1478.9, kp: 93.6 };
                     // estimate kvb
-                    estimateKvb(initial, [file], 2.5);
+                    estimateKvb(initial, [file]);
                     // check result
-                    expect(initial.kvb).toBeCloseTo(800.0, 2);
+                    expect(initial.kvb).toBeCloseTo(3200.0, 2);
                     // done
                     done();
                     // exit
@@ -79,7 +79,7 @@ describe('estimates / estimateKvb', () => {
                     // initial
                     const initial: Initial = { mu: 94.5, ex: 0.70, kg1: 616.64, kp: 928.20 };
                     // estimate kvb
-                    estimateKvb(initial, [file], 1);
+                    estimateKvb(initial, [file]);
                     // check result
                     expect(initial.kvb).toBeCloseTo(3200.0, 2);
                     // done
@@ -112,7 +112,7 @@ describe('estimates / estimateKvb', () => {
                 // initial
                     const initial: Initial = { mu: 4.82, ex: 1.58, kg1: 863.17, kp: 76.78 };
                     // estimate kvb
-                    estimateKvb(initial, [file], 25);
+                    estimateKvb(initial, [file]);
                     // check result
                     expect(initial.kvb).toBeCloseTo(50.0, 2);
                     // done

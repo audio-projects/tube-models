@@ -71,18 +71,35 @@ export function findScreenCurrentFeaturePointsInSeries(points: Point[], egOffset
         // validate both derivatives exist
         if (d1_i === undefined || d2_i === undefined)
             continue;
-        // --- A. Local Maximum Detection (First Derivative Test) ---
-        // A local max occurs where the first derivative changes sign from (+) to (-)
-        // and is approximately zero (critical point).
+        // --- A. Local Minimum Detection (First Derivative Test) ---
+        // For secondary emission, screen current has a LOCAL MINIMUM at the crossover point
+        // A local min occurs where the first derivative changes sign from (-) to (+)
         const d1_prev = firstDerivatives[i - 1];
         const d1_next = firstDerivatives[i + 1];
         // validate derivatives exist
         if (d1_prev !== undefined && d1_next !== undefined) {
-            // Check if slope changes from positive/zero to negative/zero
+            // Check if slope changes from negative to positive (minimum)
+            if (d1_prev < -Epsilon && d1_next > Epsilon) {
+                // point at local minimum (secondary emission crossover)
+                const point = points[i];
+                // append minimum point as feature point
+                featurePoints.push({
+                    type: 'Local Minimum',
+                    epmax: point.ep,
+                    eg: point.eg + egOffset,
+                    is: point.is || 0,
+                    ip: point.ip,
+                    ep: point.ep,
+                    es: point.es || 0
+                });
+                // continue to next point
+                continue;
+            }
+            // Check if slope changes from positive to negative (maximum)
             if (d1_prev > Epsilon && d1_next < -Epsilon) {
                 // point at local maximum
                 const point = points[i];
-                // append maximum point
+                // append maximum point as feature point
                 featurePoints.push({
                     type: 'Local Maximum',
                     epmax: point.ep,
@@ -126,8 +143,8 @@ function findScreenCurrentFeaturePoints(files: File[]): ScreenCurrentFeaturePoin
     const featurePoints: ScreenCurrentFeaturePoint[] = [];
     // loop all files
     for (const file of files) {
-        // check measurement type (ep is in the X-axis and es is constant), do not use triode files
-        if (file.measurementType === 'IPIS_VA_VG_VS_VH') {
+        // check measurement type where Va (ep) is on the X-axis and screen current (is) is present
+        if (file.measurementType === 'IPIS_VA_VG_VS_VH' || file.measurementType === 'IPIS_VA_VS_VG_VH' || file.measurementType === 'IPIS_VAVS_VG_VH') {
             // loop series
             for (const series of file.series) {
                 // we require at least 3 points to find inflection or local max
@@ -167,7 +184,7 @@ export const estimateSecondaryEmissionParameters = function (initial: Initial, f
     // lambda (lambda = mu)
     initial.lambda = initial.lambda || initial.mu;
     // alphaP
-    initial.alphaP = initial.alphaP || 0.05;
+    initial.alphaP = initial.alphaP || 0.2;
     // estimate v, w & s if needed
     if (!initial.v || !initial.w || !initial.s) {
         // find feature points
@@ -190,8 +207,8 @@ export const estimateSecondaryEmissionParameters = function (initial: Initial, f
             // least squares function
             const leastSquares = function(x: number[]) {
                 // get parameters
-                const v = x[0];
-                const w = x[1];
+                const v = Math.abs(x[0]);
+                const w = Math.abs(x[1]);
                 // result
                 let r = 0;
                 // loop screenCurrentFeaturePoints
@@ -213,8 +230,8 @@ export const estimateSecondaryEmissionParameters = function (initial: Initial, f
             // check result
             if (result.converged) {
                 // set initial values
-                initial.v = result.x[0];
-                initial.w = result.x[1];
+                initial.v = Math.abs(result.x[0]);
+                initial.w = Math.abs(result.x[1]);
             }
             else {
                 // set initial values

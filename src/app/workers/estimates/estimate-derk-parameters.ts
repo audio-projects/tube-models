@@ -12,7 +12,7 @@ import { ipk } from '../models/ipk';
 import { Trace } from '../trace';
 
 // estimateDerkParameters
-export const estimateDerkParameters = function (initial: Initial, files: File[], maxW: number, secondaryEmission: boolean, trace?: Trace): Initial {
+export const estimateDerkParameters = function (initial: Initial, files: File[], secondaryEmission: boolean, trace?: Trace): Initial {
     // initialize trace
     if (trace) {
         // estimates
@@ -25,17 +25,17 @@ export const estimateDerkParameters = function (initial: Initial, files: File[],
         };
     }
     // estimate mu
-    estimateMu(initial, files, maxW, trace);
+    estimateMu(initial, files, trace);
     // estimate ex and kg1
-    estimateExKg1(initial, files, maxW, trace);
+    estimateExKg1(initial, files, trace);
     // estimate kp
-    estimateKp(initial, files, maxW, trace);
+    estimateKp(initial, files, trace);
     // kvb is not estimated for pentodes, it uses a hardcoded value
     initial.kvb = 100;
     // estimate kg2
-    estimateKg2(initial, files, maxW, trace);
+    estimateKg2(initial, files, trace);
     // estimate a
-    estimateA(initial, files, maxW, trace);
+    estimateA(initial, files, trace);
     // check we need to estimate parameters
     if (!initial.alphaS || !initial.beta) {
         // mu, ex, kp and kvb must be initialized
@@ -73,8 +73,8 @@ export const estimateDerkParameters = function (initial: Initial, files: File[],
                         let c = 0;
                         // loop points (very small values of Va, where secondary emission is visible in plate characteristics)
                         for (const p of series.points) {
-                            // check point meets power criteria
-                            if (p.is && p.es && p.ip * p.ep * 1e-3 < maxW) {
+                            // "is" and "es" must be defined
+                            if (p.is && p.es) {
                                 // ipk
                                 const ip = ipk(p.eg + file.egOffset, p.es, kp, mu, kvb, ex);
                                 // difference
