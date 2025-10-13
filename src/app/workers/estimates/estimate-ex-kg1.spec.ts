@@ -16,10 +16,10 @@ describe('estimates / estimateExKg1', () => {
                     // initial
                     const initial: Initial = { mu: 56 };
                     // estimate ex/kg1
-                    estimateExKg1(initial, [file], 2.5);
+                    estimateExKg1(initial, [file]);
                     // check result (Derk Reefman linear regression method)
                     expect(initial.ex).toBeCloseTo(0.58, 1);
-                    expect(initial.kg1).toBeCloseTo(276.6, 1);
+                    expect(initial.kg1).toBeCloseTo(275.77, 2);
                     // done
                     done();
                     // exit
@@ -61,10 +61,10 @@ describe('estimates / estimateExKg1', () => {
                 // initial
                 const initial: Initial = { mu: 4.82 };
                 // estimate ex/kg1
-                estimateExKg1(initial, files, 25);
+                estimateExKg1(initial, files);
                 // check result (Derk Reefman linear regression method)
                 expect(initial.ex).toBeCloseTo(0.86, 1);
-                expect(initial.kg1).toBeCloseTo(185.29, 1);
+                expect(initial.kg1).toBeCloseTo(188.49, 2);
                 // done
                 done();
                 // exit

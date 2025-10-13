@@ -16,9 +16,9 @@ describe('estimates / estimateKp', () => {
                     // initial
                     const initial: Initial = { mu: 41.50982026143785, ex: 1.5262372799919646, kg1: 968.0718249400395 };
                     // estimate kp
-                    estimateKp(initial, [file], 2.5);
+                    estimateKp(initial, [file]);
                     // check result
-                    expect(initial.kp).toBeCloseTo(165.98, 2);
+                    expect(initial.kp).toBeCloseTo(166.26, 2);
                     // done
                     done();
                     // exit
@@ -48,9 +48,9 @@ describe('estimates / estimateKp', () => {
                     // initial
                     const initial: Initial = { mu: 94.93314285714287, ex: 0.6960953720193932, kg1: 622.4761422783655 };
                     // estimate kp
-                    estimateKp(initial, [file], 1);
+                    estimateKp(initial, [file]);
                     // check result
-                    expect(initial.kp).toBeCloseTo(445.83, 2);
+                    expect(initial.kp).toBeCloseTo(450.50, 2);
                     // done
                     done();
                     // exit
@@ -92,9 +92,9 @@ describe('estimates / estimateKp', () => {
                 // initial
                 const initial: Initial = { mu: 4.82, ex: 0.86, kg1: 185.29 };
                 // estimate kp
-                estimateKp(initial, files, 25);
+                estimateKp(initial, files);
                 // check result
-                expect(initial.kp).toBeCloseTo(25.94, 2);
+                expect(initial.kp).toBeCloseTo(20.43, 2);
                 // done
                 done();
                 // exit

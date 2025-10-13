@@ -538,7 +538,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb)
                 return null;
             // calculate RMS error
-            return normanKorenTriodeModelError([file], params.kp, params.mu, params.kvb, params.ex, params.kg1, this.tube?.maximumPlateDissipation || Number.MAX_VALUE).rmse;
+            return normanKorenTriodeModelError([file], params.kp, params.mu, params.kvb, params.ex, params.kg1).rmse;
         }
         // pentode
         if (this.selectedModel === 'norman-koren-pentode') {
@@ -551,7 +551,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb || !params.kg2)
                 return null;
             // calculate RMS error
-            return normanKorenNewPentodeModelError([file], params.kp, params.mu, params.kvb, params.ex, params.kg1, params.kg2, this.tube?.maximumPlateDissipation || Number.MAX_VALUE).rmse;
+            return normanKorenNewPentodeModelError([file], params.kp, params.mu, params.kvb, params.ex, params.kg1, params.kg2).rmse;
         }
         // derk model
         if (this.selectedModel === 'derk-pentode') {
@@ -564,7 +564,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb || !params.kg2 || !params.a || !params.alphaS || !params.beta)
                 return null;
             // evaluate model, when no screen current use Pentode connected as a Triode
-            return derkModelError([file], params.kp, params.mu, params.kvb, params.ex, params.kg1, params.kg2, params.a, params.alphaS, params.beta, params.secondaryEmission || false, params.s || 0, params.alphaP || 0, params.lambda || 0, params.v || 0, params.w || 0, this.tube?.maximumPlateDissipation || Number.MAX_VALUE).rmse;
+            return derkModelError([file], params.kp, params.mu, params.kvb, params.ex, params.kg1, params.kg2, params.a, params.alphaS, params.beta, params.secondaryEmission || false, params.s || 0, params.alphaP || 0, params.lambda || 0, params.v || 0, params.w || 0).rmse;
         }
         // derke model
         if (this.selectedModel === 'derke-pentode') {
@@ -577,7 +577,7 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             if (!params.mu || !params.ex || !params.kg1 || !params.kp || !params.kvb || !params.kg2 || !params.a || !params.alphaS || !params.beta)
                 return null;
             // evaluate model, when no screen current use Pentode connected as a Triode
-            return derkEModelError([file], params.kp, params.mu, params.kvb, params.ex, params.kg1, params.kg2, params.a, params.alphaS, params.beta, params.secondaryEmission || false, params.s || 0, params.alphaP || 0, params.lambda || 0, params.v || 0, params.w || 0, this.tube?.maximumPlateDissipation || Number.MAX_VALUE).rmse;
+            return derkEModelError([file], params.kp, params.mu, params.kvb, params.ex, params.kg1, params.kg2, params.a, params.alphaS, params.beta, params.secondaryEmission || false, params.s || 0, params.alphaP || 0, params.lambda || 0, params.v || 0, params.w || 0).rmse;
         }
         return null;
     }

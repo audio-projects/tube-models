@@ -2,7 +2,7 @@ import { File } from '../../files';
 import { Initial } from '../initial';
 import { Trace } from '../trace';
 
-export const estimateExKg1 = function (initial: Initial, files: File[], maxW: number, trace?: Trace) {
+export const estimateExKg1 = function (initial: Initial, files: File[], trace?: Trace) {
     // check we need to estimate ex and kg1
     if (!initial.ex || !initial.kg1) {
         // mu must be initialized
@@ -39,19 +39,16 @@ export const estimateExKg1 = function (initial: Initial, files: File[], maxW: nu
                 for (let k = series.points.length - 1; k >= 0; k--) {
                     // current point
                     const p = series.points[k];
-                    // check point meets power criteria
-                    if (p.ip * p.ep * 1e-3 < maxW) {
-                        // effective voltage: Va/mu + Vg
-                        const veff = p.ep / mu + (p.eg + file.egOffset);
-                        // check Derk Reefman condition: Va/mu > -Vg
-                        if (p.ep / mu > -(p.eg + file.egOffset) && veff > 0) {
-                            // total current (plate + screen for pentodes)
-                            const itotal = (p.ip + (p.is ?? 0)) * 1e-3;
-                            if (itotal > 0) {
-                                // linear regression data: ln(Ia) vs ln(Va/mu + Vg)
-                                xData.push(Math.log(veff));
-                                yData.push(Math.log(itotal));
-                            }
+                    // effective voltage: Va/mu + Vg
+                    const veff = p.ep / mu + (p.eg + file.egOffset);
+                    // check Derk Reefman condition: Va/mu > -Vg
+                    if (p.ep / mu > -(p.eg + file.egOffset) && veff > 0) {
+                        // total current (plate + screen for pentodes)
+                        const itotal = (p.ip + (p.is ?? 0)) * 1e-3;
+                        if (itotal > 0) {
+                            // linear regression data: ln(Ia) vs ln(Va/mu + Vg)
+                            xData.push(Math.log(veff));
+                            yData.push(Math.log(itotal));
                         }
                     }
                 }

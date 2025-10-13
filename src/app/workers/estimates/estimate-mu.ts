@@ -3,7 +3,7 @@ import { Initial } from '../initial';
 import { Trace } from '../trace';
 
 // estimateMu
-export const estimateMu = function (initial: Initial, files: File[], maxW: number, trace?: Trace) {
+export const estimateMu = function (initial: Initial, files: File[], trace?: Trace) {
     // check we need to estimate mu
     if (!initial.mu) {
         // maximum plate current
@@ -14,11 +14,8 @@ export const estimateMu = function (initial: Initial, files: File[], maxW: numbe
             for (const series of file.series) {
                 // loop points
                 for (const p of series.points) {
-                    // check point meets plate power criteria
-                    if (p.ip * p.ep * 1e-3 < maxW) {
-                        // update maxIp
-                        maxIp = Math.max(p.ip, maxIp);
-                    }
+                    // update maxIp
+                    maxIp = Math.max(p.ip, maxIp);
                 }
             }
         }
