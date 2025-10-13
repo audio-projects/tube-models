@@ -5,7 +5,7 @@ import {
     Input,
     Output
 } from '@angular/core';
-import { ToastService } from '../services/toast.service';
+import { ModelService } from '../services/model.service';
 import { TubeInformation } from './tube-information';
 
 @Component({
@@ -21,35 +21,10 @@ export class NormanKorenTriodeModelParametersComponent {
     @Input() canCalculate = true;
     @Output() calculateRequested = new EventEmitter<void>();
 
-    constructor(private toastService: ToastService) {}
+    constructor(private modelService: ModelService) {}
 
-    // Computed properties for SPICE model template
-    get spiceSubcktLine(): string {
-        // tube name sanitized for SPICE subckt name
-        const cleanTubeName = (this.tube?.name || 'TRIODE').toUpperCase().replace(/[^A-Z0-9]/g, '_');
-        // suffix
-        const suffix = this.tube?.type === 'Triode' ? '' : '_triode';
-        // subckt line
-        return `.SUBCKT ${cleanTubeName}${suffix} P G K`;
-    }
-
-    get spiceCommentLine(): string {
-        return `* ${this.tube?.name} Triode Model (Norman Koren)`;
-    }
-
-    get spiceParamLine(): string {
-        if (!this.tube?.triodeModelParameters) return '';
-        const params = this.tube.triodeModelParameters;
-        const mu = params.mu?.toFixed(3) || '0';
-        const ex = params.ex?.toFixed(3) || '0';
-        const kg1 = params.kg1?.toFixed(6) || '0';
-        const kp = params.kp?.toFixed(6) || '0';
-        const kvb = params.kvb?.toFixed(6) || '0';
-        const ccg = this.tube.ccg1 || 0;
-        const cgp = this.tube.cg1p || 0;
-        const ccp = this.tube.ccp || 0;
-        const rgi = 2000;
-        return `MU=${mu} EX=${ex} KG1=${kg1} KP=${kp} KVB=${kvb} CCG=${ccg} CGP=${cgp} CCP=${ccp} RGI=${rgi}`;
+    get spiceModel(): string {
+        return `${this.modelService.getTriodeModel(this.tube)}\n\n${this.modelService.getTriodeModelDefinition()}`;
     }
 
     // Trigger calculation request to parent component

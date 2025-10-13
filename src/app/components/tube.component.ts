@@ -37,9 +37,10 @@ export class TubeComponent implements OnInit, AfterViewInit {
     uploadProgress = 0;
     activeTab = 'upload'; // For tab management
     selectedFileForPlot: TubeFile | null = null; // Track file selected for plotting
-    isCalculatingSpiceParameters = false; // Track calculation state
-    isCalculatingDerkParameters = false; // Track Derk model calculation state
-    isCalculatingDerkEParameters = false; // Track Derk-E model calculation state
+    isCalculatingTriodeParameters = false;
+    isCalculatingPentodeParameters = false;
+    isCalculatingDerkParameters = false;
+    isCalculatingDerkEParameters = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -429,7 +430,7 @@ export class TubeComponent implements OnInit, AfterViewInit {
         if (!this.tube || !this.tube.files || this.tube.files.length === 0)
             return;
 
-        this.isCalculatingSpiceParameters = true;
+        this.isCalculatingTriodeParameters = true;
 
         try {
             // Create a web worker for calculation
@@ -460,13 +461,13 @@ export class TubeComponent implements OnInit, AfterViewInit {
                             rmse: params.rmse || Number.MAX_VALUE,
                         };
                         // update flag
-                        this.isCalculatingSpiceParameters = false;
+                        this.isCalculatingTriodeParameters = false;
                         // notify user
                         this.toastService.success('SPICE model parameters calculated successfully!', 'Calculation Complete');
                     }
                     else {
                         // update flag
-                        this.isCalculatingSpiceParameters = false;
+                        this.isCalculatingTriodeParameters = false;
                         // notify user
                         this.toastService.error('Failed to calculate SPICE model parameters. Invalid result.', 'Calculation Failed');
                     }
@@ -475,7 +476,7 @@ export class TubeComponent implements OnInit, AfterViewInit {
                 }
                 else if (result.type === 'failed') {
                     // update flag
-                    this.isCalculatingSpiceParameters = false;
+                    this.isCalculatingTriodeParameters = false;
                     // notify user
                     this.toastService.error('Failed to calculate SPICE model parameters. Please check your measurement data.', 'Calculation Failed');
                     // end worker
@@ -491,7 +492,7 @@ export class TubeComponent implements OnInit, AfterViewInit {
                 // log error
                 console.error('Worker error:', error);
                 // update flag
-                this.isCalculatingSpiceParameters = false;
+                this.isCalculatingTriodeParameters = false;
                 // notify user
                 this.toastService.error('An error occurred while calculating SPICE model parameters.', 'Calculation Error');
                 // end worker
@@ -504,7 +505,7 @@ export class TubeComponent implements OnInit, AfterViewInit {
             // notify user
             this.toastService.error('Failed to initialize calculation worker.', 'Worker Error');
             // update flag
-            this.isCalculatingSpiceParameters = false;
+            this.isCalculatingTriodeParameters = false;
         }
     }
 
@@ -513,7 +514,7 @@ export class TubeComponent implements OnInit, AfterViewInit {
         if (!this.tube || this.tube.type === 'Triode' || !this.tube.files || this.tube.files.length === 0)
             return;
 
-        this.isCalculatingSpiceParameters = true;
+        this.isCalculatingPentodeParameters = true;
 
         try {
             // Create a web worker for pentode calculation
@@ -545,13 +546,13 @@ export class TubeComponent implements OnInit, AfterViewInit {
                             rmse: params.rmse || Number.MAX_VALUE,
                         };
                         // update flag
-                        this.isCalculatingSpiceParameters = false;
+                        this.isCalculatingPentodeParameters = false;
                         // notify user
                         this.toastService.success('SPICE model parameters calculated successfully!', 'Calculation Complete');
                     }
                     else {
                         // update flag
-                        this.isCalculatingSpiceParameters = false;
+                        this.isCalculatingPentodeParameters = false;
                         // notify user
                         this.toastService.error('Failed to calculate SPICE model parameters. Invalid result.', 'Calculation Failed');
                     }
@@ -560,7 +561,7 @@ export class TubeComponent implements OnInit, AfterViewInit {
                 }
                 else if (result.type === 'failed') {
                     // update flag
-                    this.isCalculatingSpiceParameters = false;
+                    this.isCalculatingPentodeParameters = false;
                     // notify user
                     this.toastService.error('Failed to calculate SPICE model parameters. Please check your measurement data.', 'Calculation Failed');
                     // end worker
@@ -576,7 +577,7 @@ export class TubeComponent implements OnInit, AfterViewInit {
                 // log error
                 console.error('Worker error:', error);
                 // update flag
-                this.isCalculatingSpiceParameters = false;
+                this.isCalculatingPentodeParameters = false;
                 // notify user
                 this.toastService.error('An error occurred while calculating SPICE model parameters.', 'Calculation Error');
                 // end worker
@@ -590,7 +591,7 @@ export class TubeComponent implements OnInit, AfterViewInit {
             // notify user
             this.toastService.error('Failed to initialize calculation worker.', 'Worker Error');
             // update flag
-            this.isCalculatingSpiceParameters = false;
+            this.isCalculatingPentodeParameters = false;
         }
     }
 

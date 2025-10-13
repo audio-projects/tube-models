@@ -341,7 +341,7 @@
         <div class="card-body triode-model-parameters">
           <app-norman-koren-triode-model-parameters 
             [tube]="tube"
-            [isCalculating]="isCalculatingSpiceParameters"
+            [isCalculating]="isCalculatingTriodeParameters"
             [canCalculate]="tube.files && tube.files.length > 0"
             (calculateRequested)="calculateTriodeModelParameters()">
           </app-norman-koren-triode-model-parameters>
@@ -349,14 +349,14 @@
       </div>
 
       <!-- Pentode Model Parameters Card -->
-      <div class="card mb-4" *ngIf="tube.type === 'Pentode'">
+      <div class="card mb-4" *ngIf="tube.type !== 'Triode'">
         <div class="card-header bg-success text-white">
-          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Pentode Model (Norman Koren)</h5>
+          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>{{ tube.type }} Model (Norman Koren)</h5>
         </div>
         <div class="card-body pentode-model-parameters">
           <app-norman-koren-pentode-model-parameters 
             [tube]="tube"
-            [isCalculating]="isCalculatingSpiceParameters"
+            [isCalculating]="isCalculatingPentodeParameters"
             [canCalculate]="tube.files && tube.files.length > 0"
             (calculateRequested)="calculatePentodeModelParameters()">
           </app-norman-koren-pentode-model-parameters>
@@ -364,9 +364,9 @@
       </div>
 
       <!-- Derk Pentode Model Parameters Card -->
-      <div class="card mb-4" *ngIf="tube.type === 'Pentode'">
+      <div class="card mb-4" *ngIf="tube.type !== 'Triode'">
         <div class="card-header bg-info text-white">
-          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Pentode Model (Derk Model)</h5>
+          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>{{ tube.type }} Model (Derk Model)</h5>
         </div>
         <div class="card-body derk-pentode-model-parameters">
           <app-derk-pentode-model-parameters 
@@ -379,9 +379,9 @@
       </div>
 
       <!-- Derk E Pentode Model Parameters Card -->
-      <div class="card mb-4" *ngIf="tube.type === 'Pentode'">
+      <div class="card mb-4" *ngIf="tube.type !== 'Triode'">
         <div class="card-header bg-info text-white">
-          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Pentode Model (Derk E Model)</h5>
+          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>{{ tube.type }} Model (Derk E Model)</h5>
         </div>
         <div class="card-body derk-pentode-model-parameters">
           <app-derke-pentode-model-parameters 
