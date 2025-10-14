@@ -47,15 +47,15 @@ Chart.register(...registerables);
                 <!-- Model Selection Dropdown -->
                 <div class="mb-3" *ngIf="availableModels.length > 0">
                     <label for="modelSelect" class="form-label fw-bold"> <i class="bi bi-gear me-1"></i>Compare with Model </label>
-                    <div class="d-flex gap-2">
+                    <div class="d-flex gap-2 align-items-center">
                         <select class="form-select form-select-sm flex-grow-1" id="modelSelect" [(ngModel)]="selectedModel" (ngModelChange)="onModelSelectionChange()">
                             <option value="">No Model Selected</option>
                             <option *ngFor="let model of availableModels" [value]="model.key">
                                 {{ model.name }}
                             </option>
                         </select>
-                        <button *ngIf="selectedModel && canGenerateCircuit()" class="btn btn-sm btn-outline-primary" (click)="downloadCircuit()" title="Download SPICE circuit file">
-                            <i class="bi bi-download me-1">Circuit</i>
+                        <button *ngIf="selectedModel && canGenerateCircuit()" class="btn btn-sm btn-outline-primary d-flex align-items-center" style="height: fit-content; padding: 0.25rem 0.5rem;" (click)="downloadCircuit()" title="Download SPICE circuit file">
+                            <i class="bi bi-download me-1"></i>Circuit
                         </button>
                     </div>
                 </div>
