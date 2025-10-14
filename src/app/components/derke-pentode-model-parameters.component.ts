@@ -24,7 +24,7 @@ export class DerkEPentodeModelParametersComponent {
     constructor(private modelService: ModelService) {}
 
     get spiceModel(): string {
-        return `${this.modelService.getDerkEModel(this.tube)}\n\n${this.modelService.getDerkEModelDefinition(this.tube?.derkEModelParameters?.secondaryEmission || false)}`;
+        return `${this.modelService.getDerkEModel(this.tube).model}\n\n${this.modelService.getDerkEModelDefinition(this.tube?.derkEModelParameters?.secondaryEmission || false)}`;
     }
 
     // Get/set secondary emission checkbox value

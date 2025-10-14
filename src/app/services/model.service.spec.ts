@@ -20,13 +20,17 @@ describe('ModelService', () => {
         it('should return SPICE subcircuit definition for triode', () => {
             const result = service.getTriodeModelDefinition();
 
-            expect(result).toContain('.SUBCKT TriodeK 1 2 3');
+            expect(result).toContain('.SUBCKT TriodeK 1 2 3 PARAMS: MU=0 EX=0 KG1=0 KP=0 KVB=0 CCG=0 CGP=0 CCP=0 RGI=2000');
             expect(result).toContain('*               P G K');
             expect(result).toContain('E1 7 0 VALUE={V(1,3)/KP*LOG(1+EXP(KP*(1/MU+V(2,3)/SQRT(KVB+V(1,3)*V(1,3)))))}');
+            expect(result).toContain('R1 7 0 1G');
             expect(result).toContain('G1 1 3 VALUE={0.5*PWR(V(7),EX)*(1+SGN(V(7)))/KG1}');
+            expect(result).toContain('R2 1 3 1G');
             expect(result).toContain('C1 2 3 {CCG}');
             expect(result).toContain('C2 2 1 {CGP}');
             expect(result).toContain('C3 3 1 {CCP}');
+            expect(result).toContain('R3 2 5 {RGI}');
+            expect(result).toContain('D3 5 3 DX');
             expect(result).toContain('.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)');
             expect(result).toContain('.ENDS');
         });
@@ -36,16 +40,21 @@ describe('ModelService', () => {
         it('should return SPICE subcircuit definition for pentode', () => {
             const result = service.getPentodeModelDefinition();
 
-            expect(result).toContain('.SUBCKT PentodeK 1 2 3 4');
+            expect(result).toContain('.SUBCKT PentodeK 1 2 3 4 PARAMS: MU=0 EX=0 KG1=0 KP=0 KVB=0 KG2=0 CCG=0 CCS=0 CGS=0 CGP=0 CCP=0 RGI=2000');
             expect(result).toContain('*                P G K S');
             expect(result).toContain('E1 7 0 VALUE={V(4,3)*LOG(1+EXP(KP*(1/MU+V(2,3)/SQRT(KVB+V(4,3)*V(4,3)))))/KP}');
+            expect(result).toContain('R1 7 0 1G');
             expect(result).toContain('G1 1 3 VALUE={0.5*PWR(V(7),EX)*(1+SGN(V(7)))*ATAN(V(1,3)/KVB)/KG1}');
             expect(result).toContain('G2 4 3 VALUE={0.5*PWR(V(7),EX)*(1+SGN(V(7)))/KG2}');
+            expect(result).toContain('R2 1 3 1G');
             expect(result).toContain('C1 3 2 {CCG}');
             expect(result).toContain('C2 3 4 {CCS}');
             expect(result).toContain('C3 2 4 {CGS}');
             expect(result).toContain('C4 2 1 {CGP}');
             expect(result).toContain('C5 3 1 {CCP}');
+            expect(result).toContain('R3 2 5 {RGI}');
+            expect(result).toContain('D3 5 3 DX');
+            expect(result).toContain('.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)');
             expect(result).toContain('.ENDS');
         });
     });
@@ -54,22 +63,31 @@ describe('ModelService', () => {
         it('should return SPICE subcircuit definition for Derk model with secondary emissions', () => {
             const result = service.getDerkModelDefinition(true);
 
-            expect(result).toContain('.SUBCKT Derk_SE 1 2 3 4');
+            expect(result).toContain('.SUBCKT Derk_SE 1 2 3 4 PARAMS: MU=0 EX=0 KG1=0 KP=0 KVB=0 KG2=0 A=0 ALPHAS=0 BETA=0 ALPHA=0 S=0 ALPHAP=0 LAMBDA=0 V=0 W=0 CCG=0 CCS=0 CGS=0 CGP=0 CCP=0 RGI=2000');
             expect(result).toContain('*               P G K S');
+            expect(result).toContain('E1 7 0 VALUE={V(4,3)*LOG(1+EXP(KP*(1/MU+V(2,3)/SQRT(KVB+V(4,3)*V(4,3)))))/KP}');
+            expect(result).toContain('R1 7 0 1G');
             expect(result).toContain('E2 8 0 VALUE={S*V(1,3)*(1+(EXP(-2*ALPHAP*(V(1,3)-(V(4,3)/LAMBDA-V*V(2,3)-W)))-1)/(EXP(-2*ALPHAP*(V(1,3)-(V(4,3)/LAMBDA-V*V(2,3)-W)))+1))}');
+            expect(result).toContain('R2 8 0 1G');
             expect(result).toContain('G1 1 3 VALUE={(0.5*PWR(V(7),EX)*(1+SGN(V(7))))*(1/KG1-1/KG2+A*V(1,3)/KG1-V(8)/KG2-(ALPHA/KG1+ALPHAS/KG2)/(1+BETA*V(1,3)))}');
+            expect(result).toContain('R3 1 3 1G');
             expect(result).toContain('G2 4 3 VALUE={(0.5*PWR(V(7),EX)*(1+SGN(V(7))))*(1+ALPHAS/(1+BETA*V(1,3))+V(8))/KG2}');
+            expect(result).toContain('R4 4 3 1G');
+            expect(result).toContain('R5 2 5 {RGI}');
+            expect(result).toContain('D3 5 3 DX');
+            expect(result).toContain('.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)');
             expect(result).toContain('.ENDS');
         });
 
         it('should return SPICE subcircuit definition for Derk model without secondary emissions', () => {
             const result = service.getDerkModelDefinition(false);
 
-            expect(result).toContain('.SUBCKT Derk 1 2 3 4');
+            expect(result).toContain('.SUBCKT Derk 1 2 3 4 PARAMS: MU=0 EX=0 KG1=0 KP=0 KVB=0 KG2=0 A=0 ALPHAS=0 BETA=0 ALPHA=0 CCG=0 CCS=0 CGS=0 CGP=0 CCP=0 RGI=2000');
             expect(result).toContain('*            P G K S');
             expect(result).not.toContain('E2 8 0');
             expect(result).not.toContain('V(8)');
             expect(result).toContain('G1 1 3 VALUE={(0.5*PWR(V(7),EX)*(1+SGN(V(7))))*(1/KG1-1/KG2+A*V(1,3)/KG1-(ALPHA/KG1+ALPHAS/KG2)/(1+BETA*V(1,3)))}');
+            expect(result).toContain('G2 4 3 VALUE={(0.5*PWR(V(7),EX)*(1+SGN(V(7))))*(1+ALPHAS/(1+BETA*V(1,3)))/KG2}');
             expect(result).toContain('.ENDS');
         });
     });
@@ -78,22 +96,31 @@ describe('ModelService', () => {
         it('should return SPICE subcircuit definition for DerkE model with secondary emissions', () => {
             const result = service.getDerkEModelDefinition(true);
 
-            expect(result).toContain('.SUBCKT DerkE_SE 1 2 3 4');
+            expect(result).toContain('.SUBCKT DerkE_SE 1 2 3 4 PARAMS: MU=0 EX=0 KG1=0 KP=0 KVB=0 KG2=0 A=0 ALPHAS=0 BETA=0 ALPHA=0 S=0 ALPHAP=0 LAMBDA=0 V=0 W=0 CCG=0 CCS=0 CGS=0 CGP=0 CCP=0 RGI=2000');
             expect(result).toContain('*                P G K S');
+            expect(result).toContain('E1 7 0 VALUE={V(4,3)*LOG(1+EXP(KP*(1/MU+V(2,3)/SQRT(KVB+V(4,3)*V(4,3)))))/KP}');
+            expect(result).toContain('R1 7 0 1G');
             expect(result).toContain('E2 8 0 VALUE={S*V(1,3)*(1+(EXP(-2*ALPHAP*(V(1,3)-(V(4,3)/LAMBDA-V*V(2,3)-W)))-1)/(EXP(-2*ALPHAP*(V(1,3)-(V(4,3)/LAMBDA-V*V(2,3)-W)))+1))}');
-            expect(result).toContain('G1 1 3 VALUE={(0.5*PWR(V(7),EX)*(1+SGN(V(7))))*(1/KG1-1/KG2+A*V(1,3)/KG1-V(8)/KG2-ALPHA*EXP(-PWR(BETA*V(1,3),1.5))/KG1*(1/KG1+ALPHAS/KG2))}');
+            expect(result).toContain('R2 8 0 1G');
+            expect(result).toContain('G1 1 3 VALUE={(0.5*PWR(V(7),EX)*(1+SGN(V(7))))*(1/KG1-1/KG2+A*V(1,3)/KG1-V(8)/KG2-EXP(-PWR(BETA*V(1,3),1.5))*(ALPHA/KG1+ALPHAS/KG2))}');
+            expect(result).toContain('R3 1 3 1G');
             expect(result).toContain('G2 4 3 VALUE={(0.5*PWR(V(7),EX)*(1+SGN(V(7))))*(1+ALPHAS*EXP(-PWR(BETA*V(1,3),1.5))+V(8))/KG2}');
+            expect(result).toContain('R4 4 3 1G');
+            expect(result).toContain('R5 2 5 {RGI}');
+            expect(result).toContain('D3 5 3 DX');
+            expect(result).toContain('.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)');
             expect(result).toContain('.ENDS');
         });
 
         it('should return SPICE subcircuit definition for DerkE model without secondary emissions', () => {
             const result = service.getDerkEModelDefinition(false);
 
-            expect(result).toContain('.SUBCKT DerkE 1 2 3 4');
+            expect(result).toContain('.SUBCKT DerkE 1 2 3 4 PARAMS: MU=0 EX=0 KG1=0 KP=0 KVB=0 KG2=0 A=0 ALPHAS=0 BETA=0 ALPHA=0 CCG=0 CCS=0 CGS=0 CGP=0 CCP=0 RGI=2000');
             expect(result).toContain('*             P G K S');
             expect(result).not.toContain('E2 8 0');
             expect(result).not.toContain('V(8)');
-            expect(result).toContain('G1 1 3 VALUE={(0.5*PWR(V(7),EX)*(1+SGN(V(7))))*(1/KG1-1/KG2+A*V(1,3)/KG1-ALPHA*EXP(-PWR(BETA*V(1,3),1.5))/KG1*(1/KG1+ALPHAS/KG2))}');
+            expect(result).toContain('G1 1 3 VALUE={(0.5*PWR(V(7),EX)*(1+SGN(V(7))))*(1/KG1-1/KG2+A*V(1,3)/KG1-EXP(-PWR(BETA*V(1,3),1.5))*(ALPHA/KG1+ALPHAS/KG2))}');
+            expect(result).toContain('G2 4 3 VALUE={(0.5*PWR(V(7),EX)*(1+SGN(V(7))))*(1+ALPHAS*EXP(-PWR(BETA*V(1,3),1.5)))/KG2}');
             expect(result).toContain('.ENDS');
         });
     });
@@ -131,75 +158,76 @@ describe('ModelService', () => {
         it('should generate SPICE model for triode with all parameters formatted to 6 decimal places', () => {
             const result = service.getTriodeModel(mockTube);
 
-            expect(result).toContain('.SUBCKT ECC83 P G K');
-            expect(result).toContain('* ECC83 Triode Model (Norman Koren)');
-            expect(result).toContain('* Root Mean Square Error: 0.1235 mA');
-            expect(result).toContain('MU=100.000000');
-            expect(result).toContain('EX=1.400000');
-            expect(result).toContain('KG1=1060.000000');
-            expect(result).toContain('KP=600.000000');
-            expect(result).toContain('KVB=300.000000');
-            expect(result).toContain('CCG=1.6');
-            expect(result).toContain('CGP=1.7');
-            expect(result).toContain('CCP=0.46');
-            expect(result).toContain('RGI=2000');
-            expect(result).toContain('.ENDS');
+            expect(result.name).toBe('ECC83');
+            expect(result.model).toContain('.SUBCKT ECC83 P G K');
+            expect(result.model).toContain('* ECC83 Triode Model (Norman Koren)');
+            expect(result.model).toContain('* Root Mean Square Error: 0.1235 mA');
+            expect(result.model).toContain('X1 P G K TriodeK PARAMS: MU=100.000000 EX=1.400000 KG1=1060.000000 KP=600.000000 KVB=300.000000');
+            expect(result.model).toContain('CCG=1.6');
+            expect(result.model).toContain('CGP=1.7');
+            expect(result.model).toContain('CCP=0.46');
+            expect(result.model).toContain('.ENDS');
         });
 
         it('should include calculated date in correct format', () => {
             const result = service.getTriodeModel(mockTube);
 
             // Verify the date format pattern rather than exact time due to timezone differences
-            expect(result).toMatch(/Parameters calculated on: \d{1,2}\/\d{1,2}\/\d{2}, \d{1,2}:\d{2} (AM|PM)/);
+            expect(result.model).toMatch(/Parameters calculated on: \d{1,2}\/\d{1,2}\/\d{2}, \d{1,2}:\d{2} (AM|PM)/);
         });
 
         it('should include URL when tube has id', () => {
             const result = service.getTriodeModel(mockTube);
 
-            expect(result).toContain('https://audio-projects.us/tube-models/#/tube/test-tube-123');
+            expect(result.model).toContain('https://audio-projects.us/tube-models/#/tube/test-tube-123');
         });
 
         it('should not include URL when tube has no id', () => {
             mockTube.id = '';
             const result = service.getTriodeModel(mockTube);
 
-            expect(result).not.toContain('https://audio-projects.us/tube-models');
+            expect(result.model).not.toContain('https://audio-projects.us/tube-models');
         });
 
         it('should sanitize tube name for SPICE subckt', () => {
             mockTube.name = 'ECC-83/12AX7';
             const result = service.getTriodeModel(mockTube);
 
-            expect(result).toContain('.SUBCKT ECC_83_12AX7 P G K');
+            expect(result.name).toBe('ECC_83_12AX7');
+            expect(result.model).toContain('.SUBCKT ECC_83_12AX7 P G K');
         });
 
         it('should handle tube name with spaces and special characters', () => {
             mockTube.name = 'Test Tube #1 (Special)';
             const result = service.getTriodeModel(mockTube);
 
-            expect(result).toContain('.SUBCKT TEST_TUBE__1__SPECIAL_ P G K');
+            expect(result.name).toBe('TEST_TUBE__1__SPECIAL_');
+            expect(result.model).toContain('.SUBCKT TEST_TUBE__1__SPECIAL_ P G K');
         });
 
         it('should add _triode suffix for non-triode tube types', () => {
             mockTube.type = 'Pentode';
             const result = service.getTriodeModel(mockTube);
 
-            expect(result).toContain('.SUBCKT ECC83_triode P G K');
+            expect(result.name).toBe('ECC83_triode');
+            expect(result.model).toContain('.SUBCKT ECC83_triode P G K');
         });
 
         it('should add _triode suffix for tetrode tube types', () => {
             mockTube.type = 'Tetrode';
             const result = service.getTriodeModel(mockTube);
 
-            expect(result).toContain('.SUBCKT ECC83_triode P G K');
+            expect(result.name).toBe('ECC83_triode');
+            expect(result.model).toContain('.SUBCKT ECC83_triode P G K');
         });
 
         it('should not add suffix for triode tube type', () => {
             mockTube.type = 'Triode';
             const result = service.getTriodeModel(mockTube);
 
-            expect(result).toContain('.SUBCKT ECC83 P G K');
-            expect(result).not.toContain('_triode');
+            expect(result.name).toBe('ECC83');
+            expect(result.model).toContain('.SUBCKT ECC83 P G K');
+            expect(result.model).not.toContain('_triode');
         });
 
         it('should use default values for missing capacitance parameters', () => {
@@ -208,9 +236,9 @@ describe('ModelService', () => {
             mockTube.ccp = undefined;
             const result = service.getTriodeModel(mockTube);
 
-            expect(result).toContain('CCG=0');
-            expect(result).toContain('CGP=0');
-            expect(result).toContain('CCP=0');
+            expect(result.model).not.toContain('CCG=');
+            expect(result.model).not.toContain('CGP=');
+            expect(result.model).not.toContain('CCP=');
         });
 
         it('should handle undefined tube name', () => {
@@ -218,7 +246,8 @@ describe('ModelService', () => {
             mockTube.name = undefined as any;
             const result = service.getTriodeModel(mockTube);
 
-            expect(result).toContain('.SUBCKT UNKNOWN P G K');
+            expect(result.name).toBe('UNKNOWN');
+            expect(result.model).toContain('.SUBCKT UNKNOWN P G K');
         });
 
         it('should handle null tube name', () => {
@@ -226,36 +255,41 @@ describe('ModelService', () => {
             mockTube.name = null as any;
             const result = service.getTriodeModel(mockTube);
 
-            expect(result).toContain('.SUBCKT UNKNOWN P G K');
+            expect(result.name).toBe('UNKNOWN');
+            expect(result.model).toContain('.SUBCKT UNKNOWN P G K');
         });
 
-        it('should return empty string when triodeModelParameters is undefined', () => {
+        it('should return empty strings when triodeModelParameters is undefined', () => {
             mockTube.triodeModelParameters = undefined;
             const result = service.getTriodeModel(mockTube);
 
-            expect(result).toBe('');
+            expect(result.name).toBe('');
+            expect(result.model).toBe('');
         });
 
-        it('should return empty string when triodeModelParameters is null', () => {
+        it('should return empty strings when triodeModelParameters is null', () => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             mockTube.triodeModelParameters = null as any;
             const result = service.getTriodeModel(mockTube);
 
-            expect(result).toBe('');
+            expect(result.name).toBe('');
+            expect(result.model).toBe('');
         });
 
-        it('should return empty string when calculatedOn is missing', () => {
+        it('should return empty strings when calculatedOn is missing', () => {
             mockTube.triodeModelParameters!.calculatedOn = undefined;
             const result = service.getTriodeModel(mockTube);
 
-            expect(result).toBe('');
+            expect(result.name).toBe('');
+            expect(result.model).toBe('');
         });
 
-        it('should return empty string when calculatedOn is empty string', () => {
+        it('should return empty strings when calculatedOn is empty string', () => {
             mockTube.triodeModelParameters!.calculatedOn = '';
             const result = service.getTriodeModel(mockTube);
 
-            expect(result).toBe('');
+            expect(result.name).toBe('');
+            expect(result.model).toBe('');
         });
 
         it('should handle missing model parameters gracefully with 6 decimal places', () => {
@@ -265,11 +299,11 @@ describe('ModelService', () => {
             };
             const result = service.getTriodeModel(mockTube);
 
-            expect(result).toContain('MU=0.000000');
-            expect(result).toContain('EX=0.000000');
-            expect(result).toContain('KG1=0.000000');
-            expect(result).toContain('KP=0.000000');
-            expect(result).toContain('KVB=0.000000');
+            expect(result.model).toContain('MU=0.000000');
+            expect(result.model).toContain('EX=0.000000');
+            expect(result.model).toContain('KG1=0.000000');
+            expect(result.model).toContain('KP=0.000000');
+            expect(result.model).toContain('KVB=0.000000');
         });
 
         it('should handle zero values for model parameters', () => {
@@ -283,11 +317,11 @@ describe('ModelService', () => {
             };
             const result = service.getTriodeModel(mockTube);
 
-            expect(result).toContain('MU=0.000000');
-            expect(result).toContain('EX=0.000000');
-            expect(result).toContain('KG1=0.000000');
-            expect(result).toContain('KP=0.000000');
-            expect(result).toContain('KVB=0.000000');
+            expect(result.model).toContain('MU=0.000000');
+            expect(result.model).toContain('EX=0.000000');
+            expect(result.model).toContain('KG1=0.000000');
+            expect(result.model).toContain('KP=0.000000');
+            expect(result.model).toContain('KVB=0.000000');
         });
 
         it('should format very small decimal values to 6 decimal places', () => {
@@ -301,31 +335,32 @@ describe('ModelService', () => {
             };
             const result = service.getTriodeModel(mockTube);
 
-            expect(result).toContain('MU=0.001234');
-            expect(result).toContain('EX=0.000123');
-            expect(result).toContain('KG1=0.000012');
-            expect(result).toContain('KP=0.000001');
-            expect(result).toContain('KVB=1.000000');
+            expect(result.model).toContain('MU=0.001234');
+            expect(result.model).toContain('EX=0.000123');
+            expect(result.model).toContain('KG1=0.000012');
+            expect(result.model).toContain('KP=0.000001');
+            expect(result.model).toContain('KVB=1.000000');
         });
 
         it('should handle undefined tube argument', () => {
             const result = service.getTriodeModel(undefined);
 
-            expect(result).toBe('');
+            expect(result.name).toBe('');
+            expect(result.model).toBe('');
         });
 
         it('should handle undefined rmse gracefully', () => {
             mockTube.triodeModelParameters!.rmse = undefined;
             const result = service.getTriodeModel(mockTube);
 
-            expect(result).toContain('* Root Mean Square Error: undefined mA');
+            expect(result.model).toContain('* Root Mean Square Error: undefined mA');
         });
 
         it('should format rmse to 4 decimal places when present', () => {
             mockTube.triodeModelParameters!.rmse = 1.23456789;
             const result = service.getTriodeModel(mockTube);
 
-            expect(result).toContain('* Root Mean Square Error: 1.2346 mA');
+            expect(result.model).toContain('* Root Mean Square Error: 1.2346 mA');
         });
     });
 
@@ -362,41 +397,40 @@ describe('ModelService', () => {
         it('should generate SPICE model for pentode with all parameters formatted to 6 decimal places', () => {
             const result = service.getPentodeModel(mockTube);
 
-            expect(result).toContain('.SUBCKT EF80 P G K S');
-            expect(result).toContain('* EF80 Pentode Model (Norman Koren)');
-            expect(result).toContain('* Root Mean Square Error: 0.5678 mA');
-            expect(result).toContain('MU=50.000000');
-            expect(result).toContain('EX=1.500000');
-            expect(result).toContain('KG1=500.000000');
-            expect(result).toContain('KP=300.000000');
-            expect(result).toContain('KVB=150.000000');
-            expect(result).toContain('KG2=8000.000000');
-            expect(result).toContain('CCG=2.5');
-            expect(result).toContain('CCS=3');
-            expect(result).toContain('CGS=0.1');
-            expect(result).toContain('CGP=0.05');
-            expect(result).toContain('CCP=0.5');
-            expect(result).toContain('.ENDS');
+            expect(result.name).toBe('EF80');
+            expect(result.model).toContain('.SUBCKT EF80 P G K S');
+            expect(result.model).toContain('* EF80 Pentode Model (Norman Koren)');
+            expect(result.model).toContain('* Root Mean Square Error: 0.5678 mA');
+            expect(result.model).toContain('X1 P G K S PentodeK PARAMS: MU=50.000000 EX=1.500000 KG1=500.000000 KP=300.000000 KVB=150.000000 KG2=8000.000000');
+            expect(result.model).toContain('CCG=2.5');
+            expect(result.model).toContain('CCS=3');
+            expect(result.model).toContain('CGS=0.1');
+            expect(result.model).toContain('CGP=0.05');
+            expect(result.model).toContain('CCP=0.5');
+            expect(result.model).toContain('.ENDS');
         });
 
-        it('should return empty string when pentodeModelParameters is undefined', () => {
+        it('should return empty strings when pentodeModelParameters is undefined', () => {
             mockTube.pentodeModelParameters = undefined;
             const result = service.getPentodeModel(mockTube);
 
-            expect(result).toBe('');
+            expect(result.name).toBe('');
+            expect(result.model).toBe('');
         });
 
-        it('should return empty string when calculatedOn is missing', () => {
+        it('should return empty strings when calculatedOn is missing', () => {
             mockTube.pentodeModelParameters!.calculatedOn = undefined;
             const result = service.getPentodeModel(mockTube);
 
-            expect(result).toBe('');
+            expect(result.name).toBe('');
+            expect(result.model).toBe('');
         });
 
         it('should handle undefined tube argument', () => {
             const result = service.getPentodeModel(undefined);
 
-            expect(result).toBe('');
+            expect(result.name).toBe('');
+            expect(result.model).toBe('');
         });
 
         it('should use default values for missing capacitance parameters', () => {
@@ -407,11 +441,11 @@ describe('ModelService', () => {
             mockTube.ccp = undefined;
             const result = service.getPentodeModel(mockTube);
 
-            expect(result).toContain('CCG=0');
-            expect(result).toContain('CCS=0');
-            expect(result).toContain('CGS=0');
-            expect(result).toContain('CGP=0');
-            expect(result).toContain('CCP=0');
+            expect(result.model).not.toContain('CCG=');
+            expect(result.model).not.toContain('CCS=');
+            expect(result.model).not.toContain('CGS=');
+            expect(result.model).not.toContain('CGP=');
+            expect(result.model).not.toContain('CCP=');
         });
 
         it('should handle missing model parameters with default zeros', () => {
@@ -420,25 +454,26 @@ describe('ModelService', () => {
             };
             const result = service.getPentodeModel(mockTube);
 
-            expect(result).toContain('MU=0.000000');
-            expect(result).toContain('EX=0.000000');
-            expect(result).toContain('KG1=0.000000');
-            expect(result).toContain('KP=0.000000');
-            expect(result).toContain('KVB=0.000000');
-            expect(result).toContain('KG2=0.000000');
+            expect(result.model).toContain('MU=0.000000');
+            expect(result.model).toContain('EX=0.000000');
+            expect(result.model).toContain('KG1=0.000000');
+            expect(result.model).toContain('KP=0.000000');
+            expect(result.model).toContain('KVB=0.000000');
+            expect(result.model).toContain('KG2=0.000000');
         });
 
         it('should include URL when tube has id', () => {
             const result = service.getPentodeModel(mockTube);
 
-            expect(result).toContain('https://audio-projects.us/tube-models/#/tube/pentode-123');
+            expect(result.model).toContain('https://audio-projects.us/tube-models/#/tube/pentode-123');
         });
 
         it('should sanitize tube name', () => {
             mockTube.name = 'EF-80 (Test)';
             const result = service.getPentodeModel(mockTube);
 
-            expect(result).toContain('.SUBCKT EF_80__TEST_ P G K S');
+            expect(result.name).toBe('EF_80__TEST_');
+            expect(result.model).toContain('.SUBCKT EF_80__TEST_ P G K S');
         });
     });
 
@@ -479,26 +514,32 @@ describe('ModelService', () => {
         it('should generate SPICE model for Derk without secondary emissions', () => {
             const result = service.getDerkModel(mockTube);
 
-            expect(result).toContain('.SUBCKT TESTPENTODE P G K S');
-            expect(result).toContain('* TestPentode Derk Model (Derk Reefman)');
-            expect(result).toContain('* Root Mean Square Error: 0.2340 mA');
-            expect(result).toContain('X1 P G K S Derk MU=45.000000');
-            expect(result).toContain('EX=1.350000');
-            expect(result).toContain('KG1=450.000000');
-            expect(result).toContain('KP=280.000000');
-            expect(result).toContain('KVB=140.000000');
-            expect(result).toContain('KG2=7500.000000');
-            expect(result).toContain('A=0.001000');
-            expect(result).toContain('ALPHAS=0.500000');
-            expect(result).toContain('BETA=0.002000');
-            expect(result).toContain('ALPHA='); // Calculated alpha value
-            expect(result).not.toContain('_SE'); // No secondary emission suffix
-            expect(result).not.toContain(' S='); // No S parameter
-            expect(result).not.toContain('ALPHAP=');
-            expect(result).not.toContain('LAMBDA=');
-            expect(result).not.toContain(' V=');
-            expect(result).not.toContain(' W=');
-            expect(result).toContain('.ENDS');
+            expect(result.name).toBe('TESTPENTODE');
+            expect(result.model).toContain('.SUBCKT TESTPENTODE P G K S');
+            expect(result.model).toContain('* TestPentode Derk Model (Derk Reefman)');
+            expect(result.model).toContain('* Root Mean Square Error: 0.2340 mA');
+            expect(result.model).toContain('X1 P G K S Derk PARAMS: MU=45.000000');
+            expect(result.model).toContain('EX=1.350000');
+            expect(result.model).toContain('KG1=450.000000');
+            expect(result.model).toContain('KP=280.000000');
+            expect(result.model).toContain('KVB=140.000000');
+            expect(result.model).toContain('KG2=7500.000000');
+            expect(result.model).toContain('A=0.001000');
+            expect(result.model).toContain('ALPHAS=0.500000');
+            expect(result.model).toContain('BETA=0.002000');
+            expect(result.model).toContain('ALPHA='); // Calculated alpha value
+            expect(result.model).not.toContain('_SE'); // No secondary emission suffix
+            expect(result.model).not.toContain(' S='); // No S parameter
+            expect(result.model).not.toContain('ALPHAP=');
+            expect(result.model).not.toContain('LAMBDA=');
+            expect(result.model).not.toContain(' V=');
+            expect(result.model).not.toContain(' W=');
+            expect(result.model).toContain('CCG=2');
+            expect(result.model).toContain('CCS=2.5');
+            expect(result.model).toContain('CGS=0.15');
+            expect(result.model).toContain('CGP=0.04');
+            expect(result.model).toContain('CCP=0.45');
+            expect(result.model).toContain('.ENDS');
         });
 
         it('should generate SPICE model for Derk with secondary emissions', () => {
@@ -511,12 +552,12 @@ describe('ModelService', () => {
 
             const result = service.getDerkModel(mockTube);
 
-            expect(result).toContain('X1 P G K S Derk_SE');
-            expect(result).toContain('S=0.100000');
-            expect(result).toContain('ALPHAP=0.050000');
-            expect(result).toContain('LAMBDA=2.500000');
-            expect(result).toContain('V=0.030000');
-            expect(result).toContain('W=1.500000');
+            expect(result.model).toContain('X1 P G K S Derk_SE PARAMS:');
+            expect(result.model).toContain('S=0.100000');
+            expect(result.model).toContain('ALPHAP=0.050000');
+            expect(result.model).toContain('LAMBDA=2.500000');
+            expect(result.model).toContain('V=0.030000');
+            expect(result.model).toContain('W=1.500000');
         });
 
         it('should calculate alpha parameter correctly', () => {
@@ -525,27 +566,30 @@ describe('ModelService', () => {
             const result = service.getDerkModel(mockTube);
             const alphaValue = 1 - 450 * (1 + 0.5) / 7500;
 
-            expect(result).toContain(`ALPHA=${alphaValue.toFixed(6)}`);
+            expect(result.model).toContain(`ALPHA=${alphaValue.toFixed(6)}`);
         });
 
-        it('should return empty string when derkModelParameters is undefined', () => {
+        it('should return empty strings when derkModelParameters is undefined', () => {
             mockTube.derkModelParameters = undefined;
             const result = service.getDerkModel(mockTube);
 
-            expect(result).toBe('');
+            expect(result.name).toBe('');
+            expect(result.model).toBe('');
         });
 
-        it('should return empty string when calculatedOn is missing', () => {
+        it('should return empty strings when calculatedOn is missing', () => {
             mockTube.derkModelParameters!.calculatedOn = undefined;
             const result = service.getDerkModel(mockTube);
 
-            expect(result).toBe('');
+            expect(result.name).toBe('');
+            expect(result.model).toBe('');
         });
 
         it('should handle undefined tube argument', () => {
             const result = service.getDerkModel(undefined);
 
-            expect(result).toBe('');
+            expect(result.name).toBe('');
+            expect(result.model).toBe('');
         });
 
         it('should use default values for missing parameters in alpha calculation', () => {
@@ -555,7 +599,7 @@ describe('ModelService', () => {
             const result = service.getDerkModel(mockTube);
 
             // alpha = 1 - (0 ?? 0) * (1 + (undefined ?? 0)) / (undefined ?? 1) = 1 - 0 = 1
-            expect(result).toContain('ALPHA=1.000000');
+            expect(result.model).toContain('ALPHA=1.000000');
         });
 
         it('should handle missing secondary emission parameters with defaults', () => {
@@ -564,11 +608,11 @@ describe('ModelService', () => {
 
             const result = service.getDerkModel(mockTube);
 
-            expect(result).toContain('S=0.000000');
-            expect(result).toContain('ALPHAP=0.000000');
-            expect(result).toContain('LAMBDA=0.000000');
-            expect(result).toContain('V=0.000000');
-            expect(result).toContain('W=0.000000');
+            expect(result.model).toContain('S=0.000000');
+            expect(result.model).toContain('ALPHAP=0.000000');
+            expect(result.model).toContain('LAMBDA=0.000000');
+            expect(result.model).toContain('V=0.000000');
+            expect(result.model).toContain('W=0.000000');
         });
 
         it('should use default capacitance values', () => {
@@ -580,11 +624,11 @@ describe('ModelService', () => {
 
             const result = service.getDerkModel(mockTube);
 
-            expect(result).toContain('CCG=0');
-            expect(result).toContain('CCS=0');
-            expect(result).toContain('CGS=0');
-            expect(result).toContain('CGP=0');
-            expect(result).toContain('CCP=0');
+            expect(result.model).not.toContain('CCG=');
+            expect(result.model).not.toContain('CCS=');
+            expect(result.model).not.toContain('CGS=');
+            expect(result.model).not.toContain('CGP=');
+            expect(result.model).not.toContain('CCP=');
         });
     });
 
@@ -625,22 +669,23 @@ describe('ModelService', () => {
         it('should generate SPICE model for DerkE without secondary emissions', () => {
             const result = service.getDerkEModel(mockTube);
 
-            expect(result).toContain('.SUBCKT TESTDERKE P G K S');
-            expect(result).toContain('* TestDerkE DerkE Model (Derk Reefman)');
-            expect(result).toContain('* Root Mean Square Error: 0.3450 mA');
-            expect(result).toContain('X1 P G K S DerkE MU=42.000000');
-            expect(result).toContain('EX=1.320000');
-            expect(result).toContain('KG1=430.000000');
-            expect(result).toContain('KP=270.000000');
-            expect(result).toContain('KVB=135.000000');
-            expect(result).toContain('KG2=7200.000000');
-            expect(result).toContain('A=0.001500');
-            expect(result).toContain('ALPHAS=0.550000');
-            expect(result).toContain('BETA=0.002500');
-            expect(result).toContain('ALPHA=');
-            expect(result).not.toContain('_SE');
-            expect(result).not.toContain(' S=');
-            expect(result).toContain('.ENDS');
+            expect(result.name).toBe('TESTDERKE');
+            expect(result.model).toContain('.SUBCKT TESTDERKE P G K S');
+            expect(result.model).toContain('* TestDerkE DerkE Model (Derk Reefman)');
+            expect(result.model).toContain('* Root Mean Square Error: 0.3450 mA');
+            expect(result.model).toContain('X1 P G K S DerkE PARAMS: MU=42.000000');
+            expect(result.model).toContain('EX=1.320000');
+            expect(result.model).toContain('KG1=430.000000');
+            expect(result.model).toContain('KP=270.000000');
+            expect(result.model).toContain('KVB=135.000000');
+            expect(result.model).toContain('KG2=7200.000000');
+            expect(result.model).toContain('A=0.001500');
+            expect(result.model).toContain('ALPHAS=0.550000');
+            expect(result.model).toContain('BETA=0.002500');
+            expect(result.model).toContain('ALPHA=');
+            expect(result.model).not.toContain('_SE');
+            expect(result.model).not.toContain(' S=');
+            expect(result.model).toContain('.ENDS');
         });
 
         it('should generate SPICE model for DerkE with secondary emissions', () => {
@@ -653,39 +698,42 @@ describe('ModelService', () => {
 
             const result = service.getDerkEModel(mockTube);
 
-            expect(result).toContain('X1 P G K S DerkE_SE');
-            expect(result).toContain('S=0.120000');
-            expect(result).toContain('ALPHAP=0.060000');
-            expect(result).toContain('LAMBDA=2.800000');
-            expect(result).toContain('V=0.035000');
-            expect(result).toContain('W=1.700000');
+            expect(result.model).toContain('X1 P G K S DerkE_SE PARAMS:');
+            expect(result.model).toContain('S=0.120000');
+            expect(result.model).toContain('ALPHAP=0.060000');
+            expect(result.model).toContain('LAMBDA=2.800000');
+            expect(result.model).toContain('V=0.035000');
+            expect(result.model).toContain('W=1.700000');
         });
 
         it('should calculate alpha parameter correctly', () => {
             const result = service.getDerkEModel(mockTube);
             const alphaValue = 1 - 430 * (1 + 0.55) / 7200;
 
-            expect(result).toContain(`ALPHA=${alphaValue.toFixed(6)}`);
+            expect(result.model).toContain(`ALPHA=${alphaValue.toFixed(6)}`);
         });
 
-        it('should return empty string when derkEModelParameters is undefined', () => {
+        it('should return empty strings when derkEModelParameters is undefined', () => {
             mockTube.derkEModelParameters = undefined;
             const result = service.getDerkEModel(mockTube);
 
-            expect(result).toBe('');
+            expect(result.name).toBe('');
+            expect(result.model).toBe('');
         });
 
-        it('should return empty string when calculatedOn is missing', () => {
+        it('should return empty strings when calculatedOn is missing', () => {
             mockTube.derkEModelParameters!.calculatedOn = undefined;
             const result = service.getDerkEModel(mockTube);
 
-            expect(result).toBe('');
+            expect(result.name).toBe('');
+            expect(result.model).toBe('');
         });
 
         it('should handle undefined tube argument', () => {
             const result = service.getDerkEModel(undefined);
 
-            expect(result).toBe('');
+            expect(result.name).toBe('');
+            expect(result.model).toBe('');
         });
 
         it('should handle missing model parameters with defaults', () => {
@@ -694,16 +742,16 @@ describe('ModelService', () => {
             };
             const result = service.getDerkEModel(mockTube);
 
-            expect(result).toContain('MU=0.000000');
-            expect(result).toContain('EX=0.000000');
-            expect(result).toContain('KG1=0.000000');
-            expect(result).toContain('KP=0.000000');
-            expect(result).toContain('KVB=0.000000');
-            expect(result).toContain('KG2=0.000000');
-            expect(result).toContain('A=0.000000');
-            expect(result).toContain('ALPHAS=0.000000');
-            expect(result).toContain('BETA=0.000000');
-            expect(result).toContain('ALPHA=1.000000');
+            expect(result.model).toContain('MU=0.000000');
+            expect(result.model).toContain('EX=0.000000');
+            expect(result.model).toContain('KG1=0.000000');
+            expect(result.model).toContain('KP=0.000000');
+            expect(result.model).toContain('KVB=0.000000');
+            expect(result.model).toContain('KG2=0.000000');
+            expect(result.model).toContain('A=0.000000');
+            expect(result.model).toContain('ALPHAS=0.000000');
+            expect(result.model).toContain('BETA=0.000000');
+            expect(result.model).toContain('ALPHA=1.000000');
         });
 
         it('should handle missing secondary emission parameters with defaults', () => {
@@ -711,24 +759,25 @@ describe('ModelService', () => {
 
             const result = service.getDerkEModel(mockTube);
 
-            expect(result).toContain('S=0.000000');
-            expect(result).toContain('ALPHAP=0.000000');
-            expect(result).toContain('LAMBDA=0.000000');
-            expect(result).toContain('V=0.000000');
-            expect(result).toContain('W=0.000000');
+            expect(result.model).toContain('S=0.000000');
+            expect(result.model).toContain('ALPHAP=0.000000');
+            expect(result.model).toContain('LAMBDA=0.000000');
+            expect(result.model).toContain('V=0.000000');
+            expect(result.model).toContain('W=0.000000');
         });
 
         it('should include URL when tube has id', () => {
             const result = service.getDerkEModel(mockTube);
 
-            expect(result).toContain('https://audio-projects.us/tube-models/#/tube/derke-123');
+            expect(result.model).toContain('https://audio-projects.us/tube-models/#/tube/derke-123');
         });
 
         it('should sanitize tube name', () => {
             mockTube.name = 'Test-DerkE (V2)';
             const result = service.getDerkEModel(mockTube);
 
-            expect(result).toContain('.SUBCKT TEST_DERKE__V2_ P G K S');
+            expect(result.name).toBe('TEST_DERKE__V2_');
+            expect(result.model).toContain('.SUBCKT TEST_DERKE__V2_ P G K S');
         });
 
         it('should use default capacitance values', () => {
@@ -740,25 +789,25 @@ describe('ModelService', () => {
 
             const result = service.getDerkEModel(mockTube);
 
-            expect(result).toContain('CCG=0');
-            expect(result).toContain('CCS=0');
-            expect(result).toContain('CGS=0');
-            expect(result).toContain('CGP=0');
-            expect(result).toContain('CCP=0');
+            expect(result.model).not.toContain('CCG=');
+            expect(result.model).not.toContain('CCS=');
+            expect(result.model).not.toContain('CGS=');
+            expect(result.model).not.toContain('CGP=');
+            expect(result.model).not.toContain('CCP=');
         });
 
         it('should handle undefined rmse gracefully', () => {
             mockTube.derkEModelParameters!.rmse = undefined;
             const result = service.getDerkEModel(mockTube);
 
-            expect(result).toContain('* Root Mean Square Error: undefined mA');
+            expect(result.model).toContain('* Root Mean Square Error: undefined mA');
         });
 
         it('should format rmse to 4 decimal places when present', () => {
             mockTube.derkEModelParameters!.rmse = 2.3456789;
             const result = service.getDerkEModel(mockTube);
 
-            expect(result).toContain('* Root Mean Square Error: 2.3457 mA');
+            expect(result.model).toContain('* Root Mean Square Error: 2.3457 mA');
         });
 
         it('should handle null tube name for DerkE', () => {
@@ -766,14 +815,15 @@ describe('ModelService', () => {
             mockTube.name = null as any;
             const result = service.getDerkEModel(mockTube);
 
-            expect(result).toContain('.SUBCKT UNKNOWN P G K S');
+            expect(result.name).toBe('UNKNOWN');
+            expect(result.model).toContain('.SUBCKT UNKNOWN P G K S');
         });
 
         it('should handle empty tube id for DerkE', () => {
             mockTube.id = '';
             const result = service.getDerkEModel(mockTube);
 
-            expect(result).not.toContain('https://');
+            expect(result.model).not.toContain('https://');
         });
 
         it('should handle null calculatedOn for pentode', () => {
@@ -783,7 +833,8 @@ describe('ModelService', () => {
             };
             const result = service.getPentodeModel(mockTube);
 
-            expect(result).toBe('');
+            expect(result.name).toBe('');
+            expect(result.model).toBe('');
         });
 
         it('should handle null calculatedOn for Derk', () => {
@@ -793,7 +844,8 @@ describe('ModelService', () => {
             };
             const result = service.getDerkModel(mockTube);
 
-            expect(result).toBe('');
+            expect(result.name).toBe('');
+            expect(result.model).toBe('');
         });
 
         it('should handle null calculatedOn for DerkE', () => {
@@ -803,7 +855,8 @@ describe('ModelService', () => {
             };
             const result = service.getDerkEModel(mockTube);
 
-            expect(result).toBe('');
+            expect(result.name).toBe('');
+            expect(result.model).toBe('');
         });
 
         it('should handle zero kg2 in alpha calculation for Derk', () => {
@@ -826,7 +879,7 @@ describe('ModelService', () => {
             const result = service.getDerkModel(mockDerkTube);
             // With kg2 = 0, the nullish coalescing will default it to 1
             // alpha = 1 - (100 * 1.5) / 1 = 1 - 150 = -149
-            expect(result).toContain('ALPHA=');
+            expect(result.model).toContain('ALPHA=');
         });
 
         it('should handle false secondaryEmission for Derk', () => {
@@ -846,8 +899,8 @@ describe('ModelService', () => {
 
             const result = service.getDerkModel(mockDerkTube);
 
-            expect(result).not.toContain(' S=');
-            expect(result).toContain('X1 P G K S Derk ');
+            expect(result.model).not.toContain(' S=');
+            expect(result.model).toContain('X1 P G K S Derk PARAMS:');
         });
 
         it('should handle false secondaryEmission for DerkE', () => {
@@ -867,8 +920,8 @@ describe('ModelService', () => {
 
             const result = service.getDerkEModel(mockDerkETube);
 
-            expect(result).not.toContain(' S=');
-            expect(result).toContain('X1 P G K S DerkE ');
+            expect(result.model).not.toContain(' S=');
+            expect(result.model).toContain('X1 P G K S DerkE PARAMS:');
         });
     });
 });

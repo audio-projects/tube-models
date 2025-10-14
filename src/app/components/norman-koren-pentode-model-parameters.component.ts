@@ -24,7 +24,7 @@ export class NormanKorenPentodeModelParametersComponent {
     constructor(private modelService: ModelService) {}
 
     get spiceModel(): string {
-        return `${this.modelService.getPentodeModel(this.tube)}\n\n${this.modelService.getPentodeModelDefinition()}`;
+        return `${this.modelService.getPentodeModel(this.tube).model}\n\n${this.modelService.getPentodeModelDefinition()}`;
     }
 
     // Trigger calculation request to parent component

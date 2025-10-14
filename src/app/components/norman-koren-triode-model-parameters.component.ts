@@ -24,7 +24,7 @@ export class NormanKorenTriodeModelParametersComponent {
     constructor(private modelService: ModelService) {}
 
     get spiceModel(): string {
-        return `${this.modelService.getTriodeModel(this.tube)}\n\n${this.modelService.getTriodeModelDefinition()}`;
+        return `${this.modelService.getTriodeModel(this.tube).model}\n\n${this.modelService.getTriodeModelDefinition()}`;
     }
 
     // Trigger calculation request to parent component
