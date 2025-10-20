@@ -33,30 +33,10 @@
   <!-- SPICE Model Code Display -->
   <div class="mt-4">
     <div class="d-flex justify-content-between align-items-center mb-2">
-      <h6 class="mb-0"><i class="bi bi-code-square me-1"></i>SPICE Model Code</h6>
+      <h6 class="mb-0"><i class="bi bi-code-square me-1"></i>SPICE Model</h6>
       <small class="text-muted">(ltspice, ngspice)</small>
     </div>
-    <pre class="bg-dark text-light p-3 rounded-3" style="font-size: 0.85em; overflow-x: auto" *ngIf="tube?.triodeModelParameters?.calculatedOn"
-      >{{ spiceSubcktLine }}
-{{ spiceCommentLine }}
-* Root Mean Square Error: {{ tube?.triodeModelParameters?.rmse?.toExponential() }}
-* Parameters calculated on: {{ tube?.triodeModelParameters?.calculatedOn | date : "short" }} (https://audio-projects.us/tube-models/#/tube/{{ tube?.id }})
-X1 P G K TriodeK {{ spiceParamLine }}
-.ENDS
-
-.SUBCKT TriodeK P G K
-E1 7 0 VALUE=&#123;V(P,K)/KP*LOG(1+EXP(KP*(1/MU+V(G,K)/SQRT(KVB+V(P,K)*V(P,K)))))&#125;
-RE1 7 0 1G
-G1 P K VALUE=&#123;0.5*PWR(V(7),EX)*(1+SGN(V(7)))/KG1&#125;
-RCP P K 1G    ; TO AVOID FLOATING NODES IN MU-FOLLOWER
-C1 G K &#123;CCG&#125;  ; CATHODE-GRID
-C2 G P &#123;CGP&#125;  ; GRID-PLATE
-C3 K P &#123;CCP&#125;  ; CATHODE-PLATE
-D3 5 K DX     ; FOR GRID CURRENT
-R1 G 5 &#123;RGI&#125;  ; FOR GRID CURRENT
-.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)
-.ENDS
-    </pre>
+    <pre class="bg-dark text-light p-3 rounded-3" style="font-size: 0.85em; overflow-x: auto" *ngIf="tube?.triodeModelParameters?.calculatedOn">{{ spiceModel }}</pre>
     <div *ngIf="!tube?.triodeModelParameters?.calculatedOn" class="bg-dark text-light p-3 rounded-3" style="font-size: 0.85em">
       <span class="text-muted">No SPICE model parameters calculated.</span>
     </div>

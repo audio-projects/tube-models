@@ -187,9 +187,13 @@ const optimizeWithPowell = function (files: File[], mu: number, ex: number, kg1:
                 lambda: secondaryEmission ? Math.abs(result.x[11]) : 0,
                 v: secondaryEmission ? Math.abs(result.x[12]) : 0,
                 w: secondaryEmission ? Math.abs(result.x[13]) : 0,
+                // calculated
+                alpha: 0,
                 // root mean square error
                 rmse: 0,
             };
+            // calculated parameters
+            parameters.alpha = 1 - parameters.kg1 * (1 + parameters.alphaS) / parameters.kg2;
             // calculate Root Mean Square Error
             parameters.rmse = derkModelError(files, parameters.kp, parameters.mu, parameters.kvb, parameters.ex, parameters.kg1, parameters.kg2, parameters.a, parameters.alphaS, parameters.beta, secondaryEmission, parameters.s, parameters.alphaP, parameters.lambda, parameters.v, parameters.w).rmse;
             // log values
