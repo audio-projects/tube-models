@@ -41,6 +41,7 @@ export class TubeComponent implements OnInit, AfterViewInit {
     isCalculatingPentodeParameters = false;
     isCalculatingDerkParameters = false;
     isCalculatingDerkEParameters = false;
+    isElectricalSpecsExpanded = false; // For collapsible Electrical Specifications section
 
     constructor(
         private route: ActivatedRoute,
@@ -792,5 +793,10 @@ export class TubeComponent implements OnInit, AfterViewInit {
 
     isTabActive(tab: string): boolean {
         return this.activeTab === tab;
+    }
+
+    // Electrical Specifications collapse toggle
+    toggleElectricalSpecs() {
+        this.isElectricalSpecsExpanded = !this.isElectricalSpecsExpanded;
     }
 }

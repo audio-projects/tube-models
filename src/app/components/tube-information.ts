@@ -32,11 +32,11 @@ export interface TubeInformation {
     type: 'Triode' | 'Pentode' | 'Tetrode';
     owner?: string; // Firebase user UID who owns this tube
 
-    maximumPlateVoltage?: number;
     maximumPlateDissipation?: number;
+    maximumPlateVoltage?: number;
+    maximumGrid1Voltage?: number;
     maximumPlateCurrent?: number;
     maximumCathodeCurrent?: number;
-    maximumGrid1Voltage?: number;
     maximumGrid2Voltage?: number;
     maximumGrid2Dissipation?: number;
     minimumHeaterVoltage?: number;
