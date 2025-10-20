@@ -9,6 +9,7 @@ import {
     ViewChild
 } from '@angular/core';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
+import { CircuitService } from '../services/circuit.service';
 import { CommonModule } from '@angular/common';
 import { derkEModel } from '../workers/models/derke-model';
 import { derkEModelError } from '../workers/models/derke-model-error';
@@ -21,6 +22,7 @@ import {
     Series
 } from '../files';
 import { FormsModule } from '@angular/forms';
+import { ModelService } from '../services/model.service';
 import { normanKorenNewPentodeModel } from '../workers/models/norman-koren-new-pentode-model';
 import { normanKorenNewPentodeModelError } from '../workers/models/norman-koren-new-pentode-model-error';
 import { normanKorenTriodeModel } from '../workers/models/norman-koren-triode-model';
@@ -45,12 +47,17 @@ Chart.register(...registerables);
                 <!-- Model Selection Dropdown -->
                 <div class="mb-3" *ngIf="availableModels.length > 0">
                     <label for="modelSelect" class="form-label fw-bold"> <i class="bi bi-gear me-1"></i>Compare with Model </label>
-                    <select class="form-select form-select-sm" id="modelSelect" [(ngModel)]="selectedModel" (ngModelChange)="onModelSelectionChange()">
-                        <option value="">No Model Selected</option>
-                        <option *ngFor="let model of availableModels" [value]="model.key">
-                            {{ model.name }}
-                        </option>
-                    </select>
+                    <div class="d-flex gap-2 align-items-center">
+                        <select class="form-select form-select-sm flex-grow-1" id="modelSelect" [(ngModel)]="selectedModel" (ngModelChange)="onModelSelectionChange()">
+                            <option value="">No Model Selected</option>
+                            <option *ngFor="let model of availableModels" [value]="model.key">
+                                {{ model.name }}
+                            </option>
+                        </select>
+                        <button *ngIf="selectedModel && canGenerateCircuit()" class="btn btn-sm btn-outline-primary d-flex align-items-center" style="height: fit-content; padding: 0.25rem 0.5rem;" (click)="downloadCircuit()" title="Download SPICE circuit file">
+                            <i class="bi bi-download me-1"></i>Circuit
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -61,7 +68,7 @@ Chart.register(...registerables);
             <!-- Model RMSE Display -->
             <div *ngIf="modelRmse !== null" class="alert alert-info mt-3 mb-0" role="alert">
                 <i class="bi bi-info-circle me-2"></i>
-                <strong>Model Fit Quality:</strong> Root Mean Square Error (RMSE) = <strong>{{ modelRmse.toFixed(4) }}</strong> mA
+                <strong>Model Fit Quality (current file):</strong> Root Mean Square Error (RMSE) = <strong>{{ modelRmse.toFixed(4) }}</strong> mA
             </div>
 
             <div *ngIf="!file" class="text-center py-4">
@@ -94,6 +101,8 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
     selectedModel = '';
     availableModels: { key: string; name: string }[] = [];
     modelRmse: number | null = null;
+
+    constructor(private circuitService: CircuitService, private modelService: ModelService) { }
 
     ngAfterViewInit() {
         // update flag
@@ -1085,6 +1094,63 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
         // Recreate the chart to update line visibility
         if (this.file && this.viewInitialized)
             this.createChart();
+    }
+
+    canGenerateCircuit(): boolean {
+        // check if we can generate a circuit for the current file and model
+        if (!this.file || !this.tube || !this.selectedModel)
+            return false;
+        // triode
+        if (this.selectedModel === 'norman-koren-triode')
+            return this.file.measurementType === 'IP_VA_VG_VH' || this.file.measurementType === 'IPIS_VAVS_VG_VH' || this.file.measurementType === 'IPIS_VA_VG_VS_VH';
+        // pentode
+        return this.file.measurementType === 'IPIS_VA_VG_VS_VH';
+    }
+
+    downloadCircuit(): void {
+        // Validate we can generate the circuit
+        if (!this.canGenerateCircuit() || !this.file || !this.tube) {
+            return;
+        }
+        // create filename from current file name, replace utd extension by ".cir"
+        const filename = this.file.name.replace(/\.utd$/i, '') + '.cir';
+        // Generate circuit content based on selected model
+        let circuitContent = '';
+        // model specific
+        if (this.selectedModel === 'norman-koren-triode') {
+            // generate triode plate characteristics circuit
+            circuitContent = this.circuitService.generateTriodePlateCharacteristicsCircuit(this.tube, this.file, this.modelService.getTriodeModel(this.tube), this.modelService.getTriodeModelDefinition());
+        }
+        else if (this.selectedModel === 'norman-koren-pentode') {
+            // generate pentode plate characteristics circuit
+            circuitContent = this.circuitService.generatePentodePlateCharacteristicsCircuit(this.tube, this.file, this.modelService.getPentodeModel(this.tube), this.modelService.getPentodeModelDefinition());
+        }
+        else if (this.selectedModel === 'derk-pentode') {
+            // generate derk pentode plate characteristics circuit
+            circuitContent = this.circuitService.generatePentodePlateCharacteristicsCircuit(this.tube, this.file, this.modelService.getDerkModel(this.tube), this.modelService.getDerkModelDefinition(this.tube.derkModelParameters?.secondaryEmission || false));
+        }
+        else if (this.selectedModel === 'derke-pentode') {
+            // generate derke pentode plate characteristics circuit
+            circuitContent = this.circuitService.generatePentodePlateCharacteristicsCircuit(this.tube, this.file, this.modelService.getDerkEModel(this.tube), this.modelService.getDerkEModelDefinition(this.tube.derkEModelParameters?.secondaryEmission || false));
+        }
+        // check if generation was successful (not an error message)
+        if (circuitContent.startsWith('* Error:')) {
+            // alert user
+            alert(circuitContent);
+            // exit
+            return;
+        }
+        // instructions
+        circuitContent += `\n* execute with: ngspice -b ${filename}\n`;
+        // create blob and download
+        const blob = new Blob([circuitContent], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.click();
+        // cleanup
+        window.URL.revokeObjectURL(url);
     }
 
     private updateAvailableModels() {

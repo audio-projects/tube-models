@@ -65,6 +65,25 @@
       display: flex;
       align-items: center;
     }
+
+    // Collapsible header styling
+    &[role="button"] {
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.15s ease-in-out;
+
+      &:hover {
+        opacity: 0.9;
+      }
+
+      .bi-chevron-down {
+        transition: transform 0.2s ease-in-out;
+        
+        &.rotated {
+          transform: rotate(180deg);
+        }
+      }
+    }
   }
   
   .card-body {
