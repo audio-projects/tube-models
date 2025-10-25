@@ -57,4 +57,11 @@ export class DerkEPentodeModelParametersComponent {
     calculateSpiceModelParameters() {
         this.calculateRequested.emit();
     }
+
+    // Reset model parameters
+    resetParameters() {
+        if (this.tube) {
+            delete this.tube.derkEModelParameters;
+        }
+    }
 }
