@@ -43,14 +43,14 @@
               <div class="col-md-6">
                 <div class="mb-3">
                   <label for="tubeName" class="form-label fw-bold"> <i class="bi bi-tag me-1"></i>Tube Name * </label>
-                  <input type="text" class="form-control" id="tubeName" [(ngModel)]="tube.name" name="tubeName" required placeholder="Enter tube designation (e.g., ECC83, 12AX7)" />
+                  <input type="text" class="form-control" id="tubeName" [(ngModel)]="tube.name" name="tubeName" required placeholder="e.g., ECC83, 12AX7" />
                   <div class="form-text">Standard tube designation or model number</div>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="mb-3">
                   <label for="tubeManufacturer" class="form-label fw-bold"> <i class="bi bi-building me-1"></i>Manufacturer </label>
-                  <input type="text" class="form-control" id="tubeManufacturer" [(ngModel)]="tube.manufacturer" name="tubeManufacturer" placeholder="Enter manufacturer name" />
+                  <input type="text" class="form-control" id="tubeManufacturer" [(ngModel)]="tube.manufacturer" name="tubeManufacturer" placeholder="e.g., Telefunken, RCA, Mullard" />
                   <div class="form-text">Tube manufacturer or brand</div>
                 </div>
               </div>
@@ -78,8 +78,19 @@
             </div>
 
             <div class="mb-3">
+              <label for="datasheetUrl" class="form-label fw-bold"> <i class="bi bi-file-earmark-pdf me-1"></i>Datasheet URL </label>
+              <div class="input-group">
+                <input type="url" class="form-control" id="datasheetUrl" [(ngModel)]="tube.datasheetUrl" name="datasheetUrl" placeholder="e.g., https://example.com/datasheets/tube.pdf" />
+                <button class="btn btn-outline-primary" type="button" [disabled]="!tube.datasheetUrl" (click)="openDatasheetUrl()" title="Open datasheet in new tab">
+                  <i class="bi bi-box-arrow-up-right"></i>
+                </button>
+              </div>
+              <div class="form-text">Link to manufacturer datasheet or technical documentation</div>
+            </div>
+
+            <div class="mb-3">
               <label for="tubeComments" class="form-label fw-bold"> <i class="bi bi-chat-text me-1"></i>Comments & Notes </label>
-              <textarea class="form-control" id="tubeComments" rows="4" [(ngModel)]="tube.comments" name="tubeComments" placeholder="Enter any additional notes, specifications, or observations about this tube..."></textarea>
+              <textarea class="form-control" id="tubeComments" rows="4" [(ngModel)]="tube.comments" name="tubeComments" placeholder="e.g., Low noise version with gold grid, suitable for audio amplification"></textarea>
               <div class="form-text">Additional information, specifications, or usage notes</div>
             </div>
           </form>
@@ -241,6 +252,93 @@
               </div>
             </div>
           </div>
+
+          <!-- Capacitances Section -->
+          <h6 class="text-muted mb-3 mt-4"><i class="bi bi-circle me-1"></i>Capacitances</h6>
+          
+          <!-- Triode Capacitances -->
+          <div class="row" *ngIf="tube.type === 'Triode'">
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="ccg1" class="form-label fw-bold"> Cathode-Grid Capacitance (CCG) </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="ccg1" [(ngModel)]="tube.ccg1" name="ccg1" step="0.1" placeholder="e.g., 1.6" />
+                  <span class="input-group-text">pF</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="cg1p" class="form-label fw-bold"> Grid-Plate Capacitance (CGP) </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="cg1p" [(ngModel)]="tube.cg1p" name="cg1p" step="0.1" placeholder="e.g., 1.7" />
+                  <span class="input-group-text">pF</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="ccp" class="form-label fw-bold"> Cathode-Plate Capacitance (CCP) </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="ccp" [(ngModel)]="tube.ccp" name="ccp" step="0.1" placeholder="e.g., 0.3" />
+                  <span class="input-group-text">pF</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pentode/Tetrode Capacitances -->
+          <div *ngIf="tube.type === 'Pentode' || tube.type === 'Tetrode'">
+            <div class="row">
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="ccg1Pentode" class="form-label fw-bold"> Cathode-Grid 1 Capacitance (CCG) </label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" id="ccg1Pentode" [(ngModel)]="tube.ccg1" name="ccg1Pentode" step="0.1" placeholder="e.g., 2.5" />
+                    <span class="input-group-text">pF</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="ccg2" class="form-label fw-bold"> Cathode-Screen Capacitance (CCS) </label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" id="ccg2" [(ngModel)]="tube.ccg2" name="ccg2" step="0.1" placeholder="e.g., 3.0" />
+                    <span class="input-group-text">pF</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="cg1g2" class="form-label fw-bold"> Grid 1-Screen Capacitance (CGS) </label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" id="cg1g2" [(ngModel)]="tube.cg1g2" name="cg1g2" step="0.1" placeholder="e.g., 3.5" />
+                    <span class="input-group-text">pF</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="cg1pPentode" class="form-label fw-bold"> Grid 1-Plate Capacitance (CGP) </label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" id="cg1pPentode" [(ngModel)]="tube.cg1p" name="cg1pPentode" step="0.01" placeholder="e.g., 0.005" />
+                    <span class="input-group-text">pF</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="ccpPentode" class="form-label fw-bold"> Cathode-Plate Capacitance (CCP) </label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" id="ccpPentode" [(ngModel)]="tube.ccp" name="ccpPentode" step="0.1" placeholder="e.g., 0.5" />
+                    <span class="input-group-text">pF</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           </div>
         </div>
       </div>
@@ -318,7 +416,7 @@
                         [(ngModel)]="file.egOffset" 
                         name="egOffset_{{ i }}"
                         step="0.1" 
-                        placeholder="0.0"
+                        placeholder="e.g., 0.0"
                         title="Grid voltage offset for this file">
                     </div>
                     

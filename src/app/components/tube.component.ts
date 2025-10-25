@@ -799,4 +799,11 @@ export class TubeComponent implements OnInit, AfterViewInit {
     toggleElectricalSpecs() {
         this.isElectricalSpecsExpanded = !this.isElectricalSpecsExpanded;
     }
+
+    // Open datasheet URL in new tab
+    openDatasheetUrl() {
+        if (this.tube?.datasheetUrl) {
+            window.open(this.tube.datasheetUrl, '_blank');
+        }
+    }
 }
