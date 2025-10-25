@@ -78,10 +78,6 @@ export class TubeComponent implements OnInit, AfterViewInit {
             comments: '',
             lastUpdatedOn: new Date().toISOString().split('T')[0],
             type: 'Triode',
-            maximumPlateDissipation: 0,
-            maximumPlateVoltage: 0,
-            maximumPlateCurrent: 0,
-            maximumGrid1Voltage: 0,
             files: [],
             owner: this.authService.getCurrentUser()?.uid // Set owner for new tubes
         };
