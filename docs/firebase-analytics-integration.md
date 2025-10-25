@@ -6,6 +6,8 @@ This document describes the Firebase Analytics integration in the TubeModels app
 
 Firebase Analytics is integrated into the TubeModels application to track user behavior, app usage, and engagement metrics. The integration follows the official Firebase documentation for web applications.
 
+**Note:** Analytics is automatically disabled in development mode (`environment.production = false`). All analytics calls in development will log to the browser console instead with the prefix `[Analytics - Dev Mode]`.
+
 ## Setup
 
 ### 1. Firebase Console Configuration
@@ -194,9 +196,37 @@ Firebase Analytics automatically tracks these events without additional code:
 
 ## Debugging
 
+### Development Mode (Automatic)
+
+**Analytics is automatically disabled in development** (`npm start`). When running locally:
+
+- All analytics calls will log to the browser console with prefix: `[Analytics - Dev Mode]`
+- No data is sent to Firebase Analytics
+- You can verify events are being triggered without polluting production data
+- Example console output:
+  ```
+  [Analytics - Dev Mode] tube_view {tube_id: "abc123", tube_name: "ECC83"}
+  [Analytics - Dev Mode] setUserId: user_xyz
+  ```
+
+This allows you to develop and test without affecting your analytics data.
+
+### Production Mode
+
+To test analytics in production mode locally, temporarily change `environment.ts`:
+
+```typescript
+export const environment = {
+    production: true, // Change to true for testing
+    firebase: { ... }
+};
+```
+
+Then use the methods below to verify events are being sent.
+
 ### Enable Debug Mode
 
-To test analytics events during development:
+To test analytics events during production or deployed environments:
 
 1. Install the [Google Analytics Debugger](https://chrome.google.com/webstore/detail/google-analytics-debugger) Chrome extension
 2. Enable the extension

@@ -1,5 +1,9 @@
 # Firebase Analytics - Quick Integration Guide
 
+## ℹ️ Development Mode
+
+**Analytics is automatically disabled in development** (`npm start`). All events log to console with prefix `[Analytics - Dev Mode]` instead of being sent to Firebase. This prevents development data from polluting your analytics reports.
+
 ## 🚀 Quick Start
 
 ### 1. Get Your Measurement ID

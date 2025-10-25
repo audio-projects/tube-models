@@ -1,15 +1,18 @@
 import { Injectable, inject } from '@angular/core';
 import { Analytics, logEvent, setUserId, setUserProperties } from '@angular/fire/analytics';
+import { environment } from '../../environments/environment';
 
 /**
  * Service for logging analytics events using Firebase Analytics.
  * Provides methods to track user interactions, custom events, and user properties.
+ * Analytics is automatically disabled in development environment.
  */
 @Injectable({
     providedIn: 'root'
 })
 export class AnalyticsService {
     private analytics: Analytics = inject(Analytics);
+    private isProduction = environment.production;
 
     /**
      * Log a custom event to Firebase Analytics
@@ -17,6 +20,11 @@ export class AnalyticsService {
      * @param eventParams Optional parameters to include with the event
      */
     logEvent(eventName: string, eventParams?: Record<string, unknown>): void {
+        if (!this.isProduction) {
+            console.log('[Analytics - Dev Mode]', eventName, eventParams);
+            return;
+        }
+
         try {
             logEvent(this.analytics, eventName, eventParams);
         }
@@ -146,6 +154,11 @@ export class AnalyticsService {
      * @param userId The user's unique identifier
      */
     setUserId(userId: string | null): void {
+        if (!this.isProduction) {
+            console.log('[Analytics - Dev Mode] setUserId:', userId);
+            return;
+        }
+
         try {
             if (userId) {
                 setUserId(this.analytics, userId);
@@ -161,6 +174,11 @@ export class AnalyticsService {
      * @param properties Object containing user properties
      */
     setUserProperties(properties: Record<string, unknown>): void {
+        if (!this.isProduction) {
+            console.log('[Analytics - Dev Mode] setUserProperties:', properties);
+            return;
+        }
+
         try {
             setUserProperties(this.analytics, properties);
         }

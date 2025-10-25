@@ -23,6 +23,13 @@ describe('AnalyticsService', () => {
         expect(service).toBeTruthy();
     });
 
+    it('should log to console in development mode', () => {
+        spyOn(console, 'log');
+        service.logEvent('test_event', { test_param: 'value' });
+        // In development mode (environment.production = false), should log to console
+        expect(console.log).toHaveBeenCalledWith('[Analytics - Dev Mode]', 'test_event', { test_param: 'value' });
+    });
+
     it('should log custom events', () => {
         spyOn(console, 'error');
         service.logEvent('test_event', { test_param: 'value' });
