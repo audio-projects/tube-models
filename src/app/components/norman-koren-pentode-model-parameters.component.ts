@@ -31,4 +31,11 @@ export class NormanKorenPentodeModelParametersComponent {
     calculateSpiceModelParameters() {
         this.calculateRequested.emit();
     }
+
+    // Reset model parameters
+    resetParameters() {
+        if (this.tube) {
+            delete this.tube.pentodeModelParameters;
+        }
+    }
 }

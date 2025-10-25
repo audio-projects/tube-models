@@ -205,7 +205,7 @@ export class SingleEndedDesignerComponent implements OnInit, OnChanges, AfterVie
         // DC voltage drop is only the transformer primary DCR (usually small)
         // Vp = B+ - Iq * DCR
         this.quiescentPlateVoltage = this.bPlus - (this.quiescentCurrent * this.transformerDCR / 1000);
-        
+
         // Calculate quiescent plate dissipation
         this.quiescentPlateDissipation = (this.quiescentPlateVoltage * this.quiescentCurrent) / 1000; // W
 
@@ -619,10 +619,10 @@ export class SingleEndedDesignerComponent implements OnInit, OnChanges, AfterVie
 
         // Add DC load line
         if (this.dcLoadLine.length > 0) {
-            const dcLabel = this.loadType === 'transformer' 
-                ? 'DC Load Line (DCR)' 
+            const dcLabel = this.loadType === 'transformer'
+                ? 'DC Load Line (DCR)'
                 : 'DC/AC Load Line (Rp)';
-            
+
             datasets.push({
                 label: dcLabel,
                 data: this.dcLoadLine.map(p => ({ x: p.va, y: p.ia })),
