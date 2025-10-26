@@ -6,17 +6,29 @@ import {
     signOut,
     User
 } from '@angular/fire/auth';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { AnalyticsService } from './analytics.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class AuthService {
     user$: Observable<User | null>;
+    private analyticsService = inject(AnalyticsService);
 
     constructor(private auth: Auth) {
         this.user$ = authState(this.auth);
+
+        // Track user authentication state changes
+        this.user$.subscribe(user => {
+            if (user) {
+                this.analyticsService.setUserId(user.uid);
+            }
+            else {
+                this.analyticsService.setUserId(null);
+            }
+        });
     }
 
     /**
@@ -25,7 +37,15 @@ export class AuthService {
     async signInWithGoogle(): Promise<void> {
         const provider = new GoogleAuthProvider();
         try {
-            await signInWithPopup(this.auth, provider);
+            const result = await signInWithPopup(this.auth, provider);
+            // Log analytics event for successful login
+            this.analyticsService.logLogin('google');
+
+            // Check if this is a new user (sign up)
+            const isNewUser = result.user.metadata.creationTime === result.user.metadata.lastSignInTime;
+            if (isNewUser) {
+                this.analyticsService.logSignUp('google');
+            }
         }
         catch (error) {
             console.error('Error signing in with Google:', error);
