@@ -3,10 +3,12 @@ import {
     AfterViewInit,
     Component,
     ElementRef,
+    inject,
     NgZone,
     OnInit,
     ViewChild
 } from '@angular/core';
+import { AnalyticsService } from '../services/analytics.service';
 import { AuthService } from '../services/auth.service';
 import { CommonModule } from '@angular/common';
 import { DerkEPentodeModelParametersComponent } from './derke-pentode-model-parameters.component';
@@ -42,6 +44,7 @@ export class TubeComponent implements OnInit, AfterViewInit {
     isCalculatingDerkParameters = false;
     isCalculatingDerkEParameters = false;
     isElectricalSpecsExpanded = false; // For collapsible Electrical Specifications section
+    private analyticsService = inject(AnalyticsService);
 
     constructor(
         private route: ActivatedRoute,
@@ -91,6 +94,8 @@ export class TubeComponent implements OnInit, AfterViewInit {
                     if (tube) {
                         this.tube = tube;
                         console.log('Tube loaded:', tube);
+                        // Track tube view event
+                        this.analyticsService.logTubeView(tube.id || tubeId, tube.name);
                     }
                     else {
                         console.error('Tube not found');
@@ -140,6 +145,8 @@ export class TubeComponent implements OnInit, AfterViewInit {
                     this.tube = savedTube;
                     this.isNewTube = false;
                     this.toastService.success(`Tube "${savedTube.name}" created successfully!`);
+                    // Track tube save event (new tube)
+                    this.analyticsService.logTubeSave(savedTube.id || '', false);
                     // Navigate to edit mode after saving new tube
                     this.router.navigate(['/tube', savedTube.id]);
                 },
@@ -156,6 +163,8 @@ export class TubeComponent implements OnInit, AfterViewInit {
                     console.log('Tube updated successfully:', savedTube);
                     this.tube = savedTube;
                     this.toastService.success(`Tube "${savedTube.name}" updated successfully!`);
+                    // Track tube save event (update)
+                    this.analyticsService.logTubeSave(savedTube.id || '', true);
                 },
                 error: (error: unknown) => {
                     console.error('Error updating tube:', error);
@@ -323,6 +332,12 @@ export class TubeComponent implements OnInit, AfterViewInit {
         this.uploadProgress = 100;
         this.toastService.success(`Successfully processed ${processedFiles} of ${totalFiles} files.`);
 
+        // Track file upload event
+        if (processedFiles > 0) {
+            const fileExtension = files[0].name.split('.').pop() || 'unknown';
+            this.analyticsService.logTubeUpload(`.${fileExtension}`, this.tube.type);
+        }
+
         // Reset progress after a short delay
         setTimeout(() => {
             this.uploadProgress = 0;
@@ -407,6 +422,8 @@ export class TubeComponent implements OnInit, AfterViewInit {
 
         this.selectedFileForPlot = file;
         this.setActiveTab('plot');
+        // Track plot generation event
+        this.analyticsService.logPlotGeneration(file.measurementTypeLabel || 'unknown', this.tube?.type || 'unknown');
     }
 
     // File selection for plotting
@@ -428,6 +445,9 @@ export class TubeComponent implements OnInit, AfterViewInit {
             return;
 
         this.isCalculatingTriodeParameters = true;
+
+        // Track parameter calculation start
+        this.analyticsService.logParameterCalculation('norman-koren-triode', 'triode');
 
         try {
             // Create a web worker for calculation
@@ -512,6 +532,9 @@ export class TubeComponent implements OnInit, AfterViewInit {
             return;
 
         this.isCalculatingPentodeParameters = true;
+
+        // Track parameter calculation start
+        this.analyticsService.logParameterCalculation('norman-koren-pentode', this.tube.type);
 
         try {
             // Create a web worker for pentode calculation
@@ -598,6 +621,9 @@ export class TubeComponent implements OnInit, AfterViewInit {
             return;
 
         this.isCalculatingDerkParameters = true;
+
+        // Track parameter calculation start
+        this.analyticsService.logParameterCalculation('derk-pentode', this.tube.type);
 
         try {
             // Create a web worker for Derk model calculation
@@ -693,6 +719,9 @@ export class TubeComponent implements OnInit, AfterViewInit {
             return;
 
         this.isCalculatingDerkEParameters = true;
+
+        // Track parameter calculation start
+        this.analyticsService.logParameterCalculation('derke-pentode', this.tube.type);
 
         try {
             // Create a web worker for Derk model calculation
