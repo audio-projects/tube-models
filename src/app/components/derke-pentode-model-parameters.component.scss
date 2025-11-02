@@ -1,0 +1,17 @@
+// Norman Koren Pentode SPICE Parameters Component Styles
+
+// SPICE code block styling
+pre {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+// Spinning animation for recalculate button
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

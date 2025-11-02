@@ -5,11 +5,12 @@ const fileParserColumns = ['Point', 'Ia (mA)', 'Vg (V)', 'Va (V)', 'Vs (V)', 'Is
 const fileParserFields = ['index', 'ip', 'eg', 'ep', 'es', 'is', 'eh'];
 const fileParserSeriesColumn = 'Curve';
 
-const fileAnalysis = function (file: File): File {
+export const fileAnalysis = function (file: File): File {
     // initialize file
     file.measurementType = 'UNKNOWN';
+    file.measurementTypeLabel = 'Unknown';
     // helper functions
-    const isConstant = function (mean: number, deviation: number) {
+    const isConstantValue = function (mean: number, deviation: number) {
         // deviation is less than 1% of mean value
         return Math.abs(deviation) <= Math.abs(mean * 0.01);
     };
@@ -21,8 +22,10 @@ const fileAnalysis = function (file: File): File {
     const egFlag = 2;
     const esFlag = 4;
     const ehFlag = 8;
+    const ipFlag = 16;
+    const isFlag = 32;
     // file statistics
-    let flags = epFlag | egFlag | esFlag | ehFlag;
+    let flags = epFlag | egFlag | esFlag | ehFlag | ipFlag | isFlag;
     let epFileMean = 0;
     let epFileM2 = 0;
     let esFileMean = 0;
@@ -31,9 +34,12 @@ const fileAnalysis = function (file: File): File {
     let egFileM2 = 0;
     let ehFileMean = 0;
     let ehFileM2 = 0;
+    let ipFileMean = 0;
+    let ipFileM2 = 0;
+    let isFileMean = 0;
+    let isFileM2 = 0;
+    // total points count
     let fn = 0;
-    // screen current
-    let isSum = 0;
     // loop series
     for (const series of file.series) {
         // valid points count
@@ -47,6 +53,10 @@ const fileAnalysis = function (file: File): File {
         let egM2 = 0;
         let ehMean = 0;
         let ehM2 = 0;
+        let ipMean = 0;
+        let ipM2 = 0;
+        let isMean = 0;
+        let isM2 = 0;
         // loop points
         for (const point of series.points) {
             // increment counts
@@ -96,13 +106,33 @@ const fileAnalysis = function (file: File): File {
                 ehFileMean = ehFileMean + df4 / fn;
                 ehFileM2 = ehFileM2 + df4 * (point.eh - ehFileMean);
             }
-            // update isSum
-            isSum += point.is ?? 0;
+            // update ip statistics
+            if (point.ip) {
+                // series ip statistics
+                const d5 = point.ip - ipMean;
+                ipMean = ipMean + d5 / n;
+                ipM2 = ipM2 + d5 * (point.ip - ipMean);
+                // file ip statistics
+                const df5 = point.ip - ipFileMean;
+                ipFileMean = ipFileMean + df5 / fn;
+                ipFileM2 = ipFileM2 + df5 * (point.ip - ipFileMean);
+            }
+            // update is statistics
+            if (point.is) {
+                // series is statistics
+                const d6 = point.is - isMean;
+                isMean = isMean + d6 / n;
+                isM2 = isM2 + d6 * (point.is - isMean);
+                // file is statistics
+                const df6 = point.is - isFileMean;
+                isFileMean = isFileMean + df6 / fn;
+                isFileM2 = isFileM2 + df6 * (point.is - isFileMean);
+            }
         }
         // ep mean, variance and standard deviation
         const epVariance = epM2 / (n - 1);
         const epDeviation = Math.sqrt(epVariance);
-        const epConstant = isConstant(epMean, epDeviation);
+        const epConstant = isConstantValue(epMean, epDeviation);
         if (epConstant)
             series.ep = epMean;
         else
@@ -110,7 +140,7 @@ const fileAnalysis = function (file: File): File {
         // es mean, variance and standard deviation
         const esVariance = esM2 / (n - 1);
         const esDeviation = Math.sqrt(esVariance);
-        const esConstant = isConstant(esMean, esDeviation);
+        const esConstant = isConstantValue(esMean, esDeviation);
         if (esConstant)
             series.es = esMean;
         else
@@ -118,7 +148,7 @@ const fileAnalysis = function (file: File): File {
         // eg mean, variance and standard deviation
         const egVariance = egM2 / (n - 1);
         const egDeviation = Math.sqrt(egVariance);
-        const egConstant = isConstant(egMean, egDeviation);
+        const egConstant = isConstantValue(egMean, egDeviation);
         if (egConstant)
             series.eg = egMean;
         else
@@ -126,112 +156,128 @@ const fileAnalysis = function (file: File): File {
         // eh mean, variance and standard deviation
         const ehVariance = ehM2 / (n - 1);
         const ehDeviation = Math.sqrt(ehVariance);
-        const ehConstant = isConstant(ehMean, ehDeviation);
+        const ehConstant = isConstantValue(ehMean, ehDeviation);
         if (ehConstant)
             series.eh = ehMean;
         else
             flags = flags & ~ehFlag;
+        // ip mean, variance and standard deviation
+        const ipVariance = ipM2 / (n - 1);
+        const ipDeviation = Math.sqrt(ipVariance);
+        const ipConstant = isConstantValue(ipMean, ipDeviation);
+        if (ipConstant)
+            series.ip = ipMean;
+        else
+            flags = flags & ~ipFlag;
+        // is mean, variance and standard deviation
+        const isVariance = isM2 / (n - 1);
+        const isDeviation = Math.sqrt(isVariance);
+        const isConstant = isConstantValue(isMean, isDeviation);
+        if (isConstant)
+            series.is = isMean;
+        else
+            flags = flags & ~isFlag;
     }
     // ep mean, variance and standard deviation
     const epFileVariance = epFileM2 / (fn - 1);
     const epFileDeviation = Math.sqrt(epFileVariance);
-    const epFileConstant = isConstant(epFileMean, epFileDeviation);
+    const epFileConstant = isConstantValue(epFileMean, epFileDeviation);
     // es mean, variance and standard deviation
     const esFileVariance = esFileM2 / (fn - 1);
     const esFileDeviation = Math.sqrt(esFileVariance);
-    const esFileConstant = isConstant(esFileMean, esFileDeviation);
+    const esFileConstant = isConstantValue(esFileMean, esFileDeviation);
     // eg mean, variance and standard deviation
     const egFileVariance = egFileM2 / (fn - 1);
     const egFileDeviation = Math.sqrt(egFileVariance);
-    const egFileConstant = isConstant(egFileMean, egFileDeviation);
+    const egFileConstant = isConstantValue(egFileMean, egFileDeviation);
     // eh mean, variance and standard deviation
     const ehFileVariance = ehFileM2 / (fn - 1);
     const ehFileDeviation = Math.sqrt(ehFileVariance);
-    const ehFileConstant = isConstant(ehFileMean, ehFileDeviation);
-    // check eh is constant
+    const ehFileConstant = isConstantValue(ehFileMean, ehFileDeviation);
+    // check "eh" is constant in file
     if ((flags & ehFlag) !== 0 && ehFileConstant) {
-        // check es is constant
+        // check "es" is constant in file
         if ((flags & esFlag) !== 0 && esFileConstant) {
-            // check eg is constant in series and ep is variable
+            // check "eg" is constant in series and "ep" is variable
             if ((flags & egFlag) !== 0 && !egFileConstant && !epFileConstant) {
-                // check screen current
-                if (isSum !== 0) {
-                    // I(Va, Vg) with Vs, Vh constant
-                    file.measurementType = 'IP_EP_EG_VS_VH';
+                // check screen current is present
+                if (isFileMean !== 0) {
+                    // Ia(Va, Vg), Is(Va, Vg) with Vs, Vh constant
+                    file.measurementType = 'IPIS_VA_VG_VS_VH';
+                    file.measurementTypeLabel = `Ia(Va, Vg), Is(Va, Vg) with Vs≈${esFileMean.toFixed(1)}V, Vh≈${ehFileMean.toFixed(1)}V`;
                     file.es = esFileMean;
                     file.eh = ehFileMean;
                 }
                 else {
-                    // I(Va, Vg) with Vh constant
-                    file.measurementType = 'IP_EP_EG_VH';
+                    // Ia(Va, Vg) with Vh constant
+                    file.measurementType = 'IP_VA_VG_VH';
+                    file.measurementTypeLabel = `Ia(Va, Vg) with Vh≈${ehFileMean.toFixed(1)}V`;
                     file.eh = ehFileMean;
                 }
             }
+            // check "ep" is constant in series and "eg" is variable
             else if ((flags & epFlag) !== 0 && !epFileConstant && !egFileConstant) {
-                // check screen current
-                if (isSum !== 0) {
-                    // I(Vg, Va) with Vs, Vh constant
-                    file.measurementType = 'IP_EG_EP_VS_VH';
+                // check screen current is present
+                if (isFileMean !== 0) {
+                    // Ia(Vg, Va), Is(Vg, Va) with Vs, Vh constant
+                    file.measurementType = 'IPIS_VG_VA_VS_VH';
+                    file.measurementTypeLabel = `Ia(Vg, Va), Is(Vg, Va) with Vs≈${esFileMean.toFixed(1)}V, Vh≈${ehFileMean.toFixed(1)}V`;
                     file.es = esFileMean;
                     file.eh = ehFileMean;
                 }
                 else {
-                    // I(Vg, Va) with Vh constant
-                    file.measurementType = 'IP_EG_EP_VH';
+                    // Ia(Vg, Va) with Vh constant
+                    file.measurementType = 'IP_VG_VA_VH';
+                    file.measurementTypeLabel = `Ia(Vg, Va) with Vh≈${ehFileMean.toFixed(1)}V`;
                     file.eh = ehFileMean;
                 }
             }
         }
+        // check "ep" is constant in file
         else if ((flags & epFlag) !== 0 && epFileConstant) {
-            // check eg is constant in series
+            // check "eg" is constant in series and "es" is variable
             if ((flags & egFlag) !== 0 && !egFileConstant && !esFileConstant) {
-                // I(Vs, Vg) with Va, Vh constant
-                file.measurementType = 'IP_ES_EG_VA_VH';
+                // Ia(Vs, Vg), Is(Vs, Vg) with Vs, Vh constant
+                file.measurementType = 'IPIS_VS_VG_VA_VH';
+                file.measurementTypeLabel = `Ia(Vs, Vg), Is(Vs, Vg) with Va≈${epFileMean.toFixed(1)}V, Vh≈${ehFileMean.toFixed(1)}V`;
+                file.ep = epFileMean;
+                file.eh = ehFileMean;
+            }
+            // check "es" is constant in series and "eg" is variable
+            else if ((flags & esFlag) !== 0 && !esFileConstant && !egFileConstant) {
+                // Ia(Vg, Vs), Is(Vg, Vs) with Va, Vh constant
+                file.measurementType = 'IPIS_VG_VS_VA_VH';
+                file.measurementTypeLabel = `Ia(Vg, Vs), Is(Vg, Vs) with Va≈${epFileMean.toFixed(1)}V, Vh≈${ehFileMean.toFixed(1)}V`;
                 file.ep = epFileMean;
                 file.eh = ehFileMean;
             }
         }
+        // check "eg" is constant in file
         else if ((flags & egFlag) !== 0 && egFileConstant) {
             // check es is constant in series
             if ((flags & esFlag) !== 0 && !esFileConstant && !epFileConstant) {
                 // I(Va, Vs) with Vg, Vh constant
-                file.measurementType = 'IP_EP_ES_VG_VH';
+                file.measurementType = 'IPIS_VA_VS_VG_VH';
+                file.measurementTypeLabel = `Ia(Va, Vs), Is(Va, Vs) with Vg≈${egFileMean.toFixed(1)}V, Vh≈${ehFileMean.toFixed(1)}V`;
                 file.eg = egFileMean;
                 file.eh = ehFileMean;
             }
         }
-        else {
-            // check es=ep
-            if (isEquivalent(epFileMean, esFileMean)) {
-                // check ep is constant in series
-                if ((flags & epFlag) !== 0 && !epFileConstant && !egFileConstant) {
-                    // I(Vg, Va=Vs) with Vh constant
-                    file.measurementType = 'IP_EG_EPES_VH';
-                    file.eh = ehFileMean;
-                }
-                else if ((flags & egFlag) !== 0 && !egFileConstant && !epFileConstant) {
-                    // I(Va=Vs, Vg) with Vh constant
-                    file.measurementType = 'IP_EPES_EG_VH';
-                    file.eh = ehFileMean;
-                }
+        // check "ep" = "es" in file
+        else if (isEquivalent(epFileMean, esFileMean)) {
+            // check ep is constant in series
+            if ((flags & epFlag) !== 0 && !epFileConstant && !egFileConstant) {
+                // I(Vg, Va=Vs) with Vh constant
+                file.measurementType = 'IPIS_VG_VAVS_VH';
+                file.measurementTypeLabel = `Ia(Vg, Va=Vs) + Is(Vg, Va=Vs) with Vh≈${ehFileMean.toFixed(1)}V`;
+                file.eh = ehFileMean;
             }
-        }
-    }
-    else {
-        // check es is constant
-        if ((flags & esFlag) !== 0 && esFileConstant) {
-            // check ep is constant
-            if ((flags & epFlag) !== 0 && epFileConstant) {
-                // I(Vh, Vg) with Va, Vs constant
-                file.measurementType = 'IP_EH_EG_VA_VS';
-                file.ep = epFileMean;
-                file.es = esFileMean;
-            }
-            else if ((flags & egFlag) !== 0 && egFileConstant) {
-                // I(Vh, Va) with Vg, Vs constant
-                file.measurementType = 'IP_EH_EP_VG_VS';
-                file.eg = egFileMean;
-                file.es = esFileMean;
+            // check eg is constant in series
+            else if ((flags & egFlag) !== 0 && !egFileConstant && !epFileConstant) {
+                // Ip(Va=Vs, Vg) with Vh constant
+                file.measurementType = 'IPIS_VAVS_VG_VH';
+                file.measurementTypeLabel = `Ia(Va=Vs, Vg) + Is(Va=Vs, Vg) with Vh≈${ehFileMean.toFixed(1)}V`;
+                file.eh = ehFileMean;
             }
         }
     }
@@ -315,6 +361,8 @@ export const fileParserService = function (name: string, text: string): File | u
             name: name,
             series: series,
             measurementType: 'UNKNOWN',
+            measurementTypeLabel: 'Unknown',
+            egOffset: 0
         };
         // analyze file
         return fileAnalysis(file);

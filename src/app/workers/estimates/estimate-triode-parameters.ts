@@ -6,41 +6,30 @@ import { File } from '../../files';
 import { Initial } from '../initial';
 import { Trace } from '../trace';
 
-export const estimateTriodeParameters = function (files: File[], initial: Initial, maxW: number, egOffset: number, trace?: Trace): Initial {
+export const estimateTriodeParameters = function (initial: Initial, files: File[], trace?: Trace): Initial {
     // initialize trace
     if (trace) {
         // estimates
         trace.estimates = trace.estimates || {};
     }
-    // triode files
-    const triodeFiles: File[] = [];
-    // loop files
-    for (const f of files) {
-        // find a file that correspond to triode characteristics
-        if (f.measurementType === 'IP_EG_EP_VH' || f.measurementType === 'IP_EG_EPES_VH' || f.measurementType === 'IP_EP_EG_VH' || f.measurementType === 'IP_EPES_EG_VH') {
-            // it is a triode like graph, use it
-            triodeFiles.push(f);
-        }
-    }
-    // check we have at leat one file
-    if (triodeFiles.length > 0) {
-        // estimate mu (use all files)
-        estimateMu(initial, files, maxW, egOffset, trace);
-        // extimate ex and kg1
-        estimateExKg1(initial, triodeFiles, maxW, egOffset, trace);
+    if (files.length > 0) {
+        // estimate mu
+        estimateMu(initial, files, trace);
+        // estimate ex and kg1
+        estimateExKg1(initial, files, trace);
         // estimate kp
-        estimateKp(initial, triodeFiles, maxW, egOffset, trace);
+        estimateKp(initial, files, trace);
         // estimate kvb
-        estimateKvb(initial, triodeFiles, maxW, egOffset, trace);
+        estimateKvb(initial, files, trace);
         // return estimates
         return initial;
     }
     // nothing we can do here!
     return {
-        mu: 50,
-        kg1: 1000,
         kp: 100,
-        ex: 1.2,
+        mu: 50,
         kvb: 1000,
+        ex: 1.2,
+        kg1: 1000,
     };
 };

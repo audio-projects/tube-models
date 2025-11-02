@@ -1,5 +1,27 @@
-
 import { File } from '../files';
+import { TriodeModelParameters } from '../workers/models/triode-model-parameters';
+import { PentodeModelParameters } from '../workers/models/pentode-model-parameters';
+
+export interface DerkModelParameters {
+    mu?: number;
+    ex?: number;
+    kg1?: number;
+    kg2?: number;
+    kp?: number;
+    kvb?: number;
+    a?: number;
+    alphaS?: number;
+    beta?: number;
+    secondaryEmission?: boolean;
+    s?: number;
+    alphaP?: number;
+    lambda?: number;
+    v?: number;
+    w?: number;
+    calculatedOn?: string; // ISO-8601 datetime string with timezone
+    // root mean square error
+    rmse?: number;
+}
 
 export interface TubeInformation {
     id: string;
@@ -8,12 +30,14 @@ export interface TubeInformation {
     comments: string;
     lastUpdatedOn: string;
     type: 'Triode' | 'Pentode' | 'Tetrode';
+    owner?: string; // Firebase user UID who owns this tube
 
-    maximumPlateVoltage?: number;
+    datasheetUrl?: string;
     maximumPlateDissipation?: number;
+    maximumPlateVoltage?: number;
+    maximumGrid1Voltage?: number;
     maximumPlateCurrent?: number;
     maximumCathodeCurrent?: number;
-    maximumGrid1Voltage?: number;
     maximumGrid2Voltage?: number;
     maximumGrid2Dissipation?: number;
     minimumHeaterVoltage?: number;
@@ -22,6 +46,7 @@ export interface TubeInformation {
     minimumHeaterToCathodeVoltage?: number;
     heaterCurrent?: number;
     heaterWarmupTime?: number;
+
     ccg1?: number;
     ccg2?: number;
     ccg3?: number;
@@ -32,41 +57,11 @@ export interface TubeInformation {
     cg2p?: number;
     cg3p?: number;
     ccp?: number;
+
     files: File[];
-    egOffset?: number;
 
-    // Norman Koren Triode Model SPICE Parameters
-    triodeModelParameters?: {
-        mu?: number;
-        ex?: number;
-        kg1?: number;
-        kp?: number;
-        kvb?: number;
-        calculated?: boolean;
-        lastCalculated?: string;
-    };
-
-    // Norman Koren Pentode Model SPICE Parameters
-    pentodeSpiceModelParameters?: {
-        mu?: number;
-        ex?: number;
-        kg1?: number;
-        kg2?: number;
-        kp?: number;
-        kvb?: number;
-        calculated?: boolean;
-        lastCalculated?: string;
-    };
-
-    // Tetrode SPICE Parameters (similar to pentode but without screen grid secondary emission)
-    tetrodeSpiceModelParameters?: {
-        mu?: number;
-        ex?: number;
-        kg1?: number;
-        kg2?: number;
-        kp?: number;
-        kvb?: number;
-        calculated?: boolean;
-        lastCalculated?: string;
-    };
+    triodeModelParameters?: TriodeModelParameters;
+    pentodeModelParameters?: PentodeModelParameters;
+    derkModelParameters?: DerkModelParameters;
+    derkEModelParameters?: DerkModelParameters;
 }

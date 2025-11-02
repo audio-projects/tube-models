@@ -1,4 +1,5 @@
 import { estimateExKg1 } from './estimate-ex-kg1';
+import { File } from '../../files';
 import { fileParserService } from '../../services/file-parser-service';
 import { Initial } from '../initial';
 
@@ -15,10 +16,10 @@ describe('estimates / estimateExKg1', () => {
                     // initial
                     const initial: Initial = { mu: 56 };
                     // estimate ex/kg1
-                    estimateExKg1(initial, [file], 2.5, 0);
-                    // check result
-                    expect(initial.ex).toBeCloseTo(1.40, 0.01);
-                    expect(initial.kg1).toBeCloseTo(303.7, 0.1);
+                    estimateExKg1(initial, [file]);
+                    // check result (Derk Reefman linear regression method)
+                    expect(initial.ex).toBeCloseTo(0.58, 1);
+                    expect(initial.kg1).toBeCloseTo(275.77, 2);
                     // done
                     done();
                     // exit
@@ -37,36 +38,43 @@ describe('estimates / estimateExKg1', () => {
             });
     });
 
-    // it('it should estimate "ex/kg1" from EL500_triode.utd file', (done) => {
-    //     // fetch test data
-    //     fetch('/test-assets/EL500_triode.utd')
-    //         .then((response) => response.text())
-    //         .then((data) => {
-    //             // parse file
-    //             const file = fileParserService('EL500_triode.utd', data);
-    //             if (file) {
-    //                 // initial
-    //                 const initial: Initial = {mu: 4};
-    //                 // estimate ex/kg1
-    //                 estimateExKg1(initial, [file], 1, 0);
-    //                 // check result
-    //                 expect(initial.ex).toBeCloseTo(6.96, 0.01);
-    //                 expect(initial.kg1).toBeCloseTo(533.5, 0.1);
-    //                 // done
-    //                 done();
-    //                 // exit
-    //                 return;
-    //             }
-    //             // fail
-    //             fail('Failed to parse test data');
-    //             // done
-    //             done();
-    //         })
-    //         .catch((error) => {
-    //             // fail
-    //             fail('Failed to fetch test data: ' + error);
-    //             // done
-    //             done();
-    //         });
-    // });
+    it('it should estimate "ex/kg1" from EL500 files', (done) => {
+        // files
+        const fileNames = ['EL500_200.utd', 'EL500_250.utd', 'EL500_300.utd', 'EL500_triode.utd'];
+        // fetch all files
+        Promise.all(fileNames.map((fileName) => fetch('/test-assets/' + fileName)))
+            .then((responses) => Promise.all(responses.map((response) => response.text())))
+            .then((data) => {
+                // files
+                const files: File[] = [];
+                // loop file data
+                for (let i = 0; i < data.length; i++) {
+                    // parse file content
+                    const file = fileParserService(fileNames[i], data[i]);
+                    if (file) {
+                        // update egOffset
+                        file.egOffset = -25;
+                        // add file
+                        files.push(file);
+                    }
+                }
+                // initial
+                const initial: Initial = { mu: 4.82 };
+                // estimate ex/kg1
+                estimateExKg1(initial, files);
+                // check result (Derk Reefman linear regression method)
+                expect(initial.ex).toBeCloseTo(0.86, 1);
+                expect(initial.kg1).toBeCloseTo(188.49, 2);
+                // done
+                done();
+                // exit
+                return;
+            })
+            .catch((error) => {
+                // fail
+                fail('Failed to fetch test data: ' + error);
+                // done
+                done();
+            });
+    });
 });

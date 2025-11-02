@@ -1,6 +1,9 @@
 /* Using Bootstrap SCSS with modern @use syntax. */
 @use 'bootstrap/scss/bootstrap';
 
+/* Bootstrap Icons */
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+
 * {
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
@@ -462,8 +465,8 @@
     font-weight: bold;
   }
 
-  /* triode-spice-parameters */
-  .triode-spice-parameters {
+  /* triode-model-parameters */
+  .triode-model-parameters {
     .form-control-plaintext {
       font-family: 'Courier New', monospace;
       font-size: 1.1em;
@@ -480,8 +483,8 @@
     }
   }
 
-  /* pentode-spice-parameters */
-  .pentode-spice-parameters {
+  /* pentode-model-parameters */
+  .pentode-model-parameters {
     .form-control-plaintext {
       font-family: 'Courier New', monospace;
       font-size: 1.1em;

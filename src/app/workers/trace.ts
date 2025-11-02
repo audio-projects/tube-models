@@ -1,6 +1,8 @@
+import { InflectionPoint } from './estimates/inflection-point';
 import { MathCollection, MathNumericType } from 'mathjs';
 import { Point } from '../files';
 import { Vector } from './algorithms/vector';
+import { ScreenCurrentFeaturePoint } from './estimates/screen-current-feature-point';
 
 export interface KpAverage {
     file: string;
@@ -37,6 +39,20 @@ export interface AAverage {
     eg: number;
 };
 
+export interface AlphaSAverage {
+    file: string;
+    a: number;
+    b: number;
+    eg: number;
+};
+
+export interface BetaAverage {
+    file: string;
+    a: number;
+    b: number;
+    eg: number;
+};
+
 export interface ResidualEntry {
     r: Vector;
     x: Vector;
@@ -59,13 +75,16 @@ export interface Trace {
     history: MathCollection[];
     functionValues: number[];
     estimates: {
+        kp?: {
+            average: KpAverage[];
+        };
         mu?: {
-            maxip: number;
+            maxIp: number;
             ip: number;
             points: Point[];
         };
-        kp?: {
-            average: KpAverage[];
+        kvb?: {
+            average: KvbAverage[];
         };
         ex?: {
             average: ExAverage[];
@@ -73,14 +92,24 @@ export interface Trace {
         kg1?: {
             average: Kg1Average[];
         };
-        kvb?: {
-            average: KvbAverage[];
-        };
         kg2?: {
             average: Kg2Average[];
         };
         a?: {
             average: AAverage[];
+        };
+        secondaryEmission?: {
+            s?: {
+                s?: number;
+                average: number[];
+            };
+            screenCurrentFeaturePoints?: ScreenCurrentFeaturePoint[];
+        };
+        beta?: {
+            average: BetaAverage[];
+        };
+        alphaS?: {
+            average: AlphaSAverage[];
         };
     };
     residuals: ResidualEntry[];

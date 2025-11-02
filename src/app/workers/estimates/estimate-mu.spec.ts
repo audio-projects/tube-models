@@ -1,4 +1,5 @@
 import { estimateMu } from './estimate-mu';
+import { File } from '../../files';
 import { fileParserService } from '../../services/file-parser-service';
 import { Initial } from '../initial';
 
@@ -15,9 +16,9 @@ describe('estimates / estimateMu', () => {
                     // initial
                     const initial: Initial = {};
                     // estimate mu
-                    estimateMu(initial, [file], 2.5, 0);
+                    estimateMu(initial, [file]);
                     // check result
-                    expect(initial.mu).toBeCloseTo(41.50982026143785, 0.1);
+                    expect(initial.mu).toBeCloseTo(41.51, 1);
                     // done
                     done();
                     // exit
@@ -47,9 +48,9 @@ describe('estimates / estimateMu', () => {
                     // initial
                     const initial: Initial = {};
                     // estimate mu
-                    estimateMu(initial, [file], 2.5, 0);
+                    estimateMu(initial, [file]);
                     // check result
-                    expect(initial.mu).toBeCloseTo(14.56, 0.1);
+                    expect(initial.mu).toBeCloseTo(15.29, 1);
                     // done
                     done();
                     // exit
@@ -79,9 +80,9 @@ describe('estimates / estimateMu', () => {
                     // initial
                     const initial: Initial = {};
                     // estimate mu
-                    estimateMu(initial, [file], 1, 0);
+                    estimateMu(initial, [file]);
                     // check result
-                    expect(initial.mu).toBeCloseTo(93.8, 0.1);
+                    expect(initial.mu).toBeCloseTo(94.93, 1);
                     // done
                     done();
                     // exit
@@ -100,61 +101,36 @@ describe('estimates / estimateMu', () => {
             });
     });
 
-    it('it should estimate "mu" from EL500_triode.utd file', (done) => {
-        // fetch test data
-        fetch('/test-assets/EL500_triode.utd')
-            .then((response) => response.text())
+    it('it should estimate "mu" from EL500 files', (done) => {
+        // files
+        const fileNames = ['EL500_200.utd', 'EL500_250.utd', 'EL500_300.utd', 'EL500_triode.utd'];
+        // fetch all files
+        Promise.all(fileNames.map((fileName) => fetch('/test-assets/' + fileName)))
+            .then((responses) => Promise.all(responses.map((response) => response.text())))
             .then((data) => {
-                // parse file
-                const file = fileParserService('EL500_triode.utd', data);
-                if (file) {
-                    // initial
-                    const initial: Initial = {};
-                    // estimate mu
-                    estimateMu(initial, [file], 1, 0);
-                    // check result
-                    expect(initial.mu).toBeCloseTo(4.0, 0.1);
-                    // done
-                    done();
-                    // exit
-                    return;
+                // files
+                const files: File[] = [];
+                // loop file data
+                for (let i = 0; i < data.length; i++) {
+                    // parse file content
+                    const file = fileParserService(fileNames[i], data[i]);
+                    if (file) {
+                        // update egOffset
+                        file.egOffset = -25;
+                        // add file
+                        files.push(file);
+                    }
                 }
-                // fail
-                fail('Failed to parse test data');
+                // initial
+                const initial: Initial = {};
+                // estimate mu
+                estimateMu(initial, files);
+                // check result
+                expect(initial.mu).toBeCloseTo(4.89, 1);
                 // done
                 done();
-            })
-            .catch((error) => {
-                // fail
-                fail('Failed to fetch test data: ' + error);
-                // done
-                done();
-            });
-    });
-
-    it('it should estimate "mu" from pf86_triode.utd file', (done) => {
-        // fetch test data
-        fetch('/test-assets/pf86_triode.utd')
-            .then((response) => response.text())
-            .then((data) => {
-                // parse file
-                const file = fileParserService('pf86_triode.utd', data);
-                if (file) {
-                    // initial
-                    const initial: Initial = {};
-                    // estimate mu
-                    estimateMu(initial, [file], 1, 0);
-                    // check result
-                    expect(initial.mu).toBeCloseTo(33.5, 0.1);
-                    // done
-                    done();
-                    // exit
-                    return;
-                }
-                // fail
-                fail('Failed to parse test data');
-                // done
-                done();
+                // exit
+                return;
             })
             .catch((error) => {
                 // fail

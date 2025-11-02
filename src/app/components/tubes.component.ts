@@ -1,10 +1,11 @@
+import { AuthService } from '../services/auth.service';
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { FirebaseTubeService } from '../services/firebase-tube.service';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ToastService } from '../services/toast.service';
-import { TubeDataService } from '../services/tube-data.service';
 import { TubeInformation } from './tube-information';
 
 @Component({
@@ -16,21 +17,32 @@ import { TubeInformation } from './tube-information';
 export class TubesComponent implements OnInit, OnDestroy {
     tubes: TubeInformation[] = [];
 
-    // Filter properties
+    // Filter properties
     searchTerm = '';
     selectedType = '';
     selectedManufacturer = '';
+    selectedOwnership = ''; // Ownership filter: '', 'mine', 'others'
     filteredTubes: TubeInformation[] = [];
 
     private tubesSubscription?: Subscription;
 
-    constructor(private tubeDataService: TubeDataService, private toastService: ToastService) {}
+    constructor(
+        private firebaseTubeService: FirebaseTubeService,
+        public authService: AuthService,
+        private toastService: ToastService
+    ) {}
 
     ngOnInit() {
-        // Subscribe to tubes data changes
-        this.tubesSubscription = this.tubeDataService.tubes$.subscribe(tubes => {
-            this.tubes = tubes;
-            this.filterTubes();
+        // Subscribe to tubes data changes from Firebase
+        this.tubesSubscription = this.firebaseTubeService.getTubes().subscribe({
+            next: (tubes: TubeInformation[]) => {
+                this.tubes = tubes;
+                this.filterTubes();
+            },
+            error: (error: unknown) => {
+                console.error('Error loading tubes from Firebase:', error);
+                this.toastService.error('Error loading tubes from database. Please check your connection.');
+            }
         });
     }
 
@@ -41,12 +53,20 @@ export class TubesComponent implements OnInit, OnDestroy {
     }
 
     refreshTubes() {
-        console.log('Refreshing tubes...');
-        this.tubeDataService.refreshTubes().subscribe({
-            next: (tubes) => {
+        console.log('Refreshing tubes from Firebase...');
+        // Re-subscribe to get fresh data from Firebase
+        if (this.tubesSubscription) {
+            this.tubesSubscription.unsubscribe();
+        }
+
+        this.tubesSubscription = this.firebaseTubeService.getTubes().subscribe({
+            next: (tubes: TubeInformation[]) => {
+                this.tubes = tubes;
+                this.filterTubes();
                 console.log('Tubes refreshed successfully', tubes.length);
+                this.toastService.success(`Loaded ${tubes.length} tubes from database`);
             },
-            error: (error) => {
+            error: (error: unknown) => {
                 console.error('Error refreshing tubes:', error);
                 this.toastService.error('Error refreshing tubes. Please try again.');
             }
@@ -55,6 +75,14 @@ export class TubesComponent implements OnInit, OnDestroy {
 
     getCountByType(type: string): number {
         return this.tubes.filter(tube => tube.type === type).length;
+    }
+
+    isMyTube(tube: TubeInformation): boolean {
+        if (!this.authService.isAuthenticated()) {
+            return false;
+        }
+        const currentUserUid = this.authService.getCurrentUser()?.uid;
+        return tube.owner === currentUserUid;
     }
 
     getUniqueManufacturers(): string[] {
@@ -72,15 +100,33 @@ export class TubesComponent implements OnInit, OnDestroy {
             const matchesType = !this.selectedType || tube.type === this.selectedType;
             const matchesManufacturer = !this.selectedManufacturer || tube.manufacturer === this.selectedManufacturer;
 
-            return matchesSearch && matchesType && matchesManufacturer;
+            // Ownership filter - only apply if user is authenticated
+            let matchesOwnership = true;
+            if (this.authService.isAuthenticated() && this.selectedOwnership) {
+                const currentUserUid = this.authService.getCurrentUser()?.uid;
+                if (this.selectedOwnership === 'mine') {
+                    matchesOwnership = tube.owner === currentUserUid;
+                }
+                else if (this.selectedOwnership === 'others') {
+                    matchesOwnership = tube.owner !== currentUserUid;
+                }
+            }
+
+            return matchesSearch && matchesType && matchesManufacturer && matchesOwnership;
         });
+    }
+
+    filterByType(type: string) {
+        this.selectedType = type;
+        this.filterTubes();
     }
 
     clearFilters() {
         this.searchTerm = '';
         this.selectedType = '';
         this.selectedManufacturer = '';
-        this.filteredTubes = [...this.tubes];
+        this.selectedOwnership = '';
+        this.filterTubes();
     }
 
     getTypeBadgeClass(type: string): string {
@@ -106,6 +152,12 @@ export class TubesComponent implements OnInit, OnDestroy {
     }
 
     confirmDelete(tube: TubeInformation) {
+        // Check if user is authenticated for delete operations
+        if (!this.authService.isAuthenticated()) {
+            this.toastService.error('You must be signed in to delete tubes.');
+            return;
+        }
+
         this.toastService.confirm(
             `Are you sure you want to delete "${tube.name}"? This action cannot be undone.`,
             () => {
@@ -117,13 +169,25 @@ export class TubesComponent implements OnInit, OnDestroy {
     }
 
     private deleteTube(tube: TubeInformation) {
-        this.tubeDataService.deleteTube(tube.id).subscribe({
-            next: (success) => {
+        // Check if user owns the tube
+        if (!this.isMyTube(tube)) {
+            this.toastService.error('You can only delete tubes that you created.');
+            return;
+        }
+
+        console.log(`Delete requested for tube: ${tube.name}`);
+        this.firebaseTubeService.deleteTube(tube).subscribe({
+            next: (success: boolean) => {
                 if (success) {
-                    console.log(`Deleted tube: ${tube.name}`);
+                    console.log(`Tube "${tube.name}" deleted successfully`);
+                    this.toastService.success(`Tube "${tube.name}" deleted successfully!`);
+                    // The tubes list will automatically update via the subscription
+                }
+                else {
+                    this.toastService.error('Failed to delete tube. Please try again.');
                 }
             },
-            error: (error) => {
+            error: (error: unknown) => {
                 console.error('Error deleting tube:', error);
                 this.toastService.error('Error deleting tube. Please try again.');
             }

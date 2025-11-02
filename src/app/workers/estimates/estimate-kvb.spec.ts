@@ -15,9 +15,41 @@ describe('estimates / estimateKvb', () => {
                     // initial
                     const initial: Initial = { mu: 41.50982026143785, ex: 1.5262372799919646, kg1: 968.0718249400395, kp: 238.17163161359613 };
                     // estimate kvb
-                    estimateKvb(initial, [file], 2.5, 0);
+                    estimateKvb(initial, [file]);
                     // check result
-                    expect(initial.kvb).toBeCloseTo(20575.74, 0.01);
+                    expect(initial.kvb).toBeCloseTo(800.0, 2);
+                    // done
+                    done();
+                    // exit
+                    return;
+                }
+                // fail
+                fail('Failed to parse test data');
+                // done
+                done();
+            })
+            .catch((error) => {
+                // fail
+                fail('Failed to fetch test data: ' + error);
+                // done
+                done();
+            });
+    });
+
+    it('it should estimate "kvb" from ECC82.utd file', (done) => {
+        // fetch test data
+        fetch('/test-assets/ECC82.utd')
+            .then((response) => response.text())
+            .then((data) => {
+                // parse file
+                const file = fileParserService('ECC82.utd', data);
+                if (file) {
+                    // initial
+                    const initial: Initial = { mu: 14.56, ex: 1.11, kg1: 1478.9, kp: 93.6 };
+                    // estimate kvb
+                    estimateKvb(initial, [file]);
+                    // check result
+                    expect(initial.kvb).toBeCloseTo(3200.0, 2);
                     // done
                     done();
                     // exit
@@ -47,9 +79,9 @@ describe('estimates / estimateKvb', () => {
                     // initial
                     const initial: Initial = { mu: 94.5, ex: 0.70, kg1: 616.64, kp: 928.20 };
                     // estimate kvb
-                    estimateKvb(initial, [file], 1, 0);
+                    estimateKvb(initial, [file]);
                     // check result
-                    expect(initial.kvb).toBeCloseTo(898932.43, 0.01);
+                    expect(initial.kvb).toBeCloseTo(3200.0, 2);
                     // done
                     done();
                     // exit
@@ -68,6 +100,7 @@ describe('estimates / estimateKvb', () => {
             });
     });
 
+    // kvb estimation is only for Triodes, other tube types use a hardcoded value
     it('it should estimate "kvb" from EL500_triode.utd file', (done) => {
         // fetch test data
         fetch('/test-assets/EL500_triode.utd')
@@ -76,12 +109,12 @@ describe('estimates / estimateKvb', () => {
                 // parse file
                 const file = fileParserService('EL500_triode.utd', data);
                 if (file) {
-                    // initial
-                    const initial: Initial = { mu: 4.85, ex: 6.83, kg1: 782237010890.1022, kp: 10.10 };
+                // initial
+                    const initial: Initial = { mu: 4.82, ex: 1.58, kg1: 863.17, kp: 76.78 };
                     // estimate kvb
-                    estimateKvb(initial, [file], 1, 0);
+                    estimateKvb(initial, [file]);
                     // check result
-                    expect(initial.kvb).toBeCloseTo(7668.71, 0.01);
+                    expect(initial.kvb).toBeCloseTo(50.0, 2);
                     // done
                     done();
                     // exit

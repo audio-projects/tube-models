@@ -43,6 +43,14 @@ module.exports = tseslint.config(
       "@stylistic/space-infix-ops": ["error"],
       "@stylistic/no-trailing-spaces": ["error"],
       "@stylistic/eol-last": ["error", "always"],
+      // Custom rules for specific formatting requirements
+      "@stylistic/padding-line-between-statements": [
+        "error",
+        // Empty line after class declaration
+        { "blankLine": "always", "prev": ["export"], "next": ["class"] },
+        // Empty line after class body opening
+        { "blankLine": "always", "prev": ["class"], "next": "*" }
+      ],
     },
   },
   {

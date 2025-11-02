@@ -1,6 +1,7 @@
 import { ipk } from './ipk';
 
 describe('models / ipk', () => {
+
     it('should return a positive number when e1 is greater than 0', () => {
         // act
         const result = ipk(1, 2, 3, 4, 5, 2);

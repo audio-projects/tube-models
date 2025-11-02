@@ -2,10 +2,6 @@ import { equal, index, MathCollection, MathNumericType, size, subset } from "mat
 
 export type Vector = MathCollection<MathNumericType>;
 
-export type ColumnVector = MathCollection<MathNumericType>;
-
-export type RowVector = MathCollection<MathNumericType>;
-
 export function length(vector: Vector): number {
     // vector size
     const s = size(vector);

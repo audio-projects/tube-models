@@ -6,7 +6,7 @@
         <nav aria-label="breadcrumb">
           <ol class="breadcrumb">
             <li class="breadcrumb-item">
-              <a routerLink="/tubes" class="text-decoration-none"> <i class="bi bi-collection me-1"></i>Tubes </a>
+              <a routerLink="/tube" class="text-decoration-none"> <i class="bi bi-collection me-1"></i>Tubes </a>
             </li>
             <li class="breadcrumb-item active" aria-current="page">
               {{ tube?.name || "New Tube" }}
@@ -20,10 +20,10 @@
         <p class="text-muted mb-0" *ngIf="tube?.manufacturer">Manufactured by {{ tube?.manufacturer }}</p>
       </div>
       <div class="btn-group" role="group">
-        <a class="btn btn-outline-primary" routerLink="/tubes" title="Back to Tubes List"> <i class="bi bi-arrow-left me-1"></i>Back to Tubes </a>
+        <a class="btn btn-outline-primary" routerLink="/tube" title="Back to Tubes List"> <i class="bi bi-arrow-left me-1"></i>Back to Tubes </a>
         <button type="button" class="btn btn-outline-secondary" (click)="resetForm()" [disabled]="!tube" title="Reset Changes"><i class="bi bi-arrow-clockwise me-1"></i>Reset</button>
-        <button type="button" class="btn btn-success" (click)="saveTube()" [disabled]="!tube || !isFormValid()" title="Save Tube"><i class="bi bi-check-lg me-1"></i>Save</button>
-        <button type="button" class="btn btn-outline-danger" (click)="deleteTube()" [disabled]="!tube?.id" title="Delete Tube"><i class="bi bi-trash me-1"></i>Delete</button>
+        <button type="button" class="btn btn-success" (click)="saveTube()" [disabled]="!tube || !isFormValid() || !canSave()" title="Save Tube"><i class="bi bi-check-lg me-1"></i>Save</button>
+        <button type="button" class="btn btn-outline-danger" (click)="deleteTube()" [disabled]="!canDelete()" title="Delete Tube"><i class="bi bi-trash me-1"></i>Delete</button>
       </div>
     </div>
   </div>
@@ -43,14 +43,14 @@
               <div class="col-md-6">
                 <div class="mb-3">
                   <label for="tubeName" class="form-label fw-bold"> <i class="bi bi-tag me-1"></i>Tube Name * </label>
-                  <input type="text" class="form-control" id="tubeName" [(ngModel)]="tube.name" name="tubeName" required placeholder="Enter tube designation (e.g., ECC83, 12AX7)" />
+                  <input type="text" class="form-control" id="tubeName" [(ngModel)]="tube.name" name="tubeName" required placeholder="e.g., ECC83, 12AX7" />
                   <div class="form-text">Standard tube designation or model number</div>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="mb-3">
                   <label for="tubeManufacturer" class="form-label fw-bold"> <i class="bi bi-building me-1"></i>Manufacturer </label>
-                  <input type="text" class="form-control" id="tubeManufacturer" [(ngModel)]="tube.manufacturer" name="tubeManufacturer" placeholder="Enter manufacturer name" />
+                  <input type="text" class="form-control" id="tubeManufacturer" [(ngModel)]="tube.manufacturer" name="tubeManufacturer" placeholder="e.g., Telefunken, RCA, Mullard" />
                   <div class="form-text">Tube manufacturer or brand</div>
                 </div>
               </div>
@@ -78,8 +78,19 @@
             </div>
 
             <div class="mb-3">
+              <label for="datasheetUrl" class="form-label fw-bold"> <i class="bi bi-file-earmark-pdf me-1"></i>Datasheet URL </label>
+              <div class="input-group">
+                <input type="url" class="form-control" id="datasheetUrl" [(ngModel)]="tube.datasheetUrl" name="datasheetUrl" placeholder="e.g., https://example.com/datasheets/tube.pdf" />
+                <button class="btn btn-outline-primary" type="button" [disabled]="!tube.datasheetUrl" (click)="openDatasheetUrl()" title="Open datasheet in new tab">
+                  <i class="bi bi-box-arrow-up-right"></i>
+                </button>
+              </div>
+              <div class="form-text">Link to manufacturer datasheet or technical documentation</div>
+            </div>
+
+            <div class="mb-3">
               <label for="tubeComments" class="form-label fw-bold"> <i class="bi bi-chat-text me-1"></i>Comments & Notes </label>
-              <textarea class="form-control" id="tubeComments" rows="4" [(ngModel)]="tube.comments" name="tubeComments" placeholder="Enter any additional notes, specifications, or observations about this tube..."></textarea>
+              <textarea class="form-control" id="tubeComments" rows="4" [(ngModel)]="tube.comments" name="tubeComments" placeholder="e.g., Low noise version with gold grid, suitable for audio amplification"></textarea>
               <div class="form-text">Additional information, specifications, or usage notes</div>
             </div>
           </form>
@@ -88,23 +99,30 @@
 
       <!-- Electrical Specifications Card -->
       <div class="card mb-4">
-        <div class="card-header bg-info text-white">
-          <h5 class="card-title mb-0"><i class="bi bi-lightning me-2"></i>Electrical Specifications</h5>
+        <div class="card-header bg-info text-white" role="button" (click)="toggleElectricalSpecs()" [attr.aria-expanded]="isElectricalSpecsExpanded">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0"><i class="bi bi-lightning me-2"></i>Electrical Specifications</h5>
+            <i class="bi bi-chevron-down" [class.rotated]="isElectricalSpecsExpanded"></i>
+          </div>
         </div>
-        <div class="card-body">
+        <div class="collapse" [class.show]="isElectricalSpecsExpanded" id="electricalSpecsCollapse">
+          <div class="card-body">
+            <!-- Maximum Ratings Section -->
+          <h6 class="text-muted mb-3"><i class="bi bi-exclamation-triangle me-1"></i>Maximum Ratings</h6>
+          
           <div class="row">
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="maxPlateVoltage" class="form-label fw-bold"> Maximum Plate Voltage (V) </label>
+                <label for="maxPlateVoltage" class="form-label fw-bold"> Maximum Plate Voltage </label>
                 <div class="input-group">
-                  <input type="number" class="form-control" id="maxPlateVoltage" [(ngModel)]="tube.maximumPlateVoltage" name="maxPlateVoltage" placeholder="e.g., 300" />
+                  <input type="number" class="form-control" id="maxPlateVoltage" [(ngModel)]="tube.maximumPlateVoltage" name="maxPlateVoltage" placeholder="e.g., 300" step="1" />
                   <span class="input-group-text">V</span>
                 </div>
               </div>
             </div>
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="maxPlateDissipation" class="form-label fw-bold"> Maximum Plate Dissipation (W) </label>
+                <label for="maxPlateDissipation" class="form-label fw-bold"> Maximum Plate Dissipation </label>
                 <div class="input-group">
                   <input type="number" class="form-control" id="maxPlateDissipation" [(ngModel)]="tube.maximumPlateDissipation" name="maxPlateDissipation" step="0.1" placeholder="e.g., 2.5" />
                   <span class="input-group-text">W</span>
@@ -116,22 +134,211 @@
           <div class="row">
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="maxPlateCurrent" class="form-label fw-bold"> Maximum Plate Current (mA) </label>
+                <label for="maxPlateCurrent" class="form-label fw-bold"> Maximum Plate Current </label>
                 <div class="input-group">
-                  <input type="number" class="form-control" id="maxPlateCurrent" [(ngModel)]="tube.maximumPlateCurrent" name="maxPlateCurrent" placeholder="e.g., 10" />
+                  <input type="number" class="form-control" id="maxPlateCurrent" [(ngModel)]="tube.maximumPlateCurrent" name="maxPlateCurrent" placeholder="e.g., 10" step="0.1" />
                   <span class="input-group-text">mA</span>
                 </div>
               </div>
             </div>
             <div class="col-md-6">
               <div class="mb-3">
-                <label for="heaterVoltage" class="form-label fw-bold"> Heater Voltage (V) </label>
+                <label for="maxCathodeCurrent" class="form-label fw-bold"> Maximum Cathode Current </label>
                 <div class="input-group">
-                  <input type="number" class="form-control" id="heaterVoltage" [(ngModel)]="tube.minimumHeaterVoltage" name="heaterVoltage" step="0.1" placeholder="e.g., 6.3" />
+                  <input type="number" class="form-control" id="maxCathodeCurrent" [(ngModel)]="tube.maximumCathodeCurrent" name="maxCathodeCurrent" placeholder="e.g., 15" step="0.1" />
+                  <span class="input-group-text">mA</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="maxGrid1Voltage" class="form-label fw-bold"> Maximum Grid 1 Voltage </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="maxGrid1Voltage" [(ngModel)]="tube.maximumGrid1Voltage" name="maxGrid1Voltage" placeholder="e.g., 0" step="0.1" />
                   <span class="input-group-text">V</span>
                 </div>
               </div>
             </div>
+            <div class="col-md-6" *ngIf="tube.type === 'Pentode' || tube.type === 'Tetrode'">
+              <div class="mb-3">
+                <label for="maxGrid2Voltage" class="form-label fw-bold"> Maximum Grid 2 (Screen) Voltage </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="maxGrid2Voltage" [(ngModel)]="tube.maximumGrid2Voltage" name="maxGrid2Voltage" placeholder="e.g., 250" step="1" />
+                  <span class="input-group-text">V</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row" *ngIf="tube.type === 'Pentode' || tube.type === 'Tetrode'">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="maxGrid2Dissipation" class="form-label fw-bold"> Maximum Grid 2 (Screen) Dissipation </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="maxGrid2Dissipation" [(ngModel)]="tube.maximumGrid2Dissipation" name="maxGrid2Dissipation" placeholder="e.g., 0.5" step="0.1" />
+                  <span class="input-group-text">W</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Heater Specifications Section -->
+          <h6 class="text-muted mb-3 mt-4"><i class="bi bi-fire me-1"></i>Heater Specifications</h6>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="minHeaterVoltage" class="form-label fw-bold"> Minimum Heater Voltage </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="minHeaterVoltage" [(ngModel)]="tube.minimumHeaterVoltage" name="minHeaterVoltage" step="0.1" placeholder="e.g., 6.0" />
+                  <span class="input-group-text">V</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="maxHeaterVoltage" class="form-label fw-bold"> Maximum Heater Voltage </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="maxHeaterVoltage" [(ngModel)]="tube.maximumHeaterVoltage" name="maxHeaterVoltage" step="0.1" placeholder="e.g., 6.6" />
+                  <span class="input-group-text">V</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="heaterCurrent" class="form-label fw-bold"> Heater Current </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="heaterCurrent" [(ngModel)]="tube.heaterCurrent" name="heaterCurrent" step="0.01" placeholder="e.g., 0.3" />
+                  <span class="input-group-text">A</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="heaterWarmupTime" class="form-label fw-bold"> Heater Warmup Time </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="heaterWarmupTime" [(ngModel)]="tube.heaterWarmupTime" name="heaterWarmupTime" step="1" placeholder="e.g., 30" />
+                  <span class="input-group-text">sec</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="minHeaterToCathodeVoltage" class="form-label fw-bold"> Min Heater-Cathode Voltage </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="minHeaterToCathodeVoltage" [(ngModel)]="tube.minimumHeaterToCathodeVoltage" name="minHeaterToCathodeVoltage" step="1" placeholder="e.g., -100" />
+                  <span class="input-group-text">V</span>
+                </div>
+                <div class="form-text">Negative value typically</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="maxHeaterToCathodeVoltage" class="form-label fw-bold"> Max Heater-Cathode Voltage </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="maxHeaterToCathodeVoltage" [(ngModel)]="tube.maximumHeaterToCathodeVoltage" name="maxHeaterToCathodeVoltage" step="1" placeholder="e.g., 100" />
+                  <span class="input-group-text">V</span>
+                </div>
+                <div class="form-text">Positive value typically</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Capacitances Section -->
+          <h6 class="text-muted mb-3 mt-4"><i class="bi bi-circle me-1"></i>Capacitances</h6>
+          
+          <!-- Triode Capacitances -->
+          <div class="row" *ngIf="tube.type === 'Triode'">
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="ccg1" class="form-label fw-bold"> Cathode-Grid Capacitance (CCG) </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="ccg1" [(ngModel)]="tube.ccg1" name="ccg1" step="0.1" placeholder="e.g., 1.6" />
+                  <span class="input-group-text">pF</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="cg1p" class="form-label fw-bold"> Grid-Plate Capacitance (CGP) </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="cg1p" [(ngModel)]="tube.cg1p" name="cg1p" step="0.1" placeholder="e.g., 1.7" />
+                  <span class="input-group-text">pF</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="ccp" class="form-label fw-bold"> Cathode-Plate Capacitance (CCP) </label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="ccp" [(ngModel)]="tube.ccp" name="ccp" step="0.1" placeholder="e.g., 0.3" />
+                  <span class="input-group-text">pF</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pentode/Tetrode Capacitances -->
+          <div *ngIf="tube.type === 'Pentode' || tube.type === 'Tetrode'">
+            <div class="row">
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="ccg1Pentode" class="form-label fw-bold"> Cathode-Grid 1 Capacitance (CCG) </label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" id="ccg1Pentode" [(ngModel)]="tube.ccg1" name="ccg1Pentode" step="0.1" placeholder="e.g., 2.5" />
+                    <span class="input-group-text">pF</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="ccg2" class="form-label fw-bold"> Cathode-Screen Capacitance (CCS) </label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" id="ccg2" [(ngModel)]="tube.ccg2" name="ccg2" step="0.1" placeholder="e.g., 3.0" />
+                    <span class="input-group-text">pF</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="cg1g2" class="form-label fw-bold"> Grid 1-Screen Capacitance (CGS) </label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" id="cg1g2" [(ngModel)]="tube.cg1g2" name="cg1g2" step="0.1" placeholder="e.g., 3.5" />
+                    <span class="input-group-text">pF</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="cg1pPentode" class="form-label fw-bold"> Grid 1-Plate Capacitance (CGP) </label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" id="cg1pPentode" [(ngModel)]="tube.cg1p" name="cg1pPentode" step="0.01" placeholder="e.g., 0.005" />
+                    <span class="input-group-text">pF</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="ccpPentode" class="form-label fw-bold"> Cathode-Plate Capacitance (CCP) </label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" id="ccpPentode" [(ngModel)]="tube.ccp" name="ccpPentode" step="0.1" placeholder="e.g., 0.5" />
+                    <span class="input-group-text">pF</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           </div>
         </div>
       </div>
@@ -182,26 +389,51 @@
             <div *ngIf="tube.files && tube.files.length > 0" class="mb-3">
               <h6 class="fw-bold"><i class="bi bi-files me-1"></i>Uploaded Files ({{ tube.files.length }})</h6>
               <div class="list-group">
-                <div *ngFor="let file of tube.files; let i = index" class="list-group-item d-flex justify-content-between align-items-center">
-                  <div>
-                    <i class="bi bi-file-earmark-text me-2 text-primary"></i>
-                    <strong>{{ file.name }}</strong>
-                    <br />
-                    <small class="text-muted">
-                      {{ getMeasurementTypeDescription(file.measurementType) }}
-                      <span *ngIf="file.series.length > 0"> • {{ file.series.length }} series • {{ getTotalPointsCount(file) }} points </span>
-                    </small>
-                  </div>
-                  <div class="btn-group-sm" role="group">
-                    <button type="button" class="btn btn-outline-success btn-sm me-1" (click)="plotFile(file)" title="Plot file data" [disabled]="file.measurementType === 'UNKNOWN'">
-                      <i class="bi bi-graph-up"></i>
-                    </button>
-                    <button type="button" class="btn btn-outline-info btn-sm me-1" (click)="viewFileData(file)" title="View file data">
-                      <i class="bi bi-eye"></i>
-                    </button>
-                    <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeFile(i)" title="Remove file">
-                      <i class="bi bi-trash"></i>
-                    </button>
+                <div *ngFor="let file of tube.files; let i = index" class="list-group-item">
+                  <div class="row align-items-center">
+                    <!-- File Information Column -->
+                    <div class="col-md-6">
+                      <div class="d-flex align-items-center">
+                        <i class="bi bi-file-earmark-text me-2 text-primary"></i>
+                        <div>
+                          <strong>{{ file.name }}</strong>
+                          <br />
+                          <small class="text-muted">
+                            {{ file.measurementTypeLabel }}
+                            <span *ngIf="file.series.length > 0"> • {{ file.series.length }} series • {{ getTotalPointsCount(file) }} points </span>
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Grid Offset Column -->
+                    <div class="col-md-3">
+                      <label class="form-label small mb-1" for="egOffset_{{ i }}">Grid Offset (V)</label>
+                      <input 
+                        type="number" 
+                        class="form-control form-control-sm" 
+                        id="egOffset_{{ i }}"
+                        [(ngModel)]="file.egOffset" 
+                        name="egOffset_{{ i }}"
+                        step="0.1" 
+                        placeholder="e.g., 0.0"
+                        title="Grid voltage offset for this file">
+                    </div>
+                    
+                    <!-- Actions Column -->
+                    <div class="col-md-3 text-end">
+                      <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-success btn-sm" (click)="plotFile(file)" title="Plot file data" [disabled]="file.measurementType === 'UNKNOWN'">
+                          <i class="bi bi-graph-up"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm" (click)="viewFileData(file)" title="View file data">
+                          <i class="bi bi-eye"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeFile(i)" title="Remove file">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -225,7 +457,9 @@
                     <i class="bi bi-graph-up me-2"></i>
                     <strong>Plotting:</strong> {{ selectedFileForPlot.name }}
                     <br />
-                    <small>{{ getMeasurementTypeDescription(selectedFileForPlot.measurementType) }}</small>
+                    <small>{{ selectedFileForPlot.measurementTypeLabel }}
+                      <span *ngIf="selectedFileForPlot.egOffset !== 0"> • Grid offset: {{ selectedFileForPlot.egOffset }}V</span>
+                    </small>
                   </div>
                   <button type="button" class="btn btn-outline-secondary btn-sm" (click)="clearSelectedFile()"><i class="bi bi-x"></i> Clear Selection</button>
                 </div>
@@ -241,8 +475,9 @@
                         <strong>{{ file.name }}</strong>
                         <br />
                         <small class="text-muted">
-                          {{ getMeasurementTypeDescription(file.measurementType) }}
+                          {{ file.measurementTypeLabel }}
                           <span *ngIf="file.series.length > 0"> • {{ file.series.length }} series • {{ getTotalPointsCount(file) }} points </span>
+                          <span *ngIf="file.egOffset !== 0"> • Grid offset: {{ file.egOffset }}V </span>
                         </small>
                       </div>
                       <div *ngIf="file.measurementType !== 'UNKNOWN'">
@@ -305,154 +540,63 @@
         </div>
       </div>
 
-      <!-- Triode SPICE Model Parameters Card -->
-      <div class="card mb-4" *ngIf="tube.type === 'Triode' || tube.type === 'Pentode'">
+      <!-- Triode Model Parameters Card -->
+      <div class="card mb-4" *ngIf="tube.type === 'Triode' || tube.type === 'Pentode' || tube.type === 'Tetrode'">
         <div class="card-header bg-success text-white">
-          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Triode SPICE Model Parameters</h5>
+          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Triode Model (Norman Koren)</h5>
         </div>
-        <div class="card-body triode-spice-parameters">
-          <div *ngIf="!tube.triodeModelParameters?.calculated && !isCalculatingSpiceParameters" class="text-center">
-            <p class="text-muted mb-3">
-              <i class="bi bi-info-circle me-1"></i>
-              SPICE model parameters have not been calculated yet.
-            </p>
-            <button 
-              type="button" 
-              class="btn btn-outline-success" 
-              (click)="calculateSpiceModelParameters()" 
-              [disabled]="!tube.files || tube.files.length === 0">
-              <i class="bi bi-calculator me-1"></i>Calculate SPICE Parameters
-            </button>
-            <div class="form-text mt-2">
-              Requires triode measurement data files to calculate Norman Koren model parameters
-            </div>
-          </div>
-
-          <div *ngIf="isCalculatingSpiceParameters" class="text-center">
-            <div class="spinner-border text-success mb-3" role="status">
-              <span class="visually-hidden">Calculating...</span>
-            </div>
-            <p class="text-muted mb-0">
-              <i class="bi bi-gear-fill me-1 text-success"></i>
-              Calculating SPICE model parameters using optimization algorithms...
-            </p>
-            <small class="text-muted d-block mt-1">This may take a few moments</small>
-          </div>
-          
-          <div *ngIf="tube.triodeModelParameters?.calculated">
-            <div class="alert alert-success mb-3">
-              <i class="bi bi-check-circle me-1"></i>
-              SPICE model parameters successfully calculated
-              <small class="d-block mt-1">
-                Last calculated: {{ tube.triodeModelParameters?.lastCalculated | date:'medium' }}
-              </small>
-            </div>
-            
-            <div class="row">
-              <div class="col-md-6">
-                <div class="mb-3">
-                  <label class="form-label fw-bold"><i class="bi bi-arrow-up-right me-1"></i>μ (Amplification Factor)</label>
-                  <div class="form-control-plaintext fw-bold text-primary">
-                    {{ tube.triodeModelParameters?.mu | number:'1.3-3' }}
-                  </div>
-                  <div class="form-text">Voltage amplification factor</div>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="mb-3">
-                  <label class="form-label fw-bold"><i class="bi bi-lightning me-1"></i>EX (Exponent)</label>
-                  <div class="form-control-plaintext fw-bold text-primary">
-                    {{ tube.triodeModelParameters?.ex | number:'1.3-3' }}
-                  </div>
-                  <div class="form-text">Current law exponent</div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="row">
-              <div class="col-md-6">
-                <div class="mb-3">
-                  <label class="form-label fw-bold"><i class="bi bi-gear me-1"></i>KG1 (Grid Scaling)</label>
-                  <div class="form-control-plaintext fw-bold text-primary">
-                    {{ tube.triodeModelParameters?.kg1 | number:'1.3-3' }}
-                  </div>
-                  <div class="form-text">Grid current scaling factor</div>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="mb-3">
-                  <label class="form-label fw-bold"><i class="bi bi-sliders me-1"></i>KP (Plate Scaling)</label>
-                  <div class="form-control-plaintext fw-bold text-primary">
-                    {{ tube.triodeModelParameters?.kp | number:'1.3-3' }}
-                  </div>
-                  <div class="form-text">Plate current scaling factor</div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="row">
-              <div class="col-md-6">
-                <div class="mb-3">
-                  <label class="form-label fw-bold"><i class="bi bi-diagram-3 me-1"></i>KVB (Knee Voltage)</label>
-                  <div class="form-control-plaintext fw-bold text-primary">
-                    {{ tube.triodeModelParameters?.kvb | number:'1.3-3' }}
-                  </div>
-                  <div class="form-text">Knee voltage parameter</div>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="text-center">
-                  <button 
-                    type="button" 
-                    class="btn btn-outline-success btn-sm me-2" 
-                    (click)="calculateSpiceModelParameters()"
-                    [disabled]="isCalculatingSpiceParameters"
-                    title="Recalculate SPICE Parameters">
-                    <i class="bi bi-arrow-clockwise me-1" [class.spin]="isCalculatingSpiceParameters"></i>Recalculate
-                  </button>
-                  <button 
-                    type="button" 
-                    class="btn btn-outline-primary btn-sm" 
-                    (click)="copySpiceModel()"
-                    title="Copy SPICE Model to Clipboard">
-                    <i class="bi bi-clipboard me-1"></i>Copy SPICE Model
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            <!-- SPICE Model Code Display -->
-            <div class="mt-4">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6 class="mb-0"><i class="bi bi-code-square me-1"></i>SPICE Model Code</h6>
-                <small class="text-muted">Ready for use in SPICE simulations</small>
-              </div>
-              <pre class="bg-dark text-light p-3 rounded-3" style="font-size: 0.85em; overflow-x: auto;">{{ generateSpiceModelText() }}</pre>
-            </div>
-          </div>
+        <div class="card-body triode-model-parameters">
+          <app-norman-koren-triode-model-parameters 
+            [tube]="tube"
+            [isCalculating]="isCalculatingTriodeParameters"
+            [canCalculate]="tube.files && tube.files.length > 0"
+            (calculateRequested)="calculateTriodeModelParameters()">
+          </app-norman-koren-triode-model-parameters>
         </div>
       </div>
 
-      <!-- Pentode SPICE Model Parameters Component -->
-      <app-pentode-spice-parameters 
-        [tube]="tube" 
-        (tubeChange)="tube = $event">
-      </app-pentode-spice-parameters>
-
-      <!-- Tetrode SPICE Model Parameters Component -->
-      <app-tetrode-spice-parameters 
-        [tube]="tube" 
-        (tubeChange)="tube = $event">
-      </app-tetrode-spice-parameters>
-
-      <!-- Help Card -->
-      <div class="card">
-        <div class="card-header bg-light">
-          <h6 class="card-title mb-0"><i class="bi bi-question-circle me-2"></i>Need Help?</h6>
+      <!-- Pentode Model Parameters Card -->
+      <div class="card mb-4" *ngIf="tube.type !== 'Triode'">
+        <div class="card-header bg-success text-white">
+          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>{{ tube.type }} Model (Norman Koren)</h5>
         </div>
-        <div class="card-body">
-          <p class="card-text small mb-2"><strong>Required fields</strong> are marked with an asterisk (*).</p>
-          <p class="card-text small mb-0">Fill in the tube specifications to maintain accurate records for your vacuum tube database.</p>
+        <div class="card-body pentode-model-parameters">
+          <app-norman-koren-pentode-model-parameters 
+            [tube]="tube"
+            [isCalculating]="isCalculatingPentodeParameters"
+            [canCalculate]="tube.files && tube.files.length > 0"
+            (calculateRequested)="calculatePentodeModelParameters()">
+          </app-norman-koren-pentode-model-parameters>
+        </div>
+      </div>
+
+      <!-- Derk Pentode Model Parameters Card -->
+      <div class="card mb-4" *ngIf="tube.type !== 'Triode'">
+        <div class="card-header bg-info text-white">
+          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>{{ tube.type }} Model (Derk Model)</h5>
+        </div>
+        <div class="card-body derk-pentode-model-parameters">
+          <app-derk-pentode-model-parameters 
+            [tube]="tube"
+            [isCalculating]="isCalculatingDerkParameters"
+            [canCalculate]="tube.files && tube.files.length > 0"
+            (calculateRequested)="calculateDerkModelParameters()">
+          </app-derk-pentode-model-parameters>
+        </div>
+      </div>
+
+      <!-- Derk E Pentode Model Parameters Card -->
+      <div class="card mb-4" *ngIf="tube.type !== 'Triode'">
+        <div class="card-header bg-info text-white">
+          <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>{{ tube.type }} Model (Derk E Model)</h5>
+        </div>
+        <div class="card-body derk-pentode-model-parameters">
+          <app-derke-pentode-model-parameters 
+            [tube]="tube"
+            [isCalculating]="isCalculatingDerkEParameters"
+            [canCalculate]="tube.files && tube.files.length > 0"
+            (calculateRequested)="calculateDerkEModelParameters()">
+          </app-derke-pentode-model-parameters>
         </div>
       </div>
     </div>

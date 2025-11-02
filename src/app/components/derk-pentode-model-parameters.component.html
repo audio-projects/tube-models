@@ -1,0 +1,78 @@
+<!-- Not calculated state -->
+<div *ngIf="!tube?.derkModelParameters?.calculatedOn && !isCalculating" class="text-center">
+  <p class="text-muted mb-3">
+    <i class="bi bi-info-circle me-1"></i>
+    SPICE model parameters have not been calculated yet.
+  </p>
+  
+  <!-- Model Options -->
+  <div class="mb-3">
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" 
+             [checked]="secondaryEmission" 
+             (change)="onSecondaryEmissionChange($event)"
+             id="secondaryEmissionCheck">
+      <label class="form-check-label" for="secondaryEmissionCheck">
+        <i class="bi bi-lightning-charge me-1"></i>
+        Include Secondary Emission Effects
+      </label>
+    </div>
+    <div class="form-text">Enable advanced secondary emission modeling for improved accuracy</div>
+  </div>
+  
+  <button type="button" class="btn btn-outline-success" (click)="calculateSpiceModelParameters()" [disabled]="!canCalculate"><i class="bi bi-calculator me-1"></i>Calculate SPICE Parameters</button>
+  <div class="form-text mt-2">Requires pentode measurement data files to calculate Derk Reefman model parameters</div>
+</div>
+
+<!-- Calculating state -->
+<div *ngIf="isCalculating" class="text-center">
+  <div class="spinner-border text-success mb-3" role="status">
+    <span class="visually-hidden">Calculating...</span>
+  </div>
+  <p class="text-muted mb-0">
+    <i class="bi bi-gear-fill me-1 text-success"></i>
+    Calculating SPICE model parameters using optimization algorithms...
+  </p>
+  <small class="text-muted d-block mt-1">This may take a few moments</small>
+</div>
+
+<!-- Calculated state -->
+<div *ngIf="tube?.derkModelParameters?.calculatedOn">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="text-muted">
+      <i class="bi bi-check-circle-fill text-success me-1"></i>
+      SPICE model parameters calculated
+    </div>
+    <div class="btn-group btn-group-sm" role="group">
+      <button type="button" class="btn btn-outline-success" (click)="calculateSpiceModelParameters()" [disabled]="isCalculating || !canCalculate" title="Recalculate SPICE Parameters"><i class="bi bi-arrow-clockwise me-1" [class.spin]="isCalculating"></i>Recalculate</button>
+      <button type="button" class="btn btn-outline-danger" (click)="resetParameters()" [disabled]="isCalculating" title="Reset SPICE Parameters"><i class="bi bi-x-circle me-1"></i>Reset</button>
+    </div>
+  </div>
+
+  <!-- Model Options -->
+  <div class="mb-3">
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" 
+             [checked]="secondaryEmission" 
+             (change)="onSecondaryEmissionChange($event)"
+             id="secondaryEmissionCheckCalculated">
+      <label class="form-check-label" for="secondaryEmissionCheckCalculated">
+        <i class="bi bi-lightning-charge me-1"></i>
+        Include Secondary Emission Effects
+      </label>
+    </div>
+    <div class="form-text">Enable advanced secondary emission modeling for improved accuracy. Click Recalculate to apply changes.</div>
+  </div>
+
+  <!-- SPICE Model Code Display -->
+  <div class="mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h6 class="mb-0"><i class="bi bi-code-square me-1"></i>SPICE Model</h6>
+      <small class="text-muted">(ltspice, ngspice)</small>
+    </div>
+    <pre class="bg-dark text-light p-3 rounded-3" style="font-size: 0.85em; overflow-x: auto" *ngIf="tube?.derkModelParameters?.calculatedOn">{{ spiceModel }}</pre>
+    <div *ngIf="!tube?.derkModelParameters?.calculatedOn" class="bg-dark text-light p-3 rounded-3" style="font-size: 0.85em">
+      <span class="text-muted">No SPICE model parameters calculated.</span>
+    </div>
+  </div>
+</div>
