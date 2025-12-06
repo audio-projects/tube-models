@@ -116,7 +116,7 @@ export class FirebaseTubeService {
     updateTube(tube: TubeInformation): Observable<TubeInformation> {
         // ensure user is authenticated
         if (!this.auth.currentUser)
-            throw new Error('Authentication required to save tubes');
+            throw new Error('Authentication required to update tubes');
         // validate required fields
         if (!tube.name || tube.name.trim() === '')
             throw new Error('Tube name is required');
@@ -149,10 +149,10 @@ export class FirebaseTubeService {
     deleteTube(tube: TubeInformation): Observable<boolean> {
         // ensure user is authenticated
         if (!this.auth.currentUser)
-            throw new Error('Authentication required to save tubes');
+            throw new Error('Authentication required to delete tubes');
         // check ownership
         if (!this.isOwner(tube))
-            throw new Error('Only the tube owner can update this tube');
+            throw new Error('Only the tube owner can delete this tube');
         // ensure we are in the injection context
         return runInInjectionContext(this.injector, () => {
             // document reference
