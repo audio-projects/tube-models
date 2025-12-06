@@ -126,7 +126,7 @@ describe('FirebaseTubeService', () => {
     describe('updateTube', () => {
         it('should throw error when user is not authenticated', () => {
             Object.defineProperty(authSpy, 'currentUser', { value: null, writable: true });
-            expect(() => service.updateTube(mockTube)).toThrowError('Authentication required to save tubes');
+            expect(() => service.updateTube(mockTube)).toThrowError('Authentication required to update tubes');
         });
 
         it('should throw error when tube name is empty', () => {
@@ -144,12 +144,12 @@ describe('FirebaseTubeService', () => {
     describe('deleteTube', () => {
         it('should throw error when user is not authenticated', () => {
             Object.defineProperty(authSpy, 'currentUser', { value: null, writable: true });
-            expect(() => service.deleteTube(mockTube)).toThrowError('Authentication required to save tubes');
+            expect(() => service.deleteTube(mockTube)).toThrowError('Authentication required to delete tubes');
         });
 
         it('should throw error when user is not the owner', () => {
             Object.defineProperty(authSpy, 'currentUser', { value: { ...mockUser, uid: 'other-user' }, writable: true });
-            expect(() => service.deleteTube(mockTube)).toThrowError('Only the tube owner can update this tube');
+            expect(() => service.deleteTube(mockTube)).toThrowError('Only the tube owner can delete this tube');
         });
     });
 });
