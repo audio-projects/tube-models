@@ -93,7 +93,6 @@ export class TubeComponent implements OnInit, AfterViewInit {
                 next: (tube: TubeInformation | null) => {
                     if (tube) {
                         this.tube = tube;
-                        console.log('Tube loaded:', tube);
                         // Track tube view event
                         this.analyticsService.logTubeView(tube.id || tubeId, tube.name);
                     }

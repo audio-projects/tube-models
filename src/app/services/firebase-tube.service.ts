@@ -10,7 +10,7 @@ import {
 } from '@angular/fire/firestore';
 import { Auth } from '@angular/fire/auth';
 import { from, Observable } from 'rxjs';
-import { Injectable } from '@angular/core';
+import { Injectable, Injector, runInInjectionContext } from '@angular/core';
 import { TubeInformation } from '../components/tube-information';
 
 @Injectable({
@@ -18,7 +18,7 @@ import { TubeInformation } from '../components/tube-information';
 })
 export class FirebaseTubeService {
 
-    constructor(private firestore: Firestore, private auth: Auth) { }
+    constructor(private injector: Injector, private firestore: Firestore, private auth: Auth) { }
 
     /**
      * Get all tubes from the Firebase database
@@ -26,8 +26,13 @@ export class FirebaseTubeService {
      * @returns Observable of TubeInformation array
      */
     getTubes(): Observable<TubeInformation[]> {
-        const tubesCollection = collection(this.firestore, 'tubes');
-        return collectionData(tubesCollection, { idField: 'id' }) as Observable<TubeInformation[]>;
+        // ensure we are in the injection context
+        return runInInjectionContext(this.injector, () => {
+            // collection reference
+            const tubesCollection = collection(this.firestore, 'tubes');
+            // return observable of collection data
+            return collectionData(tubesCollection, { idField: 'id' }) as Observable<TubeInformation[]>;
+        });
     }
 
     /**
@@ -45,9 +50,10 @@ export class FirebaseTubeService {
      * @returns boolean indicating if current user owns the tube
      */
     isOwner(tube: TubeInformation): boolean {
-        if (!this.auth.currentUser || !tube.owner) {
+        // If no user is logged in or tube has no owner, return false
+        if (!this.auth.currentUser || !tube.owner)
             return false;
-        }
+        // check ownership
         return this.auth.currentUser.uid === tube.owner;
     }
 
@@ -57,13 +63,13 @@ export class FirebaseTubeService {
      * @returns Observable of TubeInformation or null
      */
     getTubeById(id: string): Observable<TubeInformation | null> {
-        const tubeDoc = doc(this.firestore, 'tubes', id);
-        return from(getDoc(tubeDoc).then(docSnap => {
-            if (docSnap.exists()) {
-                return { id: docSnap.id, ...docSnap.data() } as TubeInformation;
-            }
-            return null;
-        }));
+        // ensure we are in the injection context
+        return runInInjectionContext(this.injector, () => {
+            // document reference
+            const tubeDoc = doc(this.firestore, 'tubes', id);
+            // return observable of document data
+            return from(getDoc(tubeDoc).then(docSnap => docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } as TubeInformation : null));
+        });
     }
 
     /**
@@ -72,35 +78,34 @@ export class FirebaseTubeService {
      * @returns Observable of the created tube with ID
      */
     saveTube(tube: Omit<TubeInformation, 'id'>): Observable<TubeInformation> {
-        if (!this.auth.currentUser) {
+        // ensure user is authenticated
+        if (!this.auth.currentUser)
             throw new Error('Authentication required to save tubes');
-        }
-
-        // Validate required fields
-        if (!tube.name || tube.name.trim() === '') {
+        // validate required fields
+        if (!tube.name || tube.name.trim() === '')
             throw new Error('Tube name is required');
-        }
-
-        console.log('Saving tube with user:', this.auth.currentUser.uid);
-
+        // prepare tube data with owner and timestamp
         const tubeData = {
             ...tube,
             owner: this.auth.currentUser.uid,
             lastUpdatedOn: new Date().toISOString().split('T')[0] // Use date-only format for HTML date inputs
         };
-
-        console.log('Tube data to save:', tubeData);
-
-        const tubesCollection = collection(this.firestore, 'tubes');
-        return from(addDoc(tubesCollection, tubeData).then(docRef => {
-            console.log('Document successfully written with ID:', docRef.id);
-            return { id: docRef.id, ...tubeData } as TubeInformation;
-        }).catch(error => {
-            console.error('Detailed Firebase error:', error);
-            console.error('Error code:', error.code);
-            console.error('Error message:', error.message);
-            throw error;
-        }));
+        // ensure we are in the injection context
+        return runInInjectionContext(this.injector, () => {
+            // collection reference
+            const tubesCollection = collection(this.firestore, 'tubes');
+            // add document to collection
+            return from(addDoc(tubesCollection, tubeData)
+                .then(docRef => {
+                    return { id: docRef.id, ...tubeData } as TubeInformation;
+                })
+                .catch(error => {
+                    console.error('Detailed Firebase error:', error);
+                    console.error('Error code:', error.code);
+                    console.error('Error message:', error.message);
+                    throw error;
+                }));
+        });
     }
 
     /**
@@ -109,29 +114,31 @@ export class FirebaseTubeService {
      * @returns Observable of the updated tube
      */
     updateTube(tube: TubeInformation): Observable<TubeInformation> {
-        if (!this.auth.currentUser) {
-            throw new Error('Authentication required to update tubes');
-        }
-
-        if (!this.isOwner(tube)) {
-            throw new Error('Only the tube owner can update this tube');
-        }
-
-        // Validate required fields
-        if (!tube.name || tube.name.trim() === '') {
+        // ensure user is authenticated
+        if (!this.auth.currentUser)
+            throw new Error('Authentication required to save tubes');
+        // validate required fields
+        if (!tube.name || tube.name.trim() === '')
             throw new Error('Tube name is required');
-        }
-
-        const tubeDoc = doc(this.firestore, 'tubes', tube.id);
-        const { id, ...updateData } = tube; // Extract ID from tube data
-        const dataToUpdate = {
-            ...updateData,
-            lastUpdatedOn: new Date().toISOString().split('T')[0] // Use date-only format for HTML date inputs
-        };
-
-        return from(updateDoc(tubeDoc, dataToUpdate).then(() => {
-            return { id, ...dataToUpdate } as TubeInformation;
-        }));
+        // check ownership
+        if (!this.isOwner(tube))
+            throw new Error('Only the tube owner can update this tube');
+        // ensure we are in the injection context
+        return runInInjectionContext(this.injector, () => {
+            // document reference
+            const tubeDoc = doc(this.firestore, 'tubes', tube.id);
+            // prepare data to update
+            const { id, ...updateData } = tube; // Extract ID from tube data
+            const dataToUpdate = {
+                ...updateData,
+                lastUpdatedOn: new Date().toISOString().split('T')[0] // Use date-only format for HTML date inputs
+            };
+            // update document
+            return from(updateDoc(tubeDoc, dataToUpdate)
+                .then(() => {
+                    return { id, ...dataToUpdate } as TubeInformation;
+                }));
+        });
     }
 
     /**
@@ -140,15 +147,19 @@ export class FirebaseTubeService {
      * @returns Observable of success boolean
      */
     deleteTube(tube: TubeInformation): Observable<boolean> {
-        if (!this.auth.currentUser) {
-            throw new Error('Authentication required to delete tubes');
-        }
-
-        if (!this.isOwner(tube)) {
-            throw new Error('Only the tube owner can delete this tube');
-        }
-
-        const tubeDoc = doc(this.firestore, 'tubes', tube.id);
-        return from(deleteDoc(tubeDoc).then(() => true));
+        // ensure user is authenticated
+        if (!this.auth.currentUser)
+            throw new Error('Authentication required to save tubes');
+        // check ownership
+        if (!this.isOwner(tube))
+            throw new Error('Only the tube owner can update this tube');
+        // ensure we are in the injection context
+        return runInInjectionContext(this.injector, () => {
+            // document reference
+            const tubeDoc = doc(this.firestore, 'tubes', tube.id);
+            // delete document
+            return from(deleteDoc(tubeDoc)
+                .then(() => true));
+        });
     }
 }
