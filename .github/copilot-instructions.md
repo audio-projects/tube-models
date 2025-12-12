@@ -218,7 +218,7 @@ Example from AnalyticsService:
 
 #### Testing Patterns:
 
-**Jasmine/Karma framework** with arrange-act-assert structure:
+**CRITICAL**: ALL unit tests MUST follow the arrange-act-assert (AAA) pattern with explicit comment markers:
 
 ```typescript
 it('should find the minimum of a simple quadratic function', () => {
@@ -226,11 +226,62 @@ it('should find the minimum of a simple quadratic function', () => {
     const quadratic = (x: number[]) => x[0] * x[0] + x[1] * x[1];
     const quadraticMinimum = [0, 0];
     const quadraticStart = [1, 1];
+
     // act
     const result = powell(quadraticStart, quadratic, defaultOptions);
+
     // assert
     expect(result.converged).toBe(true);
     expect(result.fx).toBeCloseTo(quadratic(quadraticMinimum), 5);
+});
+```
+
+**AAA Pattern Requirements**:
+- **ALWAYS** include `// arrange`, `// act`, `// assert` comments in every test
+- **NO empty line** before `// arrange`, `// act`, or `// assert` comments
+- **arrange**: Set up test data, mocks, spies, and initial state
+- **act**: Execute the function/method being tested (single action when possible)
+- **assert**: Verify the expected outcome with expect() statements
+- Separate each section with a blank line for readability
+- For tests with only setup and assertions (no action), use `// arrange` and `// assert` only
+- For async tests with `done` callback, the pattern still applies
+
+**Component Testing with AAA**:
+```typescript
+it('should display error message when validation fails', () => {
+    // arrange
+    component.value = 'invalid';
+    const errorElement = compiled.query(By.css('.error-message'));
+
+    // act
+    component.validate();
+    fixture.detectChanges();
+
+    // assert
+    expect(errorElement).toBeTruthy();
+    expect(errorElement.nativeElement.textContent).toContain('Invalid value');
+});
+```
+
+**Service Testing with AAA**:
+```typescript
+it('should save tube to localStorage', (done) => {
+    // arrange
+    const newTube: TubeInformation = {
+        id: '',
+        name: 'Test Tube',
+        type: 'Triode',
+        files: []
+    };
+
+    // act
+    service.saveTube(newTube).subscribe(savedTube => {
+        // assert
+        const storedData = localStorage.getItem(STORAGE_KEY);
+        expect(storedData).toBeTruthy();
+        expect(savedTube.id).toBe('6');
+        done();
+    });
 });
 ```
 

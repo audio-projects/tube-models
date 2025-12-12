@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ToastService } from './toast.service';
+import { take } from 'rxjs/operators';
 
 describe('ToastService', () => {
     let service: ToastService;
@@ -91,14 +92,17 @@ describe('ToastService', () => {
         });
 
         it('should auto-remove toast after duration', (done) => {
+            // arrange
             service.showToast({
                 type: 'info',
                 message: 'Auto-dismiss test',
                 duration: 100
             });
 
+            // act
             setTimeout(() => {
-                service.toasts$.subscribe(toasts => {
+                // assert
+                service.toasts$.pipe(take(1)).subscribe(toasts => {
                     expect(toasts.length).toBe(0);
                     done();
                 });
@@ -106,13 +110,16 @@ describe('ToastService', () => {
         });
 
         it('should not auto-remove confirm toasts', (done) => {
+            // arrange
             service.showToast({
                 type: 'confirm',
                 message: 'Confirm action'
             });
 
+            // act
             setTimeout(() => {
-                service.toasts$.subscribe(toasts => {
+                // assert
+                service.toasts$.pipe(take(1)).subscribe(toasts => {
                     expect(toasts.length).toBe(1);
                     done();
                 });
@@ -256,15 +263,21 @@ describe('ToastService', () => {
 
     describe('confirmAction', () => {
         it('should call onConfirm callback and remove toast', (done) => {
+            // arrange
             const onConfirm = jasmine.createSpy('onConfirm');
             service.confirm('Confirm this?', onConfirm);
+            let toastId: string | undefined;
+            let doneCalled = false;
 
+            // act
             service.toasts$.subscribe(toasts => {
-                if (toasts.length === 1) {
-                    const toastId = toasts[0].id;
+                if (toasts.length === 1 && !toastId) {
+                    toastId = toasts[0].id;
                     service.confirmAction(toastId);
                 }
-                else if (toasts.length === 0) {
+                else if (toasts.length === 0 && toastId && !doneCalled) {
+                    // assert
+                    doneCalled = true;
                     expect(onConfirm).toHaveBeenCalled();
                     done();
                 }
@@ -278,16 +291,22 @@ describe('ToastService', () => {
 
     describe('cancelAction', () => {
         it('should call onCancel callback and remove toast', (done) => {
+            // arrange
             const onConfirm = jasmine.createSpy('onConfirm');
             const onCancel = jasmine.createSpy('onCancel');
             service.confirm('Confirm this?', onConfirm, onCancel);
+            let toastId: string | undefined;
+            let doneCalled = false;
 
+            // act
             service.toasts$.subscribe(toasts => {
-                if (toasts.length === 1) {
-                    const toastId = toasts[0].id;
+                if (toasts.length === 1 && !toastId) {
+                    toastId = toasts[0].id;
                     service.cancelAction(toastId);
                 }
-                else if (toasts.length === 0) {
+                else if (toasts.length === 0 && toastId && !doneCalled) {
+                    // assert
+                    doneCalled = true;
                     expect(onCancel).toHaveBeenCalled();
                     expect(onConfirm).not.toHaveBeenCalled();
                     done();
@@ -296,15 +315,21 @@ describe('ToastService', () => {
         });
 
         it('should remove toast even if onCancel is not provided', (done) => {
+            // arrange
             const onConfirm = jasmine.createSpy('onConfirm');
             service.confirm('Confirm this?', onConfirm);
+            let toastId: string | undefined;
+            let doneCalled = false;
 
+            // act
             service.toasts$.subscribe(toasts => {
-                if (toasts.length === 1) {
-                    const toastId = toasts[0].id;
+                if (toasts.length === 1 && !toastId) {
+                    toastId = toasts[0].id;
                     service.cancelAction(toastId);
                 }
-                else if (toasts.length === 0) {
+                else if (toasts.length === 0 && toastId && !doneCalled) {
+                    // assert
+                    doneCalled = true;
                     expect(onConfirm).not.toHaveBeenCalled();
                     done();
                 }
@@ -314,18 +339,22 @@ describe('ToastService', () => {
 
     describe('removeToast', () => {
         it('should remove a specific toast by ID', (done) => {
+            // arrange
             service.showToast({ type: 'info', message: 'Toast 1', duration: 0 });
             service.showToast({ type: 'info', message: 'Toast 2', duration: 0 });
             service.showToast({ type: 'info', message: 'Toast 3', duration: 0 });
+            let toastId: string | undefined;
+            let doneCalled = false;
 
-            let toastId: string;
-
+            // act
             service.toasts$.subscribe(toasts => {
-                if (toasts.length === 3) {
+                if (toasts.length === 3 && !toastId) {
                     toastId = toasts[1].id;
                     service.removeToast(toastId);
                 }
-                else if (toasts.length === 2) {
+                else if (toasts.length === 2 && toastId && !doneCalled) {
+                    // assert
+                    doneCalled = true;
                     expect(toasts.find(t => t.id === toastId)).toBeUndefined();
                     expect(toasts[0].message).toBe('Toast 1');
                     expect(toasts[1].message).toBe('Toast 3');
@@ -335,10 +364,13 @@ describe('ToastService', () => {
         });
 
         it('should handle removal of non-existent toast ID', (done) => {
+            // arrange
             service.showToast({ type: 'info', message: 'Test', duration: 0 });
 
-            service.toasts$.subscribe(toasts => {
+            // act
+            service.toasts$.pipe(take(1)).subscribe(toasts => {
                 if (toasts.length === 1) {
+                    // assert
                     expect(() => service.removeToast('non-existent')).not.toThrow();
                     done();
                 }
@@ -348,17 +380,22 @@ describe('ToastService', () => {
 
     describe('clearAll', () => {
         it('should remove all toasts', (done) => {
+            // arrange
             service.showToast({ type: 'info', message: 'Toast 1', duration: 0 });
             service.showToast({ type: 'success', message: 'Toast 2', duration: 0 });
             service.showToast({ type: 'error', message: 'Toast 3', duration: 0 });
-
             let hasCleared = false;
+            let doneCalled = false;
+
+            // act
             service.toasts$.subscribe(toasts => {
                 if (toasts.length === 3 && !hasCleared) {
                     hasCleared = true;
                     service.clearAll();
                 }
-                else if (toasts.length === 0 && hasCleared) {
+                else if (toasts.length === 0 && hasCleared && !doneCalled) {
+                    // assert
+                    doneCalled = true;
                     expect(toasts.length).toBe(0);
                     done();
                 }
@@ -383,14 +420,20 @@ describe('ToastService', () => {
         });
 
         it('should emit updates when toasts are removed', (done) => {
-            service.showToast({ type: 'info', message: 'Test', duration: 100 });
+            // arrange
+            service.showToast({ type: 'info', message: 'Test', duration: 0 });
+            let toastId: string | undefined;
+            let doneCalled = false;
 
-            let emissionCount = 0;
+            // act
             service.toasts$.subscribe(toasts => {
-                emissionCount++;
-
-                if (emissionCount === 3) {
-                    // After auto-removal
+                if (toasts.length === 1 && !toastId) {
+                    toastId = toasts[0].id;
+                    service.removeToast(toastId);
+                }
+                else if (toasts.length === 0 && toastId && !doneCalled) {
+                    // assert
+                    doneCalled = true;
                     expect(toasts.length).toBe(0);
                     done();
                 }
