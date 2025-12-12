@@ -7,7 +7,16 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:headed": "playwright test --headed",
+    "e2e:chromium": "playwright test --project=chromium",
+    "e2e:firefox": "playwright test --project=firefox",
+    "e2e:webkit": "playwright test --project=webkit",
+    "e2e:debug": "playwright test --debug",
+    "e2e:report": "playwright show-report e2e-results/html",
+    "e2e:install": "playwright install --with-deps"
   },
   "private": true,
   "dependencies": {
@@ -34,6 +43,7 @@
     "@angular/cli": "^20.3.13",
     "@angular/compiler-cli": "^20.3.15",
     "@angular/localize": "^20.3.15",
+    "@playwright/test": "^1.57.0",
     "@stylistic/eslint-plugin": "^5.6.1",
     "@types/jasmine": "~5.1.13",
     "@typescript-eslint/eslint-plugin": "^8.48.1",

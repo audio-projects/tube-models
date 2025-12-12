@@ -532,3 +532,132 @@ The application provides comprehensive quality metrics:
 - **Replacement Analysis**: Finding modern equivalents for vintage tubes
 - **Research Tool**: Academic study of vacuum tube physics and modeling
 
+## Development
+
+### Prerequisites
+
+- Node.js 18 or higher
+- npm 9 or higher
+- Angular CLI 20+
+
+### Installation
+
+```bash
+# Install dependencies
+npm install
+
+# Install Playwright browsers for e2e tests
+npm run e2e:install
+```
+
+### Development Server
+
+```bash
+npm start
+```
+
+Navigate to `http://localhost:4200/`. The application will automatically reload if you change any source files.
+
+### Testing
+
+#### Unit Tests
+
+Run unit tests with Karma and Jasmine:
+
+```bash
+npm test
+```
+
+Unit tests cover:
+- Mathematical algorithms (Powell, Levenberg-Marquardt)
+- Tube models (Norman-Koren, Derk)
+- Services (data management, file parsing, authentication)
+
+#### End-to-End Tests
+
+Run e2e tests with Playwright:
+
+```bash
+# Run all e2e tests (headless)
+npm run e2e
+
+# Run with interactive UI (recommended for development)
+npm run e2e:ui
+
+# Run in headed mode (see browser)
+npm run e2e:headed
+
+# Run specific browser
+npm run e2e:chromium
+npm run e2e:firefox
+npm run e2e:webkit
+
+# Debug tests
+npm run e2e:debug
+
+# View test report
+npm run e2e:report
+```
+
+E2E tests cover:
+- Application routing and navigation
+- Tube list browsing and search
+- Tube editor CRUD operations
+- File upload for triode/pentode
+- Plot visualization
+- SPICE parameter calculation
+- Local storage persistence
+
+📖 **[Complete E2E testing documentation](e2e/README.md)**  
+📖 **[E2E setup guide](e2e/SETUP.md)**
+
+#### Linting
+
+Run ESLint code analysis:
+
+```bash
+npm run lint
+```
+
+The project uses ESLint v9 with strict style rules (4-space indentation, Stroustrup brace style, required semicolons).
+
+### Build
+
+```bash
+# Production build
+npm run build
+
+# Build in watch mode
+npm run watch
+```
+
+Build artifacts are stored in the `dist/` directory.
+
+### Project Structure
+
+```
+src/
+├── app/
+│   ├── components/        # Angular components (tube editor, list, plots)
+│   ├── services/          # Services (data, auth, Firebase, analytics)
+│   └── workers/           # Web workers for optimization
+│       ├── algorithms/    # Mathematical algorithms
+│       ├── models/        # Tube models
+│       └── estimates/     # Parameter estimation
+├── environments/          # Environment configurations
+└── test-assets/          # Test measurement files (.utd)
+
+e2e/
+├── fixtures/             # Test data and fixtures
+├── helpers/              # Test helper functions
+├── page-objects/         # Page Object Model classes
+└── tests/                # E2E test specifications
+```
+
+### Contributing
+
+1. Follow the ESLint configuration strictly (`npm run lint`)
+2. Write unit tests for all algorithms and business logic
+3. Add e2e tests for new features
+4. Document mathematical models in `docs/`
+5. Update README for significant changes
