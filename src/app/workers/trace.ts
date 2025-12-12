@@ -1,4 +1,3 @@
-import { InflectionPoint } from './estimates/inflection-point';
 import { MathCollection, MathNumericType } from 'mathjs';
 import { Point } from '../files';
 import { Vector } from './algorithms/vector';

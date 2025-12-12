@@ -45,15 +45,12 @@ export class TubeComponent implements OnInit, AfterViewInit {
     isCalculatingDerkEParameters = false;
     isElectricalSpecsExpanded = false; // For collapsible Electrical Specifications section
     private analyticsService = inject(AnalyticsService);
-
-    constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-        private firebaseTubeService: FirebaseTubeService,
-        public authService: AuthService,
-        private ngZone: NgZone,
-        private toastService: ToastService
-    ) {}
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private firebaseTubeService = inject(FirebaseTubeService);
+    authService = inject(AuthService);
+    private ngZone = inject(NgZone);
+    private toastService = inject(ToastService);
 
     ngOnInit() {
         this.tubeId = this.route.snapshot.paramMap.get('id');
@@ -93,7 +90,6 @@ export class TubeComponent implements OnInit, AfterViewInit {
                 next: (tube: TubeInformation | null) => {
                     if (tube) {
                         this.tube = tube;
-                        console.log('Tube loaded:', tube);
                         // Track tube view event
                         this.analyticsService.logTubeView(tube.id || tubeId, tube.name);
                     }

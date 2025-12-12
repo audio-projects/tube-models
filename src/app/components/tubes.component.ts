@@ -1,6 +1,6 @@
 import { AuthService } from '../services/auth.service';
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FirebaseTubeService } from '../services/firebase-tube.service';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -25,12 +25,9 @@ export class TubesComponent implements OnInit, OnDestroy {
     filteredTubes: TubeInformation[] = [];
 
     private tubesSubscription?: Subscription;
-
-    constructor(
-        private firebaseTubeService: FirebaseTubeService,
-        public authService: AuthService,
-        private toastService: ToastService
-    ) {}
+    private firebaseTubeService = inject(FirebaseTubeService);
+    authService = inject(AuthService);
+    private toastService = inject(ToastService);
 
     ngOnInit() {
         // Subscribe to tubes data changes from Firebase

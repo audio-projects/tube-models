@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-TubeModels is an Angular 19 application for vacuum tube (electron tube) modeling and characteristic analysis. It implements mathematical models (primarily Norman-Koren triode model) to analyze and visualize tube behavior from measurement data.
+TubeModels is an Angular 20 application for vacuum tube (electron tube) modeling and characteristic analysis. It implements mathematical models (primarily Norman-Koren triode model) to analyze and visualize tube behavior from measurement data.
 
 ## Core Architecture
 
@@ -21,10 +21,14 @@ TubeModels is an Angular 19 application for vacuum tube (electron tube) modeling
 
 ### Services Architecture
 
-- **TubeDataService**: Local storage and reactive state management using BehaviorSubject
-- **FirebaseTubeService**: Cloud persistence with ownership-based access control
-- **AuthService**: Google OAuth integration for tube ownership
-- **FileParserService**: Automatic measurement type detection and .utd file parsing
+- **TubeDataService** (`src/app/services/tube-data.service.ts`): Local storage and reactive state management using BehaviorSubject
+- **FirebaseTubeService** (`src/app/services/firebase-tube.service.ts`): Cloud persistence with ownership-based access control
+- **AuthService** (`src/app/services/auth.service.ts`): Google OAuth integration for tube ownership
+- **FileParserService** (`src/app/services/file-parser-service.ts`): Automatic measurement type detection and .utd file parsing with statistical analysis
+- **ModelService** (`src/app/services/model.service.ts`): SPICE model generation from calculated parameters
+- **AnalyticsService** (`src/app/services/analytics.service.ts`): Firebase Analytics integration for tracking user events (tube views, uploads, calculations, disabled in development)
+- **CircuitService** (`src/app/services/circuit.service.ts`): SPICE circuit generation for testing tubes with specific load lines and operating points
+- **ToastService** (`src/app/services/toast.service.ts`): User notification system with success/error/warning/info/confirm toast types, uses BehaviorSubject for reactive updates
 
 ## Mathematical Computing
 
@@ -35,6 +39,21 @@ All parameter optimization runs in dedicated worker files to prevent UI blocking
 - **optimize-norman-koren-triode-model-parameters.worker.ts**: Triode model optimization
 - **optimize-norman-koren-pentode-model-parameters.worker.ts**: Pentode model optimization  
 - **optimize-norman-koren-new-pentode-model-parameters.worker.ts**: New pentode model variant
+- **optimize-derk-model-parameters.worker.ts**: Derk pentode model optimization
+- **optimize-derke-model-parameters.worker.ts**: Derk-E pentode model optimization
+
+#### Worker Message Protocol
+
+Workers communicate via `postMessage()` with standardized message types:
+
+**Incoming (to worker)**: Receives `{ files: File[], initial?: Initial }` with measurement data
+
+**Outgoing (from worker)**:
+- `{ type: 'log', text: string }`: Progress updates with RMSE values and iteration counts
+- `{ type: 'parameters', parameters: {...}, rmse: number, calculatedOn: string }`: Final optimized parameters
+- `{ type: 'error', message: string }`: Error conditions
+
+Algorithms use Powell and Levenberg-Marquardt methods with configurable tolerance and iteration limits.
 
 ### Optimization Algorithms
 
@@ -52,8 +71,8 @@ All parameter optimization runs in dedicated worker files to prevent UI blocking
 
 ### Mathematical Libraries
 
-- **mathjs**: Vector operations and mathematical functions in `src/app/workers/algorithms/vector.ts`
-- **fraction.js**: Precise fractional arithmetic for calculations
+- **mathjs** (v15.1.0): Vector operations and mathematical functions in `src/app/workers/algorithms/vector.ts`
+- Custom numerical algorithms: Gaussian elimination, Newton-Simple-Dogleg in `src/app/workers/algorithms/`
 
 ## Data Import Workflow
 
@@ -121,24 +140,163 @@ Simple two-route application (`src/app/app.routes.ts`):
 ### Error Handling
 
 - Worker errors posted as messages: `{ type: 'error', message: string }`
-- Service errors logged to console with user-friendly toast notifications
+- Service errors logged to console with user-friendly toast notifications via ToastService
 - File parsing errors gracefully handled with fallback to default data
+- Toast notification patterns:
+  - `toastService.success()`: Confirmations (5s duration)
+  - `toastService.error()`: Errors (7s duration)
+  - `toastService.warning()`: Warnings (5s duration)
+  - `toastService.info()`: Information (5s duration)
+  - `toastService.confirm()`: User confirmations with callbacks (no auto-dismiss)
 
 ## Key Integration Points
 
 - **Chart.js**: Custom chart configuration in TubePlotComponent with model overlays
 - **Bootstrap 5**: UI framework (v5.3.8) with custom SCSS theming
-- **Angular Fire**: Firebase SDK integration (v17.1.0) with v19 compatibility
+- **Angular Fire**: Firebase SDK integration (v20.0.1) for Angular 20 compatibility
 - **Web Workers**: Heavy computation isolation with TypeScript support
 
 ## Current Dependencies (Key Versions)
 
-- **Angular**: v19.2.7 (latest stable)
-- **Chart.js**: v4.5.0 for data visualization
-- **Firebase**: v10.14.1 for cloud persistence  
+- **Angular**: v20.3.15 (latest stable)
+- **Chart.js**: v4.5.1 for data visualization
+- **Firebase**: SDK managed via @angular/fire v20.0.1  
 - **Bootstrap**: v5.3.8 with Bootstrap Icons v1.13.1
-- **mathjs**: v14.7.0 for mathematical operations
-- **fraction.js**: v5.2.1 for precise fractional arithmetic
-- **ESLint**: v9.36.0 with new flat config format
+- **mathjs**: v15.1.0 for mathematical operations
+- **ESLint**: v9.39.1 with new flat config format (eslint.config.js)
+
+## Code Style Requirements
+
+### ESLint Configuration (eslint.config.js)
+
+**CRITICAL**: All code MUST follow the ESLint configuration strictly. Run `npm run lint` before committing.
+
+#### Required Style Rules:
+
+- **Indentation**: 4 spaces (enforced by `@stylistic/indent`)
+- **Brace style**: Stroustrup style with `allowSingleLine: true`
+  ```typescript
+  if (condition) {
+      // code
+  }
+  else {
+      // code
+  }
+  ```
+- **Semicolons**: Always required (`@stylistic/semi`)
+- **Spacing**: Space after commas, space after colons, space before blocks, space around infix operators
+- **No trailing spaces**: Enforced by `@stylistic/no-trailing-spaces`
+- **End of file**: Files must end with newline (`@stylistic/eol-last`)
+- **Angular conventions**: 
+  - Component selectors: `app-` prefix with kebab-case
+  - Directive selectors: `app` prefix with camelCase
+
+### Comments and Documentation
+
+**Required for all**:
+- Services: JSDoc comments describing purpose, parameters, return values
+- Complex algorithms: Inline comments explaining mathematical operations
+- Worker functions: Document expected input/output message format
+- Model parameters: Document physical meaning (e.g., `mu` = amplification factor)
+
+Example from AnalyticsService:
+```typescript
+/**
+ * Service for logging analytics events using Firebase Analytics.
+ * Provides methods to track user interactions, custom events, and user properties.
+ * Analytics is automatically disabled in development environment.
+ */
+```
+
+### Unit Testing Requirements
+
+**CRITICAL**: Unit tests are mandatory for:
+- All optimization algorithms (`src/app/workers/algorithms/*.spec.ts`)
+- Mathematical models and calculation functions
+- Services with business logic
+- File parsing and data transformation logic
+
+#### Testing Patterns:
+
+**CRITICAL**: ALL unit tests MUST follow the arrange-act-assert (AAA) pattern with explicit comment markers:
+
+```typescript
+it('should find the minimum of a simple quadratic function', () => {
+    // arrange
+    const quadratic = (x: number[]) => x[0] * x[0] + x[1] * x[1];
+    const quadraticMinimum = [0, 0];
+    const quadraticStart = [1, 1];
+
+    // act
+    const result = powell(quadraticStart, quadratic, defaultOptions);
+
+    // assert
+    expect(result.converged).toBe(true);
+    expect(result.fx).toBeCloseTo(quadratic(quadraticMinimum), 5);
+});
+```
+
+**AAA Pattern Requirements**:
+- **ALWAYS** include `// arrange`, `// act`, `// assert` comments in every test
+- **NO empty line** before `// arrange`, `// act`, or `// assert` comments
+- **arrange**: Set up test data, mocks, spies, and initial state
+- **act**: Execute the function/method being tested (single action when possible)
+- **assert**: Verify the expected outcome with expect() statements
+- Separate each section with a blank line for readability
+- For tests with only setup and assertions (no action), use `// arrange` and `// assert` only
+- For async tests with `done` callback, the pattern still applies
+
+**Component Testing with AAA**:
+```typescript
+it('should display error message when validation fails', () => {
+    // arrange
+    component.value = 'invalid';
+    const errorElement = compiled.query(By.css('.error-message'));
+
+    // act
+    component.validate();
+    fixture.detectChanges();
+
+    // assert
+    expect(errorElement).toBeTruthy();
+    expect(errorElement.nativeElement.textContent).toContain('Invalid value');
+});
+```
+
+**Service Testing with AAA**:
+```typescript
+it('should save tube to localStorage', (done) => {
+    // arrange
+    const newTube: TubeInformation = {
+        id: '',
+        name: 'Test Tube',
+        type: 'Triode',
+        files: []
+    };
+
+    // act
+    service.saveTube(newTube).subscribe(savedTube => {
+        // assert
+        const storedData = localStorage.getItem(STORAGE_KEY);
+        expect(storedData).toBeTruthy();
+        expect(savedTube.id).toBe('6');
+        done();
+    });
+});
+```
+
+**Test organization**:
+- Group related tests with `describe()` blocks
+- Use meaningful test names: "should [expected behavior] when [condition]"
+- Test edge cases: negative values, zero, undefined, empty arrays
+- Validate convergence for optimization algorithms
+- Use `toBeCloseTo()` for floating-point comparisons (specify precision)
+- Test files in `src/test-assets/` for integration validation
+
+**Run tests**: `npm test` (headless Chrome with Karma)
+
+**Coverage**: Check `coverage/tube-models/index.html` after test runs
+
+---
 
 When working on this codebase, prioritize understanding the mathematical domain (vacuum tube electronics) and the data flow from file upload → parsing → storage → visualization → parameter optimization.

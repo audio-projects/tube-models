@@ -6,7 +6,8 @@ import {
     OnChanges,
     OnDestroy,
     SimpleChanges,
-    ViewChild
+    ViewChild,
+    inject
 } from '@angular/core';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { CircuitService } from '../services/circuit.service';
@@ -101,8 +102,8 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
     selectedModel = '';
     availableModels: { key: string; name: string }[] = [];
     modelRmse: number | null = null;
-
-    constructor(private circuitService: CircuitService, private modelService: ModelService) { }
+    private circuitService = inject(CircuitService);
+    private modelService = inject(ModelService);
 
     ngAfterViewInit() {
         // update flag
