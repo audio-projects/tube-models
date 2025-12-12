@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { TubeInformation } from '../components/tube-information';
 import { File } from '../files';
 import { ModelService } from './model.service';
@@ -7,8 +7,7 @@ import { ModelService } from './model.service';
     providedIn: 'root'
 })
 export class CircuitService {
-
-    constructor(private modelService: ModelService) { }
+    private modelService = inject(ModelService);
 
     generateTriodePlateCharacteristicsCircuit(tube: TubeInformation, file: File, model: {name: string, model: string}, definition: string): string {
         // check if this is a plate characteristics measurement

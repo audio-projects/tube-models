@@ -713,8 +713,8 @@ export class SingleEndedDesignerComponent implements OnInit, OnChanges, AfterVie
                         callbacks: {
                             label: (context) => {
                                 const label = context.dataset.label || '';
-                                const x = context.parsed.x.toFixed(1);
-                                const y = context.parsed.y.toFixed(2);
+                                const x = context.parsed.x?.toFixed(1) ?? '0';
+                                const y = context.parsed.y?.toFixed(2) ?? '0';
                                 return `${label}: Va=${x}V, Ia=${y}mA`;
                             }
                         }

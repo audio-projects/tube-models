@@ -3,7 +3,8 @@ import {
     Component,
     EventEmitter,
     Input,
-    Output
+    Output,
+    inject
 } from '@angular/core';
 import { ModelService } from '../services/model.service';
 import { TubeInformation } from './tube-information';
@@ -20,8 +21,7 @@ export class DerkPentodeModelParametersComponent {
     @Input() isCalculating = false;
     @Input() canCalculate = true;
     @Output() calculateRequested = new EventEmitter<void>();
-
-    constructor(private modelService: ModelService) {}
+    private modelService = inject(ModelService);
 
     get spiceModel(): string {
         return `${this.modelService.getDerkModel(this.tube).model}\n\n${this.modelService.getDerkModelDefinition(this.tube?.derkModelParameters?.secondaryEmission || false)}`;

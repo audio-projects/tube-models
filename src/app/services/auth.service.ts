@@ -16,8 +16,9 @@ import { AnalyticsService } from './analytics.service';
 export class AuthService {
     user$: Observable<User | null>;
     private analyticsService = inject(AnalyticsService);
+    private auth = inject(Auth);
 
-    constructor(private auth: Auth) {
+    constructor() {
         this.user$ = authState(this.auth);
 
         // Track user authentication state changes

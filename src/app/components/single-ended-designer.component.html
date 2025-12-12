@@ -204,7 +204,7 @@
           <!-- Quiescent Plate Voltage -->
           <div class="col-md-6">
             <div class="mb-3">
-              <label class="form-label text-muted">Quiescent Plate Voltage (V<sub>p</sub>)</label>
+              <div class="form-label text-muted">Quiescent Plate Voltage (V<sub>p</sub>)</div>
               <div class="h5 mb-0">
                 {{ quiescentPlateVoltage.toFixed(2) }} V
                 <small class="text-muted">(≈ B+ for SE)</small>
@@ -215,7 +215,7 @@
           <!-- Quiescent Plate Current -->
           <div class="col-md-6">
             <div class="mb-3">
-              <label class="form-label text-muted">Quiescent Plate Current (I<sub>q</sub>)</label>
+              <div class="form-label text-muted">Quiescent Plate Current (I<sub>q</sub>)</div>
               <div class="h5 mb-0">
                 {{ quiescentCurrent.toFixed(2) }} mA
               </div>
@@ -227,7 +227,7 @@
           <!-- Required Grid Bias -->
           <div class="col-md-6">
             <div class="mb-3">
-              <label class="form-label text-muted">Required Grid Bias (V<sub>g</sub>)</label>
+              <div class="form-label text-muted">Required Grid Bias (V<sub>g</sub>)</div>
               <div class="h5 mb-0">
                 {{ requiredGridBias.toFixed(3) }} V
               </div>
@@ -237,7 +237,7 @@
           <!-- Quiescent Plate Dissipation -->
           <div class="col-md-6">
             <div class="mb-3">
-              <label class="form-label text-muted">Quiescent Plate Dissipation (P<sub>q</sub>)</label>
+              <div class="form-label text-muted">Quiescent Plate Dissipation (P<sub>q</sub>)</div>
               <div class="h5 mb-0" [ngClass]="getPlateDissipationClass()">
                 {{ quiescentPlateDissipation.toFixed(3) }} W
                 <span *ngIf="tube?.maximumPlateDissipation" class="small">
@@ -255,7 +255,7 @@
           <!-- Maximum Output Power -->
           <div class="col-md-6">
             <div class="mb-3">
-              <label class="form-label text-muted">Maximum Output Power (RMS)</label>
+              <div class="form-label text-muted">Maximum Output Power (RMS)</div>
               <div class="h5 mb-0">
                 {{ maxOutputPower.toFixed(3) }} W
               </div>
@@ -266,7 +266,7 @@
           <!-- Cathode Bias Components (if applicable) -->
           <div class="col-md-6" *ngIf="biasScheme === 'cathode'">
             <div class="mb-3">
-              <label class="form-label text-muted">Cathode Bias Components</label>
+              <div class="form-label text-muted">Cathode Bias Components</div>
               <div class="small">
                 <div><strong>R<sub>k</sub>:</strong> {{ cathodeResistor.toFixed(1) }} Ω</div>
                 <div><strong>C<sub>k</sub>:</strong> {{ cathodeBypassCapacitor.toFixed(1) }} µF (minimum)</div>

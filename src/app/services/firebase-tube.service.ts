@@ -10,15 +10,16 @@ import {
 } from '@angular/fire/firestore';
 import { Auth } from '@angular/fire/auth';
 import { from, Observable } from 'rxjs';
-import { Injectable, Injector, runInInjectionContext } from '@angular/core';
+import { Injectable, Injector, runInInjectionContext, inject } from '@angular/core';
 import { TubeInformation } from '../components/tube-information';
 
 @Injectable({
     providedIn: 'root'
 })
 export class FirebaseTubeService {
-
-    constructor(private injector: Injector, private firestore: Firestore, private auth: Auth) { }
+    private injector = inject(Injector);
+    private firestore = inject(Firestore);
+    private auth = inject(Auth);
 
     /**
      * Get all tubes from the Firebase database

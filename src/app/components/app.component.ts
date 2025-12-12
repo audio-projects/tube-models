@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ToastComponent } from './toast.component';
@@ -12,8 +12,7 @@ import { AuthService } from '../services/auth.service';
 })
 export class AppComponent {
     title = 'tube-models';
-
-    constructor(public authService: AuthService) { }
+    authService = inject(AuthService);
 
     async signIn(): Promise<void> {
         try {

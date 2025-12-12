@@ -29,7 +29,7 @@
   <!-- Statistics Cards -->
   <div class="row mb-4">
     <div class="col-md-3">
-      <div class="card bg-primary text-white" (click)="filterByType('')" style="cursor: pointer;">
+      <div class="card bg-primary text-white" tabindex="0" (click)="filterByType('')" (keydown.enter)="filterByType('')" (keydown.space)="filterByType('')" style="cursor: pointer;">
         <div class="card-body">
           <div class="d-flex justify-content-between">
             <div>
@@ -44,7 +44,7 @@
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card bg-success text-white" (click)="filterByType('Triode')" style="cursor: pointer;">
+      <div class="card bg-success text-white" tabindex="0" (click)="filterByType('Triode')" (keydown.enter)="filterByType('Triode')" (keydown.space)="filterByType('Triode')" style="cursor: pointer;">
         <div class="card-body">
           <div class="d-flex justify-content-between">
             <div>
@@ -59,7 +59,7 @@
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card bg-warning text-white" (click)="filterByType('Tetrode')" style="cursor: pointer;">
+      <div class="card bg-warning text-white" tabindex="0" (click)="filterByType('Tetrode')" (keydown.enter)="filterByType('Tetrode')" (keydown.space)="filterByType('Tetrode')" style="cursor: pointer;">
         <div class="card-body">
           <div class="d-flex justify-content-between">
             <div>
@@ -74,7 +74,7 @@
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card bg-info text-white" (click)="filterByType('Pentode')" style="cursor: pointer;">
+      <div class="card bg-info text-white" tabindex="0" (click)="filterByType('Pentode')" (keydown.enter)="filterByType('Pentode')" (keydown.space)="filterByType('Pentode')" style="cursor: pointer;">
         <div class="card-body">
           <div class="d-flex justify-content-between">
             <div>
