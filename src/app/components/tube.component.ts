@@ -85,7 +85,7 @@ export class TubeComponent implements OnInit, AfterViewInit {
 
     private loadTube(tubeId: string | null) {
         if (tubeId) {
-            console.log('Loading tube with ID:', tubeId);
+            // load tube from Firebase
             this.firebaseTubeService.getTubeById(tubeId).subscribe({
                 next: (tube: TubeInformation | null) => {
                     if (tube) {

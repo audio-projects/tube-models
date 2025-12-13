@@ -1,116 +1,55 @@
 <div class="tube-plot-container">
-  <!-- Plot Controls -->
-  <div class="card mb-3">
-    <div class="card-header bg-primary text-white">
-      <h5 class="card-title mb-0">
-        <i class="bi bi-graph-up me-2"></i>Plot Controls
-      </h5>
-    </div>
-    <div class="card-body">
-      <div class="row">
-        <!-- File Selection -->
-        <div class="col-md-3" *ngIf="files.length > 1">
-          <div class="mb-3">
-            <label for="fileSelect" class="form-label fw-bold">Data File</label>
-            <select class="form-select form-select-sm" id="fileSelect" 
-                    [(ngModel)]="selectedFileIndex" 
-                    (ngModelChange)="onPlotOptionsChange()">
-              <option *ngFor="let file of getAvailableFiles()" [value]="file.index">
-                {{ file.name }}
-              </option>
-            </select>
-          </div>
-        </div>
+    @if (file) {
+        <div class="mb-3">
+            <h5 class="fw-bold"><i class="bi bi-graph-up me-2"></i>{{ file.name }}</h5>
+            <p class="text-muted mb-2">
+                {{ this.file.measurementTypeLabel }}
+                @if (file.series.length > 0) {
+                    <span> • {{ file.series.length }} series • {{ getTotalPointsCount() }} points </span>
+                }
+            </p>
 
-        <!-- Plot Options -->
-        <div class="col-md-7">
-          <div class="mb-3">
-            <span class="form-label fw-bold d-block">Plot Options</span>
-            <div class="d-flex gap-3 flex-wrap">
-              <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" id="showGrid" 
-                       [(ngModel)]="plotOptions.showGrid" 
-                       (ngModelChange)="onPlotOptionsChange()">
-                <label class="form-check-label" for="showGrid">Grid</label>
-              </div>
-              <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" id="showLegend" 
-                       [(ngModel)]="plotOptions.showLegend" 
-                       (ngModelChange)="onPlotOptionsChange()">
-                <label class="form-check-label" for="showLegend">Legend</label>
-              </div>
-              <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" id="logScale" 
-                       [(ngModel)]="plotOptions.logScale" 
-                       (ngModelChange)="onPlotOptionsChange()">
-                <label class="form-check-label" for="logScale">Log Scale</label>
-              </div>
-              <button type="button" class="btn btn-outline-primary btn-sm" 
-                      (click)="exportChart()" 
-                      [disabled]="!chart"
-                      title="Export chart as PNG">
-                <i class="bi bi-download me-1"></i>Export
-              </button>
-            </div>
-          </div>
+            <!-- Model Selection Dropdown -->
+            @if (availableModels.length > 0) {
+                <div class="mb-3">
+                    <label for="modelSelect" class="form-label fw-bold"> <i class="bi bi-gear me-1"></i>Compare with Model </label>
+                    <div class="d-flex gap-2 align-items-center">
+                        <select class="form-select form-select-sm flex-grow-1" id="modelSelect" [(ngModel)]="selectedModel" (ngModelChange)="onModelSelectionChange()">
+                            <option value="">No Model Selected</option>
+                            @for (model of availableModels; track model.key) {
+                                <option [value]="model.key">
+                                    {{ model.name }}
+                                </option>
+                            }
+                        </select>
+                        @if (selectedModel && canGenerateCircuit()) {
+                            <button class="btn btn-sm btn-outline-primary d-flex align-items-center" style="height: fit-content; padding: 0.25rem 0.5rem;" (click)="downloadCircuit()" title="Download SPICE circuit file">
+                                <i class="bi bi-download me-1"></i>Circuit
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
         </div>
-      </div>
-    </div>
-  </div>
+    }
 
-  <!-- Plot Area -->
-  <div class="card">
-    <div class="card-body p-2">
-      <div *ngIf="selectedFile && selectedFile.series.length > 0; else noDataTemplate" 
-           class="chart-container" 
-           style="position: relative; height: 500px; width: 100%;">
+    <div class="chart-container" style="position: relative; height: 400px;">
         <canvas #chartCanvas></canvas>
-      </div>
-      
-      <ng-template #noDataTemplate>
-        <div class="text-center py-5">
-          <i class="bi bi-graph-up display-6 text-muted"></i>
-          <p class="text-muted mt-2 mb-0">No data available to plot</p>
-          <small class="text-muted">Upload UTD files to view characteristic curves</small>
-        </div>
-      </ng-template>
     </div>
-  </div>
 
-  <!-- Plot Information -->
-  <div class="card mt-3" *ngIf="selectedFile">
-    <div class="card-header bg-info text-white">
-      <h6 class="card-title mb-0">
-        <i class="bi bi-info-circle me-2"></i>Plot Information
-      </h6>
-    </div>
-    <div class="card-body">
-      <div class="row">
-        <div class="col-md-6">
-          <dl class="row mb-0">
-            <dt class="col-sm-4">File:</dt>
-            <dd class="col-sm-8">{{ selectedFile.name }}</dd>
-            
-            <dt class="col-sm-4">Type:</dt>
-            <dd class="col-sm-8">{{ selectedFile.measurementTypeLabel }}</dd>
-            
-            <dt class="col-sm-4">Series:</dt>
-            <dd class="col-sm-8">{{ selectedFile.series.length }}</dd>
-          </dl>
+    <!-- Model RMSE Display -->
+    @if (modelRmse !== null) {
+        <div class="alert alert-info mt-3 mb-0" role="alert">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Model Fit Quality (current file):</strong> Root Mean Square Error (RMSE) = <strong>{{ modelRmse.toFixed(4) }}</strong> mA
         </div>
-        <div class="col-md-6">
-          <dl class="row mb-0">
-            <dt class="col-sm-4">Total Points:</dt>
-            <dd class="col-sm-8">{{ getTotalPoints() }}</dd>
-            
-            <dt class="col-sm-4">X-Axis:</dt>
-            <dd class="col-sm-8">{{ getAxisLabel(plotOptions.xAxis) }}</dd>
-            
-            <dt class="col-sm-4">Y-Axis:</dt>
-            <dd class="col-sm-8">{{ getAxisLabel(plotOptions.yAxis) }}</dd>
-          </dl>
+    }
+
+    @if (!file) {
+        <div class="text-center py-4">
+            <i class="bi bi-graph-up display-6 text-muted"></i>
+            <p class="text-muted mt-2 mb-0">No file selected</p>
+            <small class="text-muted">Select a file to view its data points</small>
         </div>
-      </div>
-    </div>
-  </div>
+    }
 </div>

@@ -1,5 +1,6 @@
 <!-- Not calculated state -->
-<div *ngIf="!tube?.derkEModelParameters?.calculatedOn && !isCalculating" class="text-center">
+@if (!tube?.derkEModelParameters?.calculatedOn && !isCalculating) {
+<div class="text-center">
   <p class="text-muted mb-3">
     <i class="bi bi-info-circle me-1"></i>
     SPICE model parameters have not been calculated yet.
@@ -23,9 +24,11 @@
   <button type="button" class="btn btn-outline-success" (click)="calculateSpiceModelParameters()" [disabled]="!canCalculate"><i class="bi bi-calculator me-1"></i>Calculate SPICE Parameters</button>
   <div class="form-text mt-2">Requires pentode measurement data files to calculate Derk Reefman model parameters</div>
 </div>
+}
 
 <!-- Calculating state -->
-<div *ngIf="isCalculating" class="text-center">
+@if (isCalculating) {
+<div class="text-center">
   <div class="spinner-border text-success mb-3" role="status">
     <span class="visually-hidden">Calculating...</span>
   </div>
@@ -35,9 +38,11 @@
   </p>
   <small class="text-muted d-block mt-1">This may take a few moments</small>
 </div>
+}
 
 <!-- Calculated state -->
-<div *ngIf="tube?.derkEModelParameters?.calculatedOn">
+@if (tube?.derkEModelParameters?.calculatedOn) {
+<div>
   <div class="d-flex justify-content-between align-items-center mb-3">
     <div class="text-muted">
       <i class="bi bi-check-circle-fill text-success me-1"></i>
@@ -70,9 +75,14 @@
       <h6 class="mb-0"><i class="bi bi-code-square me-1"></i>SPICE Model</h6>
       <small class="text-muted">(ltspice, ngspice)</small>
     </div>
-    <pre class="bg-dark text-light p-3 rounded-3" style="font-size: 0.85em; overflow-x: auto" *ngIf="tube?.derkEModelParameters?.calculatedOn">{{ spiceModel }}</pre>
-    <div *ngIf="!tube?.derkEModelParameters?.calculatedOn" class="bg-dark text-light p-3 rounded-3" style="font-size: 0.85em">
+    @if (tube?.derkEModelParameters?.calculatedOn) {
+    <pre class="bg-dark text-light p-3 rounded-3" style="font-size: 0.85em; overflow-x: auto">{{ spiceModel }}</pre>
+    }
+    @if (!tube?.derkEModelParameters?.calculatedOn) {
+    <div class="bg-dark text-light p-3 rounded-3" style="font-size: 0.85em">
       <span class="text-muted">No SPICE model parameters calculated.</span>
     </div>
+    }
   </div>
 </div>
+}
