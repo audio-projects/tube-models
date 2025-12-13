@@ -17,7 +17,9 @@
           <i class="bi bi-cpu me-2 text-primary"></i>
           {{ tube?.name || "New Tube" }}
         </h1>
-        <p class="text-muted mb-0" *ngIf="tube?.manufacturer">Manufactured by {{ tube?.manufacturer }}</p>
+        @if (tube?.manufacturer) {
+          <p class="text-muted mb-0">Manufactured by {{ tube?.manufacturer }}</p>
+        }
       </div>
       <div class="btn-group" role="group">
         <a class="btn btn-outline-primary" routerLink="/tube" title="Back to Tubes List"> <i class="bi bi-arrow-left me-1"></i>Back to Tubes </a>
@@ -29,7 +31,8 @@
   </div>
 
   <!-- Main Content -->
-  <div class="row" *ngIf="tube">
+  @if (tube) {
+  <div class="row">
     <!-- Left Column - Basic Information -->
     <div class="col-lg-8">
       <!-- Basic Information Card -->
@@ -162,7 +165,8 @@
                 </div>
               </div>
             </div>
-            <div class="col-md-6" *ngIf="tube.type === 'Pentode' || tube.type === 'Tetrode'">
+            @if (tube.type === 'Pentode' || tube.type === 'Tetrode') {
+            <div class="col-md-6">
               <div class="mb-3">
                 <label for="maxGrid2Voltage" class="form-label fw-bold"> Maximum Grid 2 (Screen) Voltage </label>
                 <div class="input-group">
@@ -171,9 +175,11 @@
                 </div>
               </div>
             </div>
+            }
           </div>
 
-          <div class="row" *ngIf="tube.type === 'Pentode' || tube.type === 'Tetrode'">
+          @if (tube.type === 'Pentode' || tube.type === 'Tetrode') {
+          <div class="row">
             <div class="col-md-6">
               <div class="mb-3">
                 <label for="maxGrid2Dissipation" class="form-label fw-bold"> Maximum Grid 2 (Screen) Dissipation </label>
@@ -184,6 +190,7 @@
               </div>
             </div>
           </div>
+          }
 
           <!-- Heater Specifications Section -->
           <h6 class="text-muted mb-3 mt-4"><i class="bi bi-fire me-1"></i>Heater Specifications</h6>
@@ -257,7 +264,8 @@
           <h6 class="text-muted mb-3 mt-4"><i class="bi bi-circle me-1"></i>Capacitances</h6>
           
           <!-- Triode Capacitances -->
-          <div class="row" *ngIf="tube.type === 'Triode'">
+          @if (tube.type === 'Triode') {
+          <div class="row">
             <div class="col-md-4">
               <div class="mb-3">
                 <label for="ccg1" class="form-label fw-bold"> Cathode-Grid Capacitance (CCG) </label>
@@ -286,9 +294,11 @@
               </div>
             </div>
           </div>
+          }
 
           <!-- Pentode/Tetrode Capacitances -->
-          <div *ngIf="tube.type === 'Pentode' || tube.type === 'Tetrode'">
+          @if (tube.type === 'Pentode' || tube.type === 'Tetrode') {
+          <div>
             <div class="row">
               <div class="col-md-4">
                 <div class="mb-3">
@@ -339,6 +349,7 @@
               </div>
             </div>
           </div>
+          }
           </div>
         </div>
       </div>
@@ -360,7 +371,8 @@
         </div>
         <div class="card-body">
           <!-- Upload Tab Content -->
-          <div *ngIf="isTabActive('upload')">
+          @if (isTabActive('upload')) {
+          <div>
             <div class="mb-3">
               <label for="dataFiles" class="form-label fw-bold"> <i class="bi bi-upload me-1"></i>Upload UTD Files </label>
               <!-- Multiple file upload with direct change handler -->
@@ -379,17 +391,21 @@
             </div>
 
             <!-- Upload Progress -->
-            <div *ngIf="uploadProgress > 0 && uploadProgress < 100" class="mb-3">
+            @if (uploadProgress > 0 && uploadProgress < 100) {
+            <div class="mb-3">
               <div class="progress">
                 <div class="progress-bar progress-bar-striped progress-bar-animated" [style.width.%]="uploadProgress" role="progressbar">{{ uploadProgress }}%</div>
               </div>
             </div>
+            }
 
             <!-- Uploaded Files List -->
-            <div *ngIf="tube.files && tube.files.length > 0" class="mb-3">
+            @if (tube.files && tube.files.length > 0) {
+            <div class="mb-3">
               <h6 class="fw-bold"><i class="bi bi-files me-1"></i>Uploaded Files ({{ tube.files.length }})</h6>
               <div class="list-group">
-                <div *ngFor="let file of tube.files; let i = index" class="list-group-item">
+                @for (file of tube.files; track file.name; let i = $index) {
+                <div class="list-group-item">
                   <div class="row align-items-center">
                     <!-- File Information Column -->
                     <div class="col-md-6">
@@ -400,7 +416,9 @@
                           <br />
                           <small class="text-muted">
                             {{ file.measurementTypeLabel }}
-                            <span *ngIf="file.series.length > 0"> • {{ file.series.length }} series • {{ getTotalPointsCount(file) }} points </span>
+                            @if (file.series.length > 0) {
+                            <span> • {{ file.series.length }} series • {{ getTotalPointsCount(file) }} points </span>
+                            }
                           </small>
                         </div>
                       </div>
@@ -436,39 +454,52 @@
                     </div>
                   </div>
                 </div>
+                }
               </div>
             </div>
+            }
 
             <!-- No Files Message -->
-            <div *ngIf="!tube.files || tube.files.length === 0" class="text-center py-4">
+            @if (!tube.files || tube.files.length === 0) {
+            <div class="text-center py-4">
               <i class="bi bi-file-earmark-plus display-6 text-muted"></i>
               <p class="text-muted mt-2 mb-0">No data files uploaded yet</p>
               <small class="text-muted">Upload UTD files to analyze tube characteristics</small>
             </div>
+            }
           </div>
+          }
 
           <!-- Plot Tab Content -->
-          <div *ngIf="isTabActive('plot')">
+          @if (isTabActive('plot')) {
+          <div>
             <!-- File Selection for Plotting -->
-            <div *ngIf="tube.files && tube.files.length > 0" class="mb-4">
-              <div *ngIf="selectedFileForPlot" class="alert alert-info">
+            @if (tube.files && tube.files.length > 0) {
+            <div class="mb-4">
+              @if (selectedFileForPlot) {
+              <div class="alert alert-info">
                 <div class="d-flex justify-content-between align-items-center">
                   <div>
                     <i class="bi bi-graph-up me-2"></i>
                     <strong>Plotting:</strong> {{ selectedFileForPlot.name }}
                     <br />
                     <small>{{ selectedFileForPlot.measurementTypeLabel }}
-                      <span *ngIf="selectedFileForPlot.egOffset !== 0"> • Grid offset: {{ selectedFileForPlot.egOffset }}V</span>
+                      @if (selectedFileForPlot.egOffset !== 0) {
+                      <span> • Grid offset: {{ selectedFileForPlot.egOffset }}V</span>
+                      }
                     </small>
                   </div>
                   <button type="button" class="btn btn-outline-secondary btn-sm" (click)="clearSelectedFile()"><i class="bi bi-x"></i> Clear Selection</button>
                 </div>
               </div>
+              }
 
-              <div *ngIf="!selectedFileForPlot" class="mb-3">
+              @if (!selectedFileForPlot) {
+              <div class="mb-3">
                 <h6 class="fw-bold">Select a file to plot:</h6>
                 <div class="list-group">
-                  <button *ngFor="let file of tube.files" type="button" class="list-group-item list-group-item-action" [disabled]="file.measurementType === 'UNKNOWN'" (click)="selectFileForPlot(file)">
+                  @for (file of tube.files; track file.name) {
+                  <button type="button" class="list-group-item list-group-item-action" [disabled]="file.measurementType === 'UNKNOWN'" (click)="selectFileForPlot(file)">
                     <div class="d-flex justify-content-between align-items-center">
                       <div>
                         <i class="bi bi-file-earmark-text me-2 text-primary"></i>
@@ -476,31 +507,47 @@
                         <br />
                         <small class="text-muted">
                           {{ file.measurementTypeLabel }}
-                          <span *ngIf="file.series.length > 0"> • {{ file.series.length }} series • {{ getTotalPointsCount(file) }} points </span>
-                          <span *ngIf="file.egOffset !== 0"> • Grid offset: {{ file.egOffset }}V </span>
+                          @if (file.series.length > 0) {
+                          <span> • {{ file.series.length }} series • {{ getTotalPointsCount(file) }} points </span>
+                          }
+                          @if (file.egOffset !== 0) {
+                          <span> • Grid offset: {{ file.egOffset }}V </span>
+                          }
                         </small>
                       </div>
-                      <div *ngIf="file.measurementType !== 'UNKNOWN'">
+                      @if (file.measurementType !== 'UNKNOWN') {
+                      <div>
                         <i class="bi bi-graph-up text-success"></i>
                       </div>
-                      <div *ngIf="file.measurementType === 'UNKNOWN'">
+                      }
+                      @if (file.measurementType === 'UNKNOWN') {
+                      <div>
                         <small class="text-muted">Cannot plot</small>
                       </div>
+                      }
                     </div>
                   </button>
+                  }
                 </div>
               </div>
+              }
             </div>
+            }
 
             <!-- Plot Component -->
-            <app-tube-plot *ngIf="selectedFileForPlot" [file]="selectedFileForPlot" [tube]="tube"> </app-tube-plot>
+            @if (selectedFileForPlot) {
+            <app-tube-plot [file]="selectedFileForPlot" [tube]="tube"> </app-tube-plot>
+            }
 
-            <div *ngIf="!tube.files || tube.files.length === 0" class="text-center py-4">
+            @if (!tube.files || tube.files.length === 0) {
+            <div class="text-center py-4">
               <i class="bi bi-graph-up display-6 text-muted"></i>
               <p class="text-muted mt-2 mb-0">No data files to plot</p>
               <small class="text-muted">Upload UTD files first to view characteristic curves</small>
             </div>
+            }
           </div>
+          }
         </div>
       </div>
     </div>
@@ -541,7 +588,8 @@
       </div>
 
       <!-- Triode Model Parameters Card -->
-      <div class="card mb-4" *ngIf="tube.type === 'Triode' || tube.type === 'Pentode' || tube.type === 'Tetrode'">
+      @if (tube.type === 'Triode' || tube.type === 'Pentode' || tube.type === 'Tetrode') {
+      <div class="card mb-4">
         <div class="card-header bg-success text-white">
           <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>Triode Model (Norman Koren)</h5>
         </div>
@@ -554,9 +602,11 @@
           </app-norman-koren-triode-model-parameters>
         </div>
       </div>
+      }
 
       <!-- Pentode Model Parameters Card -->
-      <div class="card mb-4" *ngIf="tube.type !== 'Triode'">
+      @if (tube.type !== 'Triode') {
+      <div class="card mb-4">
         <div class="card-header bg-success text-white">
           <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>{{ tube.type }} Model (Norman Koren)</h5>
         </div>
@@ -569,9 +619,11 @@
           </app-norman-koren-pentode-model-parameters>
         </div>
       </div>
+      }
 
       <!-- Derk Pentode Model Parameters Card -->
-      <div class="card mb-4" *ngIf="tube.type !== 'Triode'">
+      @if (tube.type !== 'Triode') {
+      <div class="card mb-4">
         <div class="card-header bg-info text-white">
           <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>{{ tube.type }} Model (Derk Model)</h5>
         </div>
@@ -584,9 +636,11 @@
           </app-derk-pentode-model-parameters>
         </div>
       </div>
+      }
 
       <!-- Derk E Pentode Model Parameters Card -->
-      <div class="card mb-4" *ngIf="tube.type !== 'Triode'">
+      @if (tube.type !== 'Triode') {
+      <div class="card mb-4">
         <div class="card-header bg-info text-white">
           <h5 class="card-title mb-0"><i class="bi bi-cpu me-2"></i>{{ tube.type }} Model (Derk E Model)</h5>
         </div>
@@ -599,6 +653,8 @@
           </app-derke-pentode-model-parameters>
         </div>
       </div>
+      }
     </div>
   </div>
+  }
 </div>
