@@ -36,60 +36,8 @@ Chart.register(...registerables);
     selector: 'app-tube-plot',
     standalone: true,
     imports: [CommonModule, FormsModule],
-    template: `
-        <div class="tube-plot-container">
-            <div *ngIf="file" class="mb-3">
-                <h5 class="fw-bold"><i class="bi bi-graph-up me-2"></i>{{ file.name }}</h5>
-                <p class="text-muted mb-2">
-                    {{ this.file.measurementTypeLabel }}
-                    <span *ngIf="file.series.length > 0"> • {{ file.series.length }} series • {{ getTotalPointsCount() }} points </span>
-                </p>
-
-                <!-- Model Selection Dropdown -->
-                <div class="mb-3" *ngIf="availableModels.length > 0">
-                    <label for="modelSelect" class="form-label fw-bold"> <i class="bi bi-gear me-1"></i>Compare with Model </label>
-                    <div class="d-flex gap-2 align-items-center">
-                        <select class="form-select form-select-sm flex-grow-1" id="modelSelect" [(ngModel)]="selectedModel" (ngModelChange)="onModelSelectionChange()">
-                            <option value="">No Model Selected</option>
-                            <option *ngFor="let model of availableModels" [value]="model.key">
-                                {{ model.name }}
-                            </option>
-                        </select>
-                        <button *ngIf="selectedModel && canGenerateCircuit()" class="btn btn-sm btn-outline-primary d-flex align-items-center" style="height: fit-content; padding: 0.25rem 0.5rem;" (click)="downloadCircuit()" title="Download SPICE circuit file">
-                            <i class="bi bi-download me-1"></i>Circuit
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="chart-container" style="position: relative; height: 400px;">
-                <canvas #chartCanvas></canvas>
-            </div>
-
-            <!-- Model RMSE Display -->
-            <div *ngIf="modelRmse !== null" class="alert alert-info mt-3 mb-0" role="alert">
-                <i class="bi bi-info-circle me-2"></i>
-                <strong>Model Fit Quality (current file):</strong> Root Mean Square Error (RMSE) = <strong>{{ modelRmse.toFixed(4) }}</strong> mA
-            </div>
-
-            <div *ngIf="!file" class="text-center py-4">
-                <i class="bi bi-graph-up display-6 text-muted"></i>
-                <p class="text-muted mt-2 mb-0">No file selected</p>
-                <small class="text-muted">Select a file to view its data points</small>
-            </div>
-        </div>
-    `,
-    styles: [
-        `
-            .tube-plot-container {
-                width: 100%;
-            }
-            .chart-container {
-                width: 100%;
-                height: 400px;
-            }
-        `,
-    ],
+    templateUrl: './tube-plot.component.html',
+    styleUrl: './tube-plot.component.scss',
 })
 export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
 
