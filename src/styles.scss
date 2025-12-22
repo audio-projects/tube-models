@@ -15,7 +15,10 @@
     font-size: 62.5%;
     width: 100%;
     color: #04394f;
-    background-image: url('background.jpg');
+    background-image: url('/media/background.jpg');
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
     min-width: 76em;
     margin: 0;
   }
@@ -522,14 +525,17 @@
   /* spinning animation for loading states */
   .spin {
     animation: spin 1s linear infinite;
+    will-change: transform;
+    transform: translateZ(0); /* Force GPU acceleration */
+    backface-visibility: hidden; /* Prevent flickering */
   }
 
   @keyframes spin {
     from {
-      transform: rotate(0deg);
+      transform: rotate(0deg) translateZ(0);
     }
     to {
-      transform: rotate(360deg);
+      transform: rotate(360deg) translateZ(0);
     }
   }
 

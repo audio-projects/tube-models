@@ -1,13 +1,14 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <div class="container-fluid">
-    <a class="navbar-brand" href="/">Tube Models</a>
+    <a class="navbar-brand" href="/">Audio Projects</a>
     <div class="navbar-nav me-auto">
-      <a class="nav-link" routerLink="/tube" routerLinkActive="active">Tubes</a>
+      <a class="nav-link" routerLink="/tube" routerLinkActive="active">Tube Models</a>
     </div>
     
     <!-- Authentication section -->
     <div class="navbar-nav ms-auto">
-      <div class="nav-item dropdown" *ngIf="authService.user$ | async as user; else signInButton">
+      @if (authService.user$ | async; as user) {
+      <div class="nav-item dropdown">
         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
           <img [src]="user.photoURL || 'assets/default-avatar.png'" 
                [alt]="user.displayName || 'User'" 
@@ -24,12 +25,11 @@
           </a></li>
         </ul>
       </div>
-      
-      <ng-template #signInButton>
+      } @else {
         <button class="btn btn-outline-light" (click)="signIn()">
           <i class="bi bi-google me-2"></i>Sign In
         </button>
-      </ng-template>
+      }
     </div>
   </div>
 </nav>
