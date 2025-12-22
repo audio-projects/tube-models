@@ -3,10 +3,10 @@
 .card {
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
   border: 1px solid rgba(0, 0, 0, 0.125);
+  transition: box-shadow 0.15s ease-in-out;
   
   &:hover {
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    transition: box-shadow 0.15s ease-in-out;
   }
 }
 
@@ -36,9 +36,10 @@
 .card.bg-info,
 .card.bg-warning {
   transition: transform 0.2s ease-in-out;
+  will-change: transform;
   
   &:hover {
-    transform: translateY(-2px);
+    transform: translateY(-2px) translateZ(0);
   }
 }
 

@@ -50,10 +50,12 @@
 .card {
   border: 1px solid rgba(0, 0, 0, 0.125);
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-  transition: box-shadow 0.15s ease-in-out;
+  transition: box-shadow 0.15s ease-in-out, transform 0.15s ease-in-out;
+  will-change: box-shadow, transform;
   
   &:hover {
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    transform: translateZ(0);
   }
   
   .card-header {
@@ -131,10 +133,11 @@
 // Button Styling
 .btn-group {
   .btn {
-    transition: all 0.15s ease-in-out;
+    transition: transform 0.15s ease-in-out;
+    will-change: transform;
     
     &:hover {
-      transform: translateY(-1px);
+      transform: translateY(-1px) translateZ(0);
     }
     
     i {
@@ -144,14 +147,16 @@
 }
 
 .d-grid .btn {
-  transition: all 0.15s ease-in-out;
+  transition: transform 0.15s ease-in-out;
+  will-change: transform;
   
   &:hover {
-    transform: translateY(-1px);
+    transform: translateY(-1px) translateZ(0);
   }
   
   &:disabled {
     transform: none;
+    will-change: auto;
   }
 }
 
