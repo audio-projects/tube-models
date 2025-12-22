@@ -10,13 +10,16 @@
     box-sizing: border-box;
   }
 
+  :root {
+    --background-image-url: url('/media/background.jpg');
+  }
+
   body {
     font-family: "Trebuchet MS", "Helvetica", "Arial", "Verdana", "sans-serif";
     font-size: 62.5%;
     width: 100%;
     color: #04394f;
-    background-image: url('/media/background.jpg');
-    background-size: cover;
+    background-image: var(--background-image-url);
     background-attachment: fixed;
     background-position: center;
     min-width: 76em;
