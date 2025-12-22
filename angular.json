@@ -30,11 +30,6 @@
               {
                 "glob": "**/*",
                 "input": "public"
-              },
-              {
-                "glob": "background.jpg",
-                "input": "src",
-                "output": "media"
               }
             ],
             "styles": [
@@ -105,12 +100,7 @@
                 "glob": "**/*",
                 "input": "public"
               },
-              "src/test-assets",
-              {
-                "glob": "background.jpg",
-                "input": "src",
-                "output": "media"
-              }
+              "src/test-assets"
             ],
             "styles": [
               "src/styles.scss"
