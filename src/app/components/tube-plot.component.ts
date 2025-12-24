@@ -1069,18 +1069,30 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
         if (this.selectedModel === 'norman-koren-triode') {
             // generate triode plate characteristics circuit
             circuitContent = this.circuitService.generateTriodePlateCharacteristicsCircuit(this.tube, this.file, this.modelService.getTriodeModel(this.tube), this.modelService.getTriodeModelDefinition());
+            // instructions
+            circuitContent += `\n* ngspice: ngspice -b ${filename}`;
+            circuitContent += `\n* ltspice: remove the .control section, run the simulation and plot i(R4)\n`;
         }
         else if (this.selectedModel === 'norman-koren-pentode') {
             // generate pentode plate characteristics circuit
             circuitContent = this.circuitService.generatePentodePlateCharacteristicsCircuit(this.tube, this.file, this.modelService.getPentodeModel(this.tube), this.modelService.getPentodeModelDefinition());
+            // instructions
+            circuitContent += `\n* ngspice: ngspice -b ${filename}`;
+            circuitContent += `\n* ltspice: remove the .control section, run the simulation and plot i(R4) and i(R5)\n`;
         }
         else if (this.selectedModel === 'derk-pentode') {
             // generate derk pentode plate characteristics circuit
             circuitContent = this.circuitService.generatePentodePlateCharacteristicsCircuit(this.tube, this.file, this.modelService.getDerkModel(this.tube), this.modelService.getDerkModelDefinition(this.tube.derkModelParameters?.secondaryEmission || false));
+            // instructions
+            circuitContent += `\n* ngspice: ngspice -b ${filename}`;
+            circuitContent += `\n* ltspice: remove the .control section, run the simulation and plot i(R4) and i(R5)\n`;
         }
         else if (this.selectedModel === 'derke-pentode') {
             // generate derke pentode plate characteristics circuit
             circuitContent = this.circuitService.generatePentodePlateCharacteristicsCircuit(this.tube, this.file, this.modelService.getDerkEModel(this.tube), this.modelService.getDerkEModelDefinition(this.tube.derkEModelParameters?.secondaryEmission || false));
+            // instructions
+            circuitContent += `\n* ngspice: ngspice -b ${filename}`;
+            circuitContent += `\n* ltspice: remove the .control section, run the simulation and plot i(R4) and i(R5)\n`;
         }
         // check if generation was successful (not an error message)
         if (circuitContent.startsWith('* Error:')) {
@@ -1089,8 +1101,6 @@ export class TubePlotComponent implements OnChanges, AfterViewInit, OnDestroy {
             // exit
             return;
         }
-        // instructions
-        circuitContent += `\n* execute with: ngspice -b ${filename}\n`;
         // create blob and download
         const blob = new Blob([circuitContent], { type: 'text/plain' });
         const url = window.URL.createObjectURL(blob);

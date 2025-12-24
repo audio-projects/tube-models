@@ -56,6 +56,11 @@ export class CircuitService {
         const lines: string[] = [];
         // circuit
         lines.push(`* Plate Characteristics`);
+        lines.push('');
+        lines.push(definition);
+        lines.push('');
+        lines.push(model.model);
+        lines.push('');
         lines.push('V1 1 0 0');
         lines.push('R1 1 G 10       ; Grid coupling resistor');
         lines.push('R2 G 0 1Meg     ; Grid leak resistor');
@@ -63,16 +68,15 @@ export class CircuitService {
         lines.push('V2 2 0 0');
         lines.push('R4 2 P 1        ; Plate series resistor');
         lines.push(`X1 P G K ${model.name}`);
+        lines.push('');
+        lines.push(`.dc V2 0 ${maxVa} 1 V1 ${minVg.toFixed(1)} ${maxVg.toFixed(1)} ${vgStep.toFixed(1)}`);
+        lines.push('.save v(2) v(P) i(R4)');
+        lines.push('');
         lines.push('.control');
-        lines.push(`    dc V2 0 ${maxVa} 1 V1 ${minVg.toFixed(1)} ${maxVg.toFixed(1)} ${vgStep.toFixed(1)}`);
-        lines.push('    save v(2) v(P) i(R4)');
+        lines.push('    run');
         lines.push('    gnuplot dc v(2)-v(P)');
         lines.push('.endc');
         lines.push('.end');
-        lines.push('');
-        lines.push(model.model);
-        lines.push('');
-        lines.push(definition);
         lines.push('');
         // return result
         return lines.join('\n');
@@ -125,6 +129,11 @@ export class CircuitService {
         const lines: string[] = [];
         // circuit
         lines.push(`* Plate Characteristics`);
+        lines.push('');
+        lines.push(definition);
+        lines.push('');
+        lines.push(model.model);
+        lines.push('');
         lines.push('V1 1 0 0');
         lines.push('R1 1 G 10       ; Grid coupling resistor');
         lines.push('R2 G 0 1Meg     ; Grid leak resistor');
@@ -134,16 +143,15 @@ export class CircuitService {
         lines.push(`V3 3 0 ${file.es?.toFixed(0)}`);
         lines.push('R5 3 S 1        ; Screen series resistor');
         lines.push(`X1 P G K S ${model.name}`);
+        lines.push('');
+        lines.push(`.dc V2 0 ${maxVa} 1 V1 ${minVg.toFixed(1)} ${maxVg.toFixed(1)} ${vgStep.toFixed(1)}`);
+        lines.push('.save v(2) v(3) v(P) v(S) i(R4) i(R5)');
+        lines.push('');
         lines.push('.control');
-        lines.push(`    dc V2 0 ${maxVa} 1 V1 ${minVg.toFixed(1)} ${maxVg.toFixed(1)} ${vgStep.toFixed(1)}`);
-        lines.push('    save v(2) v(P) v(S) i(R4) i(R5)');
+        lines.push('    run');
         lines.push('    gnuplot dc v(2)-v(P) v(3)-v(S)');
         lines.push('.endc');
         lines.push('.end');
-        lines.push('');
-        lines.push(model.model);
-        lines.push('');
-        lines.push(definition);
         lines.push('');
         // return result
         return lines.join('\n');
