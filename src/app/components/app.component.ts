@@ -1,6 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, Inject, OnInit } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import { ToastComponent } from './toast.component';
 import { AuthService } from '../services/auth.service';
 
@@ -10,9 +10,16 @@ import { AuthService } from '../services/auth.service';
     templateUrl: './app.component.html',
     styleUrl: './app.component.scss',
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
     title = 'tube-models';
     authService = inject(AuthService);
+
+    constructor(@Inject(DOCUMENT) private document: Document) {}
+
+    ngOnInit(): void {
+        const baseHref = this.document.querySelector('base')?.getAttribute('href') || '/';
+        this.document.documentElement.style.setProperty('--background-image-url', `url('${baseHref}media/background.jpg')`);
+    }
 
     async signIn(): Promise<void> {
         try {

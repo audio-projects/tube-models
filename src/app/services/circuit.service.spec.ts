@@ -227,9 +227,10 @@ describe('CircuitService', () => {
             expect(circuit).toContain('V3 3 0 250');  // Screen voltage
             expect(circuit).toContain('R5 3 S 1        ; Screen series resistor');
             expect(circuit).toContain(`X1 P G K S ${mockModel.name}`);
+            expect(circuit).toContain('.save v(2) v(3) v(P) v(S) i(R4) i(R5)');
             expect(circuit).toContain('.control');
-            expect(circuit).toContain('save v(2) v(P) v(S) i(R4) i(R5)');
-            expect(circuit).toContain('gnuplot dc v(2)-v(P) v(3)-v(S)');
+            expect(circuit).toContain('    run');
+            expect(circuit).toContain('    gnuplot dc v(2)-v(P) v(3)-v(S)');
             expect(circuit).toContain('.endc');
             expect(circuit).toContain('.end');
         });
@@ -244,7 +245,7 @@ describe('CircuitService', () => {
             const circuit = service.generatePentodePlateCharacteristicsCircuit(mockTube, mockFile, mockModel, mockDefinition);
 
             // Max Va from mockPoints is 300V
-            expect(circuit).toContain('dc V2 0 300');
+            expect(circuit).toContain('.dc V2 0 300');
         });
 
         it('should extract and sort grid voltages from series', () => {

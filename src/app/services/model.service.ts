@@ -10,6 +10,7 @@ export class ModelService {
         return [
             '.SUBCKT TriodeK 1 2 3 PARAMS: MU=0 EX=0 KG1=0 KP=0 KVB=0 CCG=0 CGP=0 CCP=0 RGI=2000',
             '*               P G K',
+            '.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)',
             'E1 7 0 VALUE={V(1,3)/KP*LOG(1+EXP(KP*(1/MU+V(2,3)/SQRT(KVB+V(1,3)*V(1,3)))))}',
             'R1 7 0 1G',
             'G1 1 3 VALUE={0.5*PWR(V(7),EX)*(1+SGN(V(7)))/KG1}',
@@ -19,7 +20,6 @@ export class ModelService {
             'C3 3 1 {CCP}',
             'R3 2 5 {RGI}',
             'D3 5 3 DX',
-            '.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)',
             '.ENDS'
         ].join('\n');
     }
@@ -28,6 +28,7 @@ export class ModelService {
         return [
             '.SUBCKT PentodeK 1 2 3 4 PARAMS: MU=0 EX=0 KG1=0 KP=0 KVB=0 KG2=0 CCG=0 CCS=0 CGS=0 CGP=0 CCP=0 RGI=2000',
             '*                P G K S',
+            '.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)',
             'E1 7 0 VALUE={V(4,3)*LOG(1+EXP(KP*(1/MU+V(2,3)/SQRT(KVB+V(4,3)*V(4,3)))))/KP}',
             'R1 7 0 1G',
             'G1 1 3 VALUE={0.5*PWR(V(7),EX)*(1+SGN(V(7)))*ATAN(V(1,3)/KVB)/KG1}',
@@ -40,7 +41,6 @@ export class ModelService {
             'C5 3 1 {CCP}',
             'R3 2 5 {RGI}',
             'D3 5 3 DX',
-            '.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)',
             '.ENDS'
         ].join('\n');
     }
@@ -52,6 +52,7 @@ export class ModelService {
             return [
                 '.SUBCKT Derk_SE 1 2 3 4 PARAMS: MU=0 EX=0 KG1=0 KP=0 KVB=0 KG2=0 A=0 ALPHAS=0 BETA=0 ALPHA=0 S=0 ALPHAP=0 LAMBDA=0 V=0 W=0 CCG=0 CCS=0 CGS=0 CGP=0 CCP=0 RGI=2000',
                 '*               P G K S',
+                '.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)',
                 'E1 7 0 VALUE={V(4,3)*LOG(1+EXP(KP*(1/MU+V(2,3)/SQRT(KVB+V(4,3)*V(4,3)))))/KP}',
                 'R1 7 0 1G',
                 'E2 8 0 VALUE={S*V(1,3)*(1+(EXP(-2*ALPHAP*(V(1,3)-(V(4,3)/LAMBDA-V*V(2,3)-W)))-1)/(EXP(-2*ALPHAP*(V(1,3)-(V(4,3)/LAMBDA-V*V(2,3)-W)))+1))}',
@@ -67,7 +68,6 @@ export class ModelService {
                 'C5 3 1 {CCP}',
                 'R5 2 5 {RGI}',
                 'D3 5 3 DX',
-                '.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)',
                 '.ENDS'
             ].join('\n');
         }
@@ -75,6 +75,7 @@ export class ModelService {
         return [
             '.SUBCKT Derk 1 2 3 4 PARAMS: MU=0 EX=0 KG1=0 KP=0 KVB=0 KG2=0 A=0 ALPHAS=0 BETA=0 ALPHA=0 CCG=0 CCS=0 CGS=0 CGP=0 CCP=0 RGI=2000',
             '*            P G K S',
+            '.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)',
             'E1 7 0 VALUE={V(4,3)*LOG(1+EXP(KP*(1/MU+V(2,3)/SQRT(KVB+V(4,3)*V(4,3)))))/KP}',
             'R1 7 0 1G',
             'G1 1 3 VALUE={(0.5*PWR(V(7),EX)*(1+SGN(V(7))))*(1/KG1-1/KG2+A*V(1,3)/KG1-(ALPHA/KG1+ALPHAS/KG2)/(1+BETA*V(1,3)))}',
@@ -88,7 +89,6 @@ export class ModelService {
             'C5 3 1 {CCP}',
             'R4 2 5 {RGI}',
             'D3 5 3 DX',
-            '.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)',
             '.ENDS'
         ].join('\n');
     }
@@ -100,6 +100,7 @@ export class ModelService {
             return [
                 '.SUBCKT DerkE_SE 1 2 3 4 PARAMS: MU=0 EX=0 KG1=0 KP=0 KVB=0 KG2=0 A=0 ALPHAS=0 BETA=0 ALPHA=0 S=0 ALPHAP=0 LAMBDA=0 V=0 W=0 CCG=0 CCS=0 CGS=0 CGP=0 CCP=0 RGI=2000',
                 '*                P G K S',
+                '.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)',
                 'E1 7 0 VALUE={V(4,3)*LOG(1+EXP(KP*(1/MU+V(2,3)/SQRT(KVB+V(4,3)*V(4,3)))))/KP}',
                 'R1 7 0 1G',
                 'E2 8 0 VALUE={S*V(1,3)*(1+(EXP(-2*ALPHAP*(V(1,3)-(V(4,3)/LAMBDA-V*V(2,3)-W)))-1)/(EXP(-2*ALPHAP*(V(1,3)-(V(4,3)/LAMBDA-V*V(2,3)-W)))+1))}',
@@ -115,7 +116,6 @@ export class ModelService {
                 'C5 3 1 {CCP}',
                 'R5 2 5 {RGI}',
                 'D3 5 3 DX',
-                '.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)',
                 '.ENDS'
             ].join('\n');
         }
@@ -123,6 +123,7 @@ export class ModelService {
         return [
             '.SUBCKT DerkE 1 2 3 4 PARAMS: MU=0 EX=0 KG1=0 KP=0 KVB=0 KG2=0 A=0 ALPHAS=0 BETA=0 ALPHA=0 CCG=0 CCS=0 CGS=0 CGP=0 CCP=0 RGI=2000',
             '*             P G K S',
+            '.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)',
             'E1 7 0 VALUE={V(4,3)*LOG(1+EXP(KP*(1/MU+V(2,3)/SQRT(KVB+V(4,3)*V(4,3)))))/KP}',
             'R1 7 0 1G',
             'G1 1 3 VALUE={(0.5*PWR(V(7),EX)*(1+SGN(V(7))))*(1/KG1-1/KG2+A*V(1,3)/KG1-EXP(-PWR(BETA*V(1,3),1.5))*(ALPHA/KG1+ALPHAS/KG2))}',
@@ -136,7 +137,6 @@ export class ModelService {
             'C5 3 1 {CCP}',
             'R4 2 5 {RGI}',
             'D3 5 3 DX',
-            '.MODEL DX D(IS=1N RS=1 CJO=10PF TT=1N)',
             '.ENDS'
         ].join('\n');
     }
