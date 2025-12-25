@@ -4,7 +4,6 @@ import {
     Component,
     ElementRef,
     inject,
-    NgZone,
     OnInit,
     ViewChild
 } from '@angular/core';
@@ -19,15 +18,17 @@ import { FirebaseTubeService } from '../services/firebase-tube.service';
 import { FormsModule } from '@angular/forms';
 import { NormanKorenPentodeModelParametersComponent } from './norman-koren-pentode-model-parameters.component';
 import { NormanKorenTriodeModelParametersComponent } from './norman-koren-triode-model-parameters.component';
+import { SerialService } from '../services/serial.service';
 import { ToastService } from '../services/toast.service';
 import { TubeInformation } from './tube-information';
 import { TubePlotComponent } from './tube-plot.component';
+import { UTracerComponent } from './utracer.component';
 
 @Component({
     selector: 'app-tube',
     templateUrl: './tube.component.html',
     styleUrl: './tube.component.scss',
-    imports: [FormsModule, CommonModule, RouterLink, TubePlotComponent, NormanKorenPentodeModelParametersComponent, NormanKorenTriodeModelParametersComponent, DerkPentodeModelParametersComponent, DerkEPentodeModelParametersComponent],
+    imports: [FormsModule, CommonModule, RouterLink, TubePlotComponent, NormanKorenPentodeModelParametersComponent, NormanKorenTriodeModelParametersComponent, DerkPentodeModelParametersComponent, DerkEPentodeModelParametersComponent, UTracerComponent],
 })
 export class TubeComponent implements OnInit, AfterViewInit {
 
@@ -44,34 +45,43 @@ export class TubeComponent implements OnInit, AfterViewInit {
     isCalculatingDerkParameters = false;
     isCalculatingDerkEParameters = false;
     isElectricalSpecsExpanded = false; // For collapsible Electrical Specifications section
+    isSerialImporting = false; // Track serial import state
+    serialImportProgress = ''; // Serial import progress message
+    showUTracerModal = false; // Show uTracer import modal
+    isSerialConnected = false; // Track serial connection status
+    isSerialSupported = false; // Track if Web Serial API is supported
+
+    // services
     private analyticsService = inject(AnalyticsService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private firebaseTubeService = inject(FirebaseTubeService);
-    authService = inject(AuthService);
-    private ngZone = inject(NgZone);
+    private authService = inject(AuthService);
     private toastService = inject(ToastService);
+    private serialService = inject(SerialService);
 
     ngOnInit() {
+        // tube id from route
         this.tubeId = this.route.snapshot.paramMap.get('id');
+        // new tube flag
         this.isNewTube = this.tubeId === 'new';
-
-        if (this.isNewTube) {
+        // check if Web Serial API is supported (do this once on init)
+        this.isSerialSupported = this.serialService.isSupported();
+        // load or create tube
+        if (this.isNewTube)
             this.tube = this.createNewTube();
-        }
-        else {
+        else
             this.loadTube(this.tubeId);
-        }
     }
 
     ngAfterViewInit() {
-        if (this.fileInput) {
+        // listen for file input changes
+        if (this.fileInput)
             this.fileInput.nativeElement.addEventListener('change', this.onFileSelected.bind(this));
-        }
     }
 
     private createNewTube(): TubeInformation {
-        return {
+        const newTube: TubeInformation = {
             id: '',
             name: '',
             manufacturer: '',
@@ -81,16 +91,23 @@ export class TubeComponent implements OnInit, AfterViewInit {
             files: [],
             owner: this.authService.getCurrentUser()?.uid // Set owner for new tubes
         };
+        // Set default tab based on files
+        this.setDefaultTab(newTube);
+        return newTube;
     }
 
     private loadTube(tubeId: string | null) {
+        // check tubeId is present
         if (tubeId) {
             // load tube from Firebase
             this.firebaseTubeService.getTubeById(tubeId).subscribe({
                 next: (tube: TubeInformation | null) => {
                     if (tube) {
+                        // store instance
                         this.tube = tube;
-                        // Track tube view event
+                        // set default tab based on files
+                        this.setDefaultTab(tube);
+                        // track tube view event
                         this.analyticsService.logTubeView(tube.id || tubeId, tube.name);
                     }
                     else {
@@ -110,6 +127,11 @@ export class TubeComponent implements OnInit, AfterViewInit {
             console.error('No tube ID provided');
             this.router.navigate(['/tube']);
         }
+    }
+
+    private setDefaultTab(tube: TubeInformation) {
+        // Default to 'plot' if there are files, otherwise 'upload'
+        this.activeTab = tube.files && tube.files.length > 0 ? 'plot' : 'upload';
     }
 
     saveTube() {
@@ -369,6 +391,89 @@ export class TubeComponent implements OnInit, AfterViewInit {
             reader.onerror = () => reject(new Error('Failed to read file'));
             reader.readAsText(file);
         });
+    }
+
+    async importFromSerial() {
+        if (!this.tube) {
+            return;
+        }
+
+        try {
+            // Only request port if not already connected
+            if (!this.isSerialConnected) {
+                this.isSerialImporting = true;
+                this.serialImportProgress = 'Requesting serial port access...';
+
+                // Request port from user
+                await this.serialService.requestPort({ baudRate: 9600 });
+
+                this.serialImportProgress = 'Connected to uTracer';
+                this.toastService.success('Serial port connected. You can now import files.');
+                this.isSerialConnected = true;
+            }
+
+            // Show the uTracer modal for import
+            this.showUTracerModal = true;
+        }
+        catch (error) {
+            console.error('Serial port connection error:', error);
+
+            // Check if user cancelled the port selection
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            const isUserCancellation = errorMessage.includes('No port selected') || errorMessage.includes('NotFoundError');
+
+            if (!isUserCancellation) {
+                this.toastService.error(`Failed to connect to serial port: ${errorMessage}`);
+            }
+        }
+        finally {
+            this.isSerialImporting = false;
+            this.serialImportProgress = '';
+        }
+    }
+
+    onUTracerFileImported(file: TubeFile) {
+        if (this.tube) {
+            this.tube.files.push(file);
+            this.toastService.success(`Successfully imported file "${file.name}" from uTracer.`);
+
+            // Track file import event
+            this.analyticsService.logTubeUpload('.utd', this.tube.type);
+        }
+    }
+
+    onUTracerClosed() {
+        this.showUTracerModal = false;
+    }
+
+    async disconnectSerial() {
+        if (this.serialService.isConnected()) {
+            try {
+                await this.serialService.disconnect();
+                this.isSerialConnected = false;
+                this.toastService.info('Disconnected from uTracer.');
+            }
+            catch (error) {
+                console.error('Error disconnecting from serial port:', error);
+                this.toastService.error('Error disconnecting from serial port.');
+            }
+        }
+    }
+
+    cancelSerialImport() {
+        if (this.serialService.isConnected()) {
+            this.serialService.disconnect()
+                .then(() => {
+                    this.toastService.info('Serial import cancelled.');
+                })
+                .catch((error: unknown) => {
+                    console.error('Error cancelling serial import:', error);
+                })
+                .finally(() => {
+                    this.isSerialImporting = false;
+                    this.serialImportProgress = '';
+                });
+        }
     }
 
     removeFile(index: number) {

@@ -361,7 +361,7 @@
             <h5 class="card-title mb-0"><i class="bi bi-file-earmark-data me-2"></i>Data Files</h5>
             <ul class="nav nav-pills nav-sm">
               <li class="nav-item">
-                <button class="nav-link btn-sm" [class.active]="isTabActive('upload')" (click)="setActiveTab('upload')" type="button"><i class="bi bi-upload me-1"></i>Upload</button>
+                <button class="nav-link btn-sm" [class.active]="isTabActive('upload')" (click)="setActiveTab('upload')" type="button"><i class="bi bi-upload me-1"></i>Import</button>
               </li>
               <li class="nav-item">
                 <button class="nav-link btn-sm" [class.active]="isTabActive('plot')" [disabled]="!tube.files || tube.files.length === 0" (click)="setActiveTab('plot')" type="button"><i class="bi bi-graph-up me-1"></i>Plot</button>
@@ -370,24 +370,64 @@
           </div>
         </div>
         <div class="card-body">
-          <!-- Upload Tab Content -->
+          <!-- Import Tab Content -->
           @if (isTabActive('upload')) {
           <div>
-            <div class="mb-3">
-              <label for="dataFiles" class="form-label fw-bold"> <i class="bi bi-upload me-1"></i>Upload UTD Files </label>
-              <!-- Multiple file upload with direct change handler -->
-              <input 
-                type="file" 
-                class="form-control" 
-                id="dataFiles" 
-                accept=".utd" 
-                multiple 
-                #fileInput 
-              />
-              <button type="button" class="btn btn-primary mt-2" (click)="triggerFileUpload()">
-                <i class="bi bi-upload me-1"></i>Select Files
-              </button>
-              <div class="form-text">Select one or more UTD (tube test data) files to upload. Multiple files can be selected at once.</div>
+            <!-- Import Options -->
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <div class="card h-100">
+                  <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-upload me-2"></i>Upload from File</h6>
+                    <p class="card-text text-muted small">Select UTD files from your computer</p>
+                    <input 
+                      type="file" 
+                      class="form-control form-control-sm mb-2" 
+                      id="dataFiles" 
+                      accept=".utd" 
+                      multiple 
+                      #fileInput 
+                    />
+                    <button type="button" class="btn btn-primary btn-sm w-100" (click)="triggerFileUpload()" [disabled]="isSerialImporting">
+                      <i class="bi bi-folder-open me-1"></i>Select Files
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card h-100">
+                  <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-usb-symbol me-2"></i>Import from uTracer</h6>
+                    <p class="card-text text-muted small">Connect a tube tester or measurement device</p>
+                    @if (!isSerialImporting) {
+                      @if (isSerialSupported) {
+                        @if (isSerialConnected) {
+                          <button type="button" class="btn btn-success btn-sm w-100 mb-2" (click)="importFromSerial()">
+                            <i class="bi bi-download me-1"></i>Import
+                          </button>
+                          <button type="button" class="btn btn-outline-secondary btn-sm w-100" (click)="disconnectSerial()">
+                            <i class="bi bi-plug me-1"></i>Disconnect
+                          </button>
+                        } @else {
+                          <button type="button" class="btn btn-success btn-sm w-100" (click)="importFromSerial()">
+                            <i class="bi bi-play-fill me-1"></i>Import
+                          </button>
+                        }
+                      } @else {
+                        <button type="button" class="btn btn-secondary btn-sm w-100" disabled title="Web Serial API not supported in this browser">
+                          <i class="bi bi-x-circle me-1"></i>Not Supported
+                        </button>
+                        <small class="text-muted d-block mt-1">Use Chrome, Edge, or Opera</small>
+                      }
+                    } @else {
+                      <button type="button" class="btn btn-warning btn-sm w-100" (click)="cancelSerialImport()">
+                        <i class="bi bi-stop-fill me-1"></i>Cancel Import
+                      </button>
+                      <small class="text-muted d-block mt-1">{{ serialImportProgress }}</small>
+                    }
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Upload Progress -->
@@ -402,59 +442,71 @@
             <!-- Uploaded Files List -->
             @if (tube.files && tube.files.length > 0) {
             <div class="mb-3">
-              <h6 class="fw-bold"><i class="bi bi-files me-1"></i>Uploaded Files ({{ tube.files.length }})</h6>
-              <div class="list-group">
-                @for (file of tube.files; track file.name; let i = $index) {
-                <div class="list-group-item">
-                  <div class="row align-items-center">
-                    <!-- File Information Column -->
-                    <div class="col-md-6">
-                      <div class="d-flex align-items-center">
+              <h6 class="fw-bold mb-3"><i class="bi bi-files me-1"></i>Imported Files ({{ tube.files.length }})</h6>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th style="width: 30%">File Name</th>
+                      <th style="width: 20%">Type</th>
+                      <th style="width: 15%">Grid Offset (V)</th>
+                      <th style="width: 10%" class="text-center">Series</th>
+                      <th style="width: 10%" class="text-center">Points</th>
+                      <th style="width: 15%" class="text-end">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (file of tube.files; track file.name; let i = $index) {
+                    <tr>
+                      <td>
                         <i class="bi bi-file-earmark-text me-2 text-primary"></i>
-                        <div>
-                          <strong>{{ file.name }}</strong>
-                          <br />
-                          <small class="text-muted">
-                            {{ file.measurementTypeLabel }}
-                            @if (file.series.length > 0) {
-                            <span> • {{ file.series.length }} series • {{ getTotalPointsCount(file) }} points </span>
-                            }
-                          </small>
+                        <strong>{{ file.name }}</strong>
+                      </td>
+                      <td>
+                        <span class="badge" [class.bg-success]="file.measurementType !== 'UNKNOWN'" [class.bg-secondary]="file.measurementType === 'UNKNOWN'">
+                          {{ file.measurementTypeLabel }}
+                        </span>
+                      </td>
+                      <td>
+                        <input 
+                          type="number" 
+                          class="form-control form-control-sm" 
+                          [(ngModel)]="file.egOffset" 
+                          name="egOffset_{{ i }}"
+                          step="0.1" 
+                          placeholder="0.0"
+                          style="width: 100px;"
+                          title="Grid voltage offset for this file">
+                      </td>
+                      <td class="text-center">
+                        <span class="badge bg-info">{{ file.series.length }}</span>
+                      </td>
+                      <td class="text-center">
+                        <span class="badge bg-secondary">{{ getTotalPointsCount(file) }}</span>
+                      </td>
+                      <td class="text-end">
+                        <div class="btn-group btn-group-sm" role="group">
+                          <button 
+                            type="button" 
+                            class="btn btn-outline-success" 
+                            (click)="plotFile(file)" 
+                            title="Plot file data" 
+                            [disabled]="file.measurementType === 'UNKNOWN'">
+                            <i class="bi bi-graph-up"></i>
+                          </button>
+                          <button 
+                            type="button" 
+                            class="btn btn-outline-danger" 
+                            (click)="removeFile(i)" 
+                            title="Remove file">
+                            <i class="bi bi-trash"></i>
+                          </button>
                         </div>
-                      </div>
-                    </div>
-                    
-                    <!-- Grid Offset Column -->
-                    <div class="col-md-3">
-                      <label class="form-label small mb-1" for="egOffset_{{ i }}">Grid Offset (V)</label>
-                      <input 
-                        type="number" 
-                        class="form-control form-control-sm" 
-                        id="egOffset_{{ i }}"
-                        [(ngModel)]="file.egOffset" 
-                        name="egOffset_{{ i }}"
-                        step="0.1" 
-                        placeholder="e.g., 0.0"
-                        title="Grid voltage offset for this file">
-                    </div>
-                    
-                    <!-- Actions Column -->
-                    <div class="col-md-3 text-end">
-                      <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-success btn-sm" (click)="plotFile(file)" title="Plot file data" [disabled]="file.measurementType === 'UNKNOWN'">
-                          <i class="bi bi-graph-up"></i>
-                        </button>
-                        <button type="button" class="btn btn-outline-info btn-sm" (click)="viewFileData(file)" title="View file data">
-                          <i class="bi bi-eye"></i>
-                        </button>
-                        <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeFile(i)" title="Remove file">
-                          <i class="bi bi-trash"></i>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                }
+                      </td>
+                    </tr>
+                    }
+                  </tbody>
+                </table>
               </div>
             </div>
             }
@@ -463,8 +515,8 @@
             @if (!tube.files || tube.files.length === 0) {
             <div class="text-center py-4">
               <i class="bi bi-file-earmark-plus display-6 text-muted"></i>
-              <p class="text-muted mt-2 mb-0">No data files uploaded yet</p>
-              <small class="text-muted">Upload UTD files to analyze tube characteristics</small>
+              <p class="text-muted mt-2 mb-0">No data files imported yet</p>
+              <small class="text-muted">Upload UTD files or import from uTracer to analyze tube characteristics</small>
             </div>
             }
           </div>
@@ -658,3 +710,11 @@
   </div>
   }
 </div>
+
+<!-- uTracer Import Modal -->
+@if (showUTracerModal) {
+  <app-utracer 
+    (fileImported)="onUTracerFileImported($event)" 
+    (closed)="onUTracerClosed()">
+  </app-utracer>
+}
