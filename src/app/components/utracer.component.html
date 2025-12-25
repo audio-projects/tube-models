@@ -1,31 +1,405 @@
 <div class="modal-backdrop" (click)="close()"></div>
 <div class="modal d-block">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
     <div class="modal-content">
+      <!-- Header -->
       <div class="modal-header bg-success text-white">
         <h5 class="modal-title">
-          <i class="bi bi-usb-symbol me-2"></i>uTracer Import
+          <i class="bi bi-usb-symbol me-2"></i>uTracer Measurement
         </h5>
         <button type="button" class="btn-close btn-close-white" (click)="close()" [disabled]="isImporting" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <div class="text-center py-4">
-          <i class="bi bi-usb-plug display-4 text-success"></i>
-          <h6 class="mt-3">Ready to Import</h6>
-          <p class="text-muted">{{ importStatus || 'Waiting for data from uTracer...' }}</p>
+
+      <!-- Body with two-column layout -->
+      <div class="modal-body p-0">
+        <div class="row g-0 h-100">
           
-          @if (isImporting) {
-          <div class="spinner-border text-success mt-3" role="status">
-            <span class="visually-hidden">Importing...</span>
+          <!-- Left Column: Setup Section -->
+          <div class="col-lg-5 setup-section">
+            <div class="section-content">
+              <div class="section-header">
+                <h6 class="section-title">
+                  <i class="bi bi-gear-fill me-2"></i>Setup
+                </h6>
+              </div>
+
+              <div class="section-body">
+                <!-- Measurement Type Selector -->
+                <div class="form-group">
+                  <label for="measurementType" class="form-label">
+                    Measurement Type
+                    <i class="bi bi-info-circle ms-1 text-muted" 
+                       title="Select the type of tube characteristic to measure"></i>
+                  </label>
+                  <select 
+                    id="measurementType" 
+                    class="form-select"
+                    [(ngModel)]="selectedMeasurementType"
+                    (ngModelChange)="onMeasurementTypeChange()"
+                    [disabled]="isImporting">
+                    <option value="" disabled>-- Select Measurement Type --</option>
+                    
+                    <!-- Triode Measurements -->
+                    @if (triodeMeasurements.length > 0) {
+                      <optgroup label="Triode Measurements">
+                        @for (config of triodeMeasurements; track config.type) {
+                          <option [value]="config.type">
+                            {{ config.label }}
+                          </option>
+                        }
+                      </optgroup>
+                    }
+
+                    <!-- Pentode Measurements (with screen grid) -->
+                    @if (pentodeMeasurements.length > 0) {
+                      <optgroup label="Tetrode/Pentode Measurements">
+                        @for (config of pentodeMeasurements; track config.type) {
+                          <option [value]="config.type">
+                            {{ config.label }}
+                          </option>
+                        }
+                      </optgroup>
+                    }
+
+                    <!-- Special Measurements -->
+                    @if (specialMeasurements.length > 0) {
+                      <optgroup label="Special Configurations">
+                        @for (config of specialMeasurements; track config.type) {
+                          <option [value]="config.type">
+                            {{ config.label }}
+                          </option>
+                        }
+                      </optgroup>
+                    }
+                  </select>
+                </div>
+
+                <!-- Divider -->
+                <hr class="section-divider">
+
+                <!-- Parameters Section -->
+                @if (currentConfig) {
+                  <div class="parameters-container">
+                  <h6 class="parameters-title">
+                    <i class="bi bi-sliders me-2"></i>Measurement Parameters
+                  </h6>
+
+                  <!-- What to Measure -->
+                  <div class="form-group parameter-group measure-group">
+                    <label class="form-label parameter-label">
+                      <span class="param-name">
+                        <i class="bi bi-lightning-charge me-1"></i>Currents to Measure
+                      </span>
+                    </label>
+                    
+                    <div class="measurement-options">
+                      <div class="form-check">
+                        <input 
+                          class="form-check-input" 
+                          type="checkbox" 
+                          id="measureIa"
+                          [(ngModel)]="measureIa"
+                          [disabled]="isImporting">
+                        <label class="form-check-label measurement-label" for="measureIa">
+                          <span class="current-symbol">Ia</span>
+                          <span class="current-name">Plate Current</span>
+                        </label>
+                      </div>
+                      @if (currentConfig.measuredCurrents.is) {
+                        <div class="form-check">
+                          <input 
+                          class="form-check-input" 
+                          type="checkbox" 
+                          id="measureIs"
+                          [(ngModel)]="measureIs"
+                          [disabled]="isImporting">
+                        <label class="form-check-label measurement-label" for="measureIs">
+                          <span class="current-symbol">Is</span>
+                          <span class="current-name">Screen Grid Current</span>
+                        </label>
+                      </div>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Swept Parameter (1st parameter) -->
+                  <div class="form-group parameter-group">
+                    <label class="form-label parameter-label">
+                      <span class="param-name">{{ currentConfig.sweptParam.symbol }}</span>
+                      <span class="param-description">{{ currentConfig.sweptParam.description }}</span>
+                      <span class="badge bg-primary ms-auto">Swept</span>
+                    </label>
+                    
+                    <div class="row g-2">
+                      <div class="col-md-4">
+                        <label for="sweptMin" class="form-label-sm">Minimum (V)</label>
+                        <div class="input-group input-group-sm">
+                          <input 
+                            type="number" 
+                            id="sweptMin" 
+                            class="form-control"
+                            [(ngModel)]="sweptMin"
+                            step="1"
+                            [disabled]="isImporting">
+                          <span class="input-group-text">V</span>
+                        </div>
+                      </div>
+                      <div class="col-md-4">
+                        <label for="sweptMax" class="form-label-sm">Maximum (V)</label>
+                        <div class="input-group input-group-sm">
+                          <input 
+                            type="number" 
+                            id="sweptMax" 
+                            class="form-control"
+                            [(ngModel)]="sweptMax"
+                            step="1"
+                            [disabled]="isImporting">
+                          <span class="input-group-text">V</span>
+                        </div>
+                      </div>
+                      <div class="col-md-4">
+                        <label for="sweptSteps" class="form-label-sm">Steps</label>
+                        <input 
+                          type="number" 
+                          id="sweptSteps" 
+                          class="form-control form-control-sm"
+                          [(ngModel)]="sweptSteps"
+                          min="2"
+                          max="100"
+                          step="1"
+                          [disabled]="isImporting">
+                      </div>
+                    </div>
+
+                    <div class="form-check mt-2">
+                      <input 
+                        class="form-check-input" 
+                        type="checkbox" 
+                        id="sweptLogarithmic"
+                        [(ngModel)]="sweptLogarithmic"
+                        [disabled]="isImporting">
+                      <label class="form-check-label" for="sweptLogarithmic">
+                        <i class="bi bi-graph-up me-1"></i>Use logarithmic spacing
+                        <i class="bi bi-info-circle ms-1 text-muted" 
+                           title="Logarithmic spacing provides more detail at lower voltages"></i>
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Discrete Values Parameter (2nd parameter) -->
+                  <div class="form-group parameter-group">
+                    <label class="form-label parameter-label">
+                      <span class="param-name">{{ currentConfig.seriesParam.symbol }}</span>
+                      <span class="param-description">{{ currentConfig.seriesParam.description }}</span>
+                      <span class="badge bg-info ms-auto">Series</span>
+                    </label>
+                    
+                    <div class="discrete-values-input">
+                      <label for="discreteValues" class="form-label-sm">Values (comma-separated)</label>
+                      <input 
+                        type="text" 
+                        id="discreteValues" 
+                        class="form-control form-control-sm"
+                        [(ngModel)]="discreteValues"
+                        (ngModelChange)="onDiscreteValuesChange()"
+                        [disabled]="isImporting">
+                      <div class="form-text">
+                        Enter voltages separated by commas. Each value creates a new measurement curve.
+                      </div>
+                    </div>
+
+                    <!-- Value chips preview -->
+                    @if (discreteValuesArray.length > 0) {
+                      <div class="value-chips mt-2">
+                        @for (value of discreteValuesArray; track $index) {
+                          <span class="chip">{{ value }}V</span>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Constant Values Section -->
+                  <div class="constants-section">
+                    <h6 class="subsection-title">
+                      <i class="bi bi-lock-fill me-2"></i>Constant Values
+                    </h6>
+
+                    <!-- Dynamic Constant Parameters -->
+                    @for (param of currentConfig.constantParams; track param.name) {
+                      <div class="form-group parameter-group constant-group">
+                        <label class="form-label parameter-label">
+                        <span class="param-name">{{ param.symbol }}</span>
+                        <span class="param-description">{{ param.description }}</span>
+                        <span class="badge bg-secondary ms-auto">Constant</span>
+                      </label>
+                      
+                      <div class="row g-2">
+                        <div [ngClass]="param.quickValues ? 'col-md-6' : 'col-12'">
+                          <label [attr.for]="'const_' + param.name" class="form-label-sm">Voltage (V)</label>
+                          <div class="input-group input-group-sm">
+                            <input 
+                              type="number" 
+                              [id]="'const_' + param.name"
+                              class="form-control"
+                              [(ngModel)]="constantValues[param.name]"
+                              step="0.1"
+                              [disabled]="isImporting">
+                            <span class="input-group-text">V</span>
+                          </div>
+                        </div>
+                        @if (param.quickValues) {
+                          <div class="col-md-6">
+                            <label class="form-label-sm">Quick Select</label>
+                            <div class="btn-group btn-group-sm w-100" role="group">
+                              @for (qv of param.quickValues; track qv) {
+                                <button 
+                                  type="button" 
+                                  class="btn btn-outline-secondary"
+                                  (click)="setConstantValue(param.name, qv)"
+                                  [disabled]="isImporting">{{ qv }}V</button>
+                              }
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                    }
+
+                  </div>
+
+                </div>
+                }
+
+              </div>
+            </div>
           </div>
-          }
+
+          <!-- Right Column: Visualization Section -->
+          <div class="col-lg-7 visualization-section">
+            <div class="section-content">
+              <div class="section-header">
+                <h6 class="section-title">
+                  <i class="bi bi-graph-up me-2"></i>Measurement Data
+                </h6>
+              </div>
+
+              <div class="section-body">
+                <!-- Idle State -->
+                @if (measurementState === 'idle') {
+                  <div class="visualization-placeholder">
+                    <i class="bi bi-activity display-1 text-muted"></i>
+                    <p class="mt-3 text-muted">Measurement data will appear here</p>
+                    <small class="text-muted">Configure setup and start measurement to begin</small>
+                  </div>
+                }
+
+                <!-- Heating State -->
+                @if (measurementState === 'heating') {
+                  <div class="heating-progress">
+                    <div class="text-center mb-4">
+                      <i class="bi bi-thermometer-half display-4 text-warning"></i>
+                      <h6 class="mt-3">Heating Tube Filament</h6>
+                      <p class="text-muted">Please wait while the tube heats up...</p>
+                    </div>
+                    <div class="progress" style="height: 25px;">
+                      <div 
+                        class="progress-bar progress-bar-striped progress-bar-animated bg-warning" 
+                        role="progressbar" 
+                        [style.width.%]="heatingProgress"
+                        [attr.aria-valuenow]="heatingProgress" 
+                        aria-valuemin="0" 
+                        aria-valuemax="100">
+                        {{ heatingProgress.toFixed(0) }}%
+                      </div>
+                    </div>
+                    <small class="text-muted d-block text-center mt-2">
+                      Estimated time: {{ heatingTimeSeconds }} seconds
+                    </small>
+                  </div>
+                }
+
+                <!-- Ready State -->
+                @if (measurementState === 'ready') {
+                  <div class="ready-state">
+                    <div class="text-center">
+                      <i class="bi bi-check-circle display-1 text-success"></i>
+                      <h6 class="mt-3">Tube Ready</h6>
+                      <p class="text-muted">Filament heated. Ready to begin measurement.</p>
+                      <p class="text-info">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Click "Measure Data" to start capturing measurements
+                      </p>
+                    </div>
+                  </div>
+                }
+
+                <!-- Measuring State -->
+                @if (measurementState === 'measuring') {
+                  <div class="measuring-state">
+                    <div class="text-center">
+                      <div class="spinner-border text-success mb-3" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Measuring...</span>
+                      </div>
+                      <h6>Measuring...</h6>
+                      <p class="text-muted">Capturing tube characteristics</p>
+                      <small class="text-muted">This may take a few moments</small>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
+
+      <!-- Footer -->
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="isImporting">
-          Cancel
-        </button>
+        <!-- Abort button - shown during heating or measuring -->
+        @if (measurementState === 'heating' || measurementState === 'measuring') {
+          <button 
+            type="button" 
+            class="btn btn-danger" 
+            (click)="abortMeasurement()">
+            <i class="bi bi-x-circle me-1"></i>
+            Abort
+          </button>
+        }
+
+        <!-- Cancel button - shown when idle or ready -->
+        @if (measurementState === 'idle' || measurementState === 'ready') {
+          <button 
+            type="button" 
+            class="btn btn-secondary" 
+            (click)="cancel()">
+            Cancel
+          </button>
+        }
+
+        <!-- Start Measurement button - shown when idle -->
+        @if (measurementState === 'idle') {
+          <button 
+            type="button" 
+            class="btn btn-success" 
+            (click)="startMeasurement()"
+            [disabled]="!isFormValid()">
+            <i class="bi bi-play-fill me-1"></i>
+            Start Measurement
+          </button>
+        }
+
+        <!-- Measure Data button - shown when ready -->
+        @if (measurementState === 'ready') {
+          <button 
+            type="button" 
+            class="btn btn-primary" 
+            (click)="measureData()">
+            <i class="bi bi-graph-up me-1"></i>
+            Measure Data
+          </button>
+        }
       </div>
+
     </div>
   </div>
 </div>

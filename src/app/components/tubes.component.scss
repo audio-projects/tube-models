@@ -3,26 +3,16 @@
 .card {
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
   border: 1px solid rgba(0, 0, 0, 0.125);
-  transition: box-shadow 0.15s ease-in-out;
-  
-  &:hover {
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-  }
 }
 
 .table {
   tbody tr {
-    &:hover {
-      background-color: rgba(13, 110, 253, 0.05);
-    }
+    /* Hover effect removed */
   }
 }
 
 .btn-group .btn {
-  &:hover {
-    transform: translateY(-1px);
-    transition: transform 0.15s ease-in-out;
-  }
+  /* Hover effect removed */
 }
 
 .badge {
@@ -30,17 +20,12 @@
   font-weight: 600;
 }
 
-// Statistics cards animation
+// Statistics cards (hover effects removed)
 .card.bg-primary,
 .card.bg-success,
 .card.bg-info,
 .card.bg-warning {
-  transition: transform 0.2s ease-in-out;
-  will-change: transform;
-  
-  &:hover {
-    transform: translateY(-2px) translateZ(0);
-  }
+  /* Transitions and hover effects removed */
 }
 
 // Search input focus effect

@@ -713,7 +713,8 @@
 
 <!-- uTracer Import Modal -->
 @if (showUTracerModal) {
-  <app-utracer 
+  <app-utracer
+    [tubeType]="tube?.type === 'Triode' ? 'triode' : 'pentode'"
     (fileImported)="onUTracerFileImported($event)" 
     (closed)="onUTracerClosed()">
   </app-utracer>

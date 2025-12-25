@@ -525,21 +525,9 @@
     }
   }
 
-  /* spinning animation for loading states */
+  /* spinning animation removed to prevent Chrome crashes */
   .spin {
-    animation: spin 1s linear infinite;
-    will-change: transform;
-    transform: translateZ(0); /* Force GPU acceleration */
-    backface-visibility: hidden; /* Prevent flickering */
-  }
-
-  @keyframes spin {
-    from {
-      transform: rotate(0deg) translateZ(0);
-    }
-    to {
-      transform: rotate(360deg) translateZ(0);
-    }
+    /* Animation removed */
   }
 
   /* pentode-spice-model */

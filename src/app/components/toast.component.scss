@@ -6,23 +6,10 @@
     min-width: 300px;
     margin-bottom: 0.75rem;
     opacity: 1;
-    transition: opacity 0.3s ease-in-out;
-    will-change: transform, opacity;
 }
 
 .toast.show {
-    animation: slideInRight 0.3s ease-out;
-}
-
-@keyframes slideInRight {
-    from {
-        transform: translateX(100%) translateZ(0);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0) translateZ(0);
-        opacity: 1;
-    }
+    /* Animation removed */
 }
 
 .toast-success {

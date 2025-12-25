@@ -1,18 +1,7 @@
 // Tube Detail Page Styles
 
 .tube-detail-page {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  /* Animation removed */
 }
 
 // Page Header Styling
@@ -27,10 +16,6 @@
       
       a {
         color: #6c757d;
-        
-        &:hover {
-          color: #0d6efd;
-        }
       }
       
       &.active {
@@ -50,13 +35,6 @@
 .card {
   border: 1px solid rgba(0, 0, 0, 0.125);
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-  transition: box-shadow 0.15s ease-in-out, transform 0.15s ease-in-out;
-  will-change: box-shadow, transform;
-  
-  &:hover {
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    transform: translateZ(0);
-  }
   
   .card-header {
     font-weight: 600;
@@ -72,15 +50,8 @@
     &[role="button"] {
       cursor: pointer;
       user-select: none;
-      transition: background-color 0.15s ease-in-out;
-
-      &:hover {
-        opacity: 0.9;
-      }
 
       .bi-chevron-down {
-        transition: transform 0.2s ease-in-out;
-        
         &.rotated {
           transform: rotate(180deg);
         }
@@ -133,12 +104,6 @@
 // Button Styling
 .btn-group {
   .btn {
-    transition: transform 0.15s ease-in-out;
-    will-change: transform;
-    
-    &:hover {
-      transform: translateY(-1px) translateZ(0);
-    }
     
     i {
       font-size: 0.875rem;
@@ -147,16 +112,8 @@
 }
 
 .d-grid .btn {
-  transition: transform 0.15s ease-in-out;
-  will-change: transform;
-  
-  &:hover {
-    transform: translateY(-1px) translateZ(0);
-  }
-  
   &:disabled {
-    transform: none;
-    will-change: auto;
+    /* Disabled state styling if needed */
   }
 }
 
