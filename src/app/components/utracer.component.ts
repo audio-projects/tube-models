@@ -6,9 +6,11 @@ import {
     Input,
     Output
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { File as TubeFile } from '../files';
+import { FormsModule } from '@angular/forms';
 import { SerialService } from '../services/serial.service';
+import { SettingsService } from '../services/settings.service';
+import { TubeInformation } from './tube-information';
 
 interface MeasurementConfig {
     type: string;
@@ -47,11 +49,15 @@ export class UTracerComponent {
 
     @Output() fileImported = new EventEmitter<TubeFile>();
     @Output() closed = new EventEmitter<void>();
-    @Input() tubeType: 'triode' | 'pentode' = 'triode';
+    @Input() tube: TubeInformation | null = null;
 
     private serialService = inject(SerialService);
+    private settingsService = inject(SettingsService);
+
     importStatus = '';
     isImporting = false;
+    pingStatus = '';
+    isPinging = false;
 
     // Measurement process state
     measurementState: 'idle' | 'heating' | 'ready' | 'measuring' = 'idle';
@@ -78,13 +84,13 @@ export class UTracerComponent {
     private measurementConfigs: Record<string, MeasurementConfig> = {
         'IP_VA_VG_VH': {
             type: 'IP_VA_VG_VH',
-            label: 'Ia(Va, Vg) - Plate current vs Plate/Grid voltage',
+            label: 'Ia(Va, Vg) - Plate current vs Plate/Grid voltage (*)',
             category: 'triode',
             measuredCurrents: { ia: true, is: false },
             sweptParam: { name: 'ep', symbol: 'Va', description: 'Plate Voltage' },
             seriesParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
             constantParams: [
-                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 6.3, quickValues: [6.3, 12.6] }
+                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 0 }
             ]
         },
         'IP_VG_VA_VH': {
@@ -95,19 +101,19 @@ export class UTracerComponent {
             sweptParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
             seriesParam: { name: 'ep', symbol: 'Va', description: 'Plate Voltage' },
             constantParams: [
-                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 6.3, quickValues: [6.3, 12.6] }
+                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 0 }
             ]
         },
         'IPIS_VA_VG_VS_VH': {
             type: 'IPIS_VA_VG_VS_VH',
-            label: 'Ia(Va, Vg), Is(Va, Vg) - Plate/Screen current vs Plate/Grid voltage',
+            label: 'Ia(Va, Vg), Is(Va, Vg) - Plate/Screen current vs Plate/Grid voltage (*)',
             category: 'pentode',
             measuredCurrents: { ia: true, is: true },
             sweptParam: { name: 'ep', symbol: 'Va', description: 'Plate Voltage' },
             seriesParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
             constantParams: [
                 { name: 'es', symbol: 'Vs', description: 'Screen Grid Voltage', defaultValue: 100 },
-                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 6.3, quickValues: [6.3, 12.6] }
+                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 0 }
             ]
         },
         'IPIS_VG_VA_VS_VH': {
@@ -119,7 +125,7 @@ export class UTracerComponent {
             seriesParam: { name: 'ep', symbol: 'Va', description: 'Plate Voltage' },
             constantParams: [
                 { name: 'es', symbol: 'Vs', description: 'Screen Grid Voltage', defaultValue: 100 },
-                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 6.3, quickValues: [6.3, 12.6] }
+                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 0 }
             ]
         },
         'IPIS_VS_VG_VA_VH': {
@@ -131,7 +137,7 @@ export class UTracerComponent {
             seriesParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
             constantParams: [
                 { name: 'ep', symbol: 'Va', description: 'Plate Voltage', defaultValue: 200 },
-                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 6.3, quickValues: [6.3, 12.6] }
+                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 0 }
             ]
         },
         'IPIS_VG_VS_VA_VH': {
@@ -143,7 +149,7 @@ export class UTracerComponent {
             seriesParam: { name: 'es', symbol: 'Vs', description: 'Screen Grid Voltage' },
             constantParams: [
                 { name: 'ep', symbol: 'Va', description: 'Plate Voltage', defaultValue: 200 },
-                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 6.3, quickValues: [6.3, 12.6] }
+                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 0 }
             ]
         },
         'IPIS_VA_VS_VG_VH': {
@@ -155,7 +161,7 @@ export class UTracerComponent {
             seriesParam: { name: 'es', symbol: 'Vs', description: 'Screen Grid Voltage' },
             constantParams: [
                 { name: 'eg', symbol: 'Vg', description: 'Grid Voltage', defaultValue: -2 },
-                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 6.3, quickValues: [6.3, 12.6] }
+                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 0 }
             ]
         },
         'IPIS_VG_VAVS_VH': {
@@ -166,32 +172,27 @@ export class UTracerComponent {
             sweptParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
             seriesParam: { name: 'ep', symbol: 'Va=Vs', description: 'Plate/Screen Voltage (tied)' },
             constantParams: [
-                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 6.3, quickValues: [6.3, 12.6] }
+                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 0 }
             ]
         },
         'IPIS_VAVS_VG_VH': {
             type: 'IPIS_VAVS_VG_VH',
-            label: 'Ia(Va=Vs, Vg), Is(Va=Vs, Vg) - Plate/Screen tied together (Voltage sweep)',
+            label: 'Ia(Va=Vs, Vg), Is(Va=Vs, Vg) - Plate/Screen tied together (Voltage sweep) (*)',
             category: 'special',
             measuredCurrents: { ia: true, is: true },
             sweptParam: { name: 'ep', symbol: 'Va=Vs', description: 'Plate/Screen Voltage (tied)' },
             seriesParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
             constantParams: [
-                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 6.3, quickValues: [6.3, 12.6] }
+                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 0 }
             ]
         }
     };
 
     get availableMeasurements() {
-        return Object.values(this.measurementConfigs).filter(config => {
-            if (this.tubeType === 'triode') {
-                return config.category === 'triode';
-            }
-            else {
-                // Pentode/Tetrode: all measurement types are available
-                return true;
-            }
-        });
+        // filter measurements based on tube type
+        return Object.values(this.measurementConfigs)
+            // filter triode vs pentode/tetrode
+            .filter(config => this.tube?.type === 'Triode' ? config.category === 'triode' : config.category === 'pentode' || config.category === 'special');
     }
 
     get triodeMeasurements() {
@@ -207,66 +208,137 @@ export class UTracerComponent {
     }
 
     onMeasurementTypeChange() {
+        // select config
         this.currentConfig = this.measurementConfigs[this.selectedMeasurementType] || null;
-
         if (this.currentConfig) {
-            // Update measured currents
+            // update measured currents
             this.measureIa = this.currentConfig.measuredCurrents.ia;
             this.measureIs = this.currentConfig.measuredCurrents.is;
-
-            // Initialize constant values
+            // initialize constant values
             this.constantValues = {};
-            this.currentConfig.constantParams.forEach(param => {
-                if (param.defaultValue !== undefined) {
-                    this.constantValues[param.name] = param.defaultValue;
-                }
-            });
-
-            // Update discrete values
+            this.currentConfig.constantParams
+                .forEach(param => {
+                    // check for special case of heater voltage
+                    if (param.name === 'eh') {
+                        // set heater voltage from tube data
+                        this.constantValues[param.name] = this.calculateInitialHeaterVoltage();
+                    }
+                    else if (param.defaultValue !== undefined) {
+                        // use default value
+                        this.constantValues[param.name] = param.defaultValue;
+                    }
+                });
+            // update discrete values
             this.updateDiscreteValuesArray();
-
-            // Set default ranges based on swept parameter
+            // set default ranges based on swept parameter
             this.setDefaultRanges();
         }
     }
 
+    private calculateInitialHeaterVoltage(): number {
+        // default
+        if (!this.tube)
+            return 0;
+        // values from tube data
+        const minHeater = this.tube.minimumHeaterVoltage;
+        const maxHeater = this.tube.maximumHeaterVoltage;
+        // average if both defined
+        if (minHeater && maxHeater)
+            return (minHeater + maxHeater) / 2;
+        // min
+        if (minHeater)
+            return minHeater;
+        // max
+        if (maxHeater)
+            return maxHeater;
+        // fallback
+        return 0;
+    }
+
     setDefaultRanges() {
-        if (!this.currentConfig) return;
-
+        // validate config is set
+        if (!this.currentConfig)
+            return;
+        // x axis parameter
         const symbol = this.currentConfig.sweptParam.symbol;
-
-        // Set sensible defaults based on parameter type
-        if (symbol.includes('Va') || symbol.includes('Vs')) {
+        // set sensible defaults based on parameter type
+        if (symbol.includes('Va') && symbol.includes('Vs')) {
             this.sweptMin = 0;
-            this.sweptMax = 300;
-            this.sweptSteps = 30;
+            this.sweptMax = Math.min(this.getMaxVoltageForParameter('Va'), this.getMaxVoltageForParameter('Vs'));
+            this.sweptSteps = 50;
+        }
+        else if (symbol.includes('Va')) {
+            this.sweptMin = 0;
+            this.sweptMax = this.getMaxVoltageForParameter('Va');
+            this.sweptSteps = 50;
+        }
+        else if (symbol.includes('Vs')) {
+            this.sweptMin = 0;
+            this.sweptMax = this.getMaxVoltageForParameter('Vs');
+            this.sweptSteps = 50;
         }
         else if (symbol.includes('Vg')) {
             this.sweptMin = -10;
             this.sweptMax = 0;
             this.sweptSteps = 20;
         }
-
-        // Set default discrete values
-        if (this.currentConfig.seriesParam.symbol.includes('Vg')) {
+        // series parameter
+        const series = this.currentConfig.seriesParam.symbol;
+        // set default values for series parameter
+        if (series.includes('Va') && series.includes('Vs')) {
+            // max
+            const max = Math.min(this.getMaxVoltageForParameter('Va'), this.getMaxVoltageForParameter('Vs'));
+            // discrete values
+            this.discreteValues = this.generateDiscreteValues(Math.round(max / 2), max, 6);
+        }
+        else if (series.includes('Va')) {
+            // max
+            const max = this.getMaxVoltageForParameter('Va');
+            // discrete values
+            this.discreteValues = this.generateDiscreteValues(Math.round(max / 2), max, 6);
+        }
+        else if (series.includes('Vs')) {
+            // max
+            const max = this.getMaxVoltageForParameter('Vs');
+            // discrete values
+            this.discreteValues = this.generateDiscreteValues(Math.round(max / 2), max, 6);
+        }
+        else if (series.includes('Vg')) {
+            // discrete values
             this.discreteValues = '0, -2, -4, -6, -8, -10';
         }
-        else if (this.currentConfig.seriesParam.symbol.includes('Va')) {
-            this.discreteValues = '100, 150, 200, 250, 300';
-        }
-        else if (this.currentConfig.seriesParam.symbol.includes('Vs')) {
-            this.discreteValues = '50, 75, 100, 125, 150';
-        }
-
+        // process values
         this.updateDiscreteValuesArray();
     }
 
+    private getMaxVoltageForParameter(param: 'Va' | 'Vs'): number {
+        // plate
+        if (param === 'Va') {
+            // max plate voltage
+            return this.tube?.maximumPlateVoltage ?? 300;
+        }
+        // for screen voltage, use max grid 2 voltage
+        return this.tube?.maximumGrid2Voltage ?? 300;
+    }
+
+    private generateDiscreteValues(min: number, max: number, count: number): string {
+        // step
+        const step = (max - min) / (count - 1);
+        // values in series
+        const values: number[] = [];
+        // generate values
+        for (let i = 0; i < count; i++)
+            values.push(Math.round(min + step * i));
+        // join
+        return values.join(', ');
+    }
+
     updateDiscreteValuesArray() {
-        const values = this.discreteValues
+        // use int numbers
+        this.discreteValuesArray = this.discreteValues
             .split(',')
             .map(v => parseFloat(v.trim()))
             .filter(v => !isNaN(v));
-        this.discreteValuesArray = values;
     }
 
     onDiscreteValuesChange() {
@@ -378,5 +450,24 @@ export class UTracerComponent {
 
     cancel() {
         this.close();
+    }
+
+    async testPing(): Promise<void> {
+        this.isPinging = true;
+        this.pingStatus = 'Pinging uTracer...';
+
+        try {
+            await this.serialService.ping();
+            this.pingStatus = 'Ping successful! ✓';
+            setTimeout(() => {
+                this.pingStatus = '';
+            }, 3000);
+        }
+        catch (error) {
+            this.pingStatus = `Ping failed: ${error}`;
+        }
+        finally {
+            this.isPinging = false;
+        }
     }
 }

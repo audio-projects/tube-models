@@ -4,6 +4,7 @@ import {
     Component,
     ElementRef,
     inject,
+    OnDestroy,
     OnInit,
     ViewChild
 } from '@angular/core';
@@ -30,7 +31,7 @@ import { UTracerComponent } from './utracer.component';
     styleUrl: './tube.component.scss',
     imports: [FormsModule, CommonModule, RouterLink, TubePlotComponent, NormanKorenPentodeModelParametersComponent, NormanKorenTriodeModelParametersComponent, DerkPentodeModelParametersComponent, DerkEPentodeModelParametersComponent, UTracerComponent],
 })
-export class TubeComponent implements OnInit, AfterViewInit {
+export class TubeComponent implements OnInit, AfterViewInit, OnDestroy {
 
     @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
@@ -78,6 +79,19 @@ export class TubeComponent implements OnInit, AfterViewInit {
         // listen for file input changes
         if (this.fileInput)
             this.fileInput.nativeElement.addEventListener('change', this.onFileSelected.bind(this));
+    }
+
+    ngOnDestroy() {
+        // disconnect serial port if connected
+        if (this.serialService.isConnected()) {
+            // disconnect
+            this.serialService.disconnect()
+                // ignore errors
+                .catch((error: unknown) => {
+                    // log error
+                    console.error('Error disconnecting serial port on component destroy: ', error);
+                });
+        }
     }
 
     private createNewTube(): TubeInformation {
@@ -404,8 +418,8 @@ export class TubeComponent implements OnInit, AfterViewInit {
                 this.isSerialImporting = true;
                 this.serialImportProgress = 'Requesting serial port access...';
 
-                // Request port from user
-                await this.serialService.requestPort({ baudRate: 9600 });
+                // Request port from user (using required 9600-8-N-1 configuration)
+                await this.serialService.requestPort();
 
                 this.serialImportProgress = 'Connected to uTracer';
                 this.toastService.success('Serial port connected. You can now import files.');

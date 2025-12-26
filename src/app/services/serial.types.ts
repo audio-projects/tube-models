@@ -26,7 +26,6 @@ export interface SerialPort {
 }
 
 export interface Serial extends EventTarget {
-    getPorts(): Promise<SerialPort[]>;
     requestPort(options?: SerialPortRequestOptions): Promise<SerialPort>;
 }
 

@@ -63,7 +63,7 @@
 
                     <!-- Special Measurements -->
                     @if (specialMeasurements.length > 0) {
-                      <optgroup label="Special Configurations">
+                      <optgroup label="Triode Measurements">
                         @for (config of specialMeasurements; track config.type) {
                           <option [value]="config.type">
                             {{ config.label }}
@@ -83,44 +83,6 @@
                   <h6 class="parameters-title">
                     <i class="bi bi-sliders me-2"></i>Measurement Parameters
                   </h6>
-
-                  <!-- What to Measure -->
-                  <div class="form-group parameter-group measure-group">
-                    <label class="form-label parameter-label">
-                      <span class="param-name">
-                        <i class="bi bi-lightning-charge me-1"></i>Currents to Measure
-                      </span>
-                    </label>
-                    
-                    <div class="measurement-options">
-                      <div class="form-check">
-                        <input 
-                          class="form-check-input" 
-                          type="checkbox" 
-                          id="measureIa"
-                          [(ngModel)]="measureIa"
-                          [disabled]="isImporting">
-                        <label class="form-check-label measurement-label" for="measureIa">
-                          <span class="current-symbol">Ia</span>
-                          <span class="current-name">Plate Current</span>
-                        </label>
-                      </div>
-                      @if (currentConfig.measuredCurrents.is) {
-                        <div class="form-check">
-                          <input 
-                          class="form-check-input" 
-                          type="checkbox" 
-                          id="measureIs"
-                          [(ngModel)]="measureIs"
-                          [disabled]="isImporting">
-                        <label class="form-check-label measurement-label" for="measureIs">
-                          <span class="current-symbol">Is</span>
-                          <span class="current-name">Screen Grid Current</span>
-                        </label>
-                      </div>
-                      }
-                    </div>
-                  </div>
 
                   <!-- Swept Parameter (1st parameter) -->
                   <div class="form-group parameter-group">
@@ -234,7 +196,7 @@
                       </label>
                       
                       <div class="row g-2">
-                        <div [ngClass]="param.quickValues ? 'col-md-6' : 'col-12'">
+                        <div class="col-12">
                           <label [attr.for]="'const_' + param.name" class="form-label-sm">Voltage (V)</label>
                           <div class="input-group input-group-sm">
                             <input 
@@ -247,20 +209,6 @@
                             <span class="input-group-text">V</span>
                           </div>
                         </div>
-                        @if (param.quickValues) {
-                          <div class="col-md-6">
-                            <label class="form-label-sm">Quick Select</label>
-                            <div class="btn-group btn-group-sm w-100" role="group">
-                              @for (qv of param.quickValues; track qv) {
-                                <button 
-                                  type="button" 
-                                  class="btn btn-outline-secondary"
-                                  (click)="setConstantValue(param.name, qv)"
-                                  [disabled]="isImporting">{{ qv }}V</button>
-                              }
-                            </div>
-                          </div>
-                        }
                       </div>
                     </div>
                     }
@@ -355,6 +303,28 @@
 
       <!-- Footer -->
       <div class="modal-footer">
+        <!-- Ping status message -->
+        @if (pingStatus) {
+          <div class="me-auto text-muted small">
+            {{ pingStatus }}
+          </div>
+        }
+
+        <!-- Ping Test button - always shown when idle -->
+        @if (measurementState === 'idle') {
+          <button 
+            type="button" 
+            class="btn btn-outline-primary btn-sm" 
+            (click)="testPing()"
+            [disabled]="isPinging">
+            <i class="bi bi-broadcast me-1"></i>
+            @if (isPinging) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            Test Connection
+          </button>
+        }
+
         <!-- Abort button - shown during heating or measuring -->
         @if (measurementState === 'heating' || measurementState === 'measuring') {
           <button 
