@@ -19,7 +19,7 @@ import { FirebaseTubeService } from '../services/firebase-tube.service';
 import { FormsModule } from '@angular/forms';
 import { NormanKorenPentodeModelParametersComponent } from './norman-koren-pentode-model-parameters.component';
 import { NormanKorenTriodeModelParametersComponent } from './norman-koren-triode-model-parameters.component';
-import { SerialService } from '../services/serial.service';
+import { UTracerService } from '../services/utracer.service';
 import { ToastService } from '../services/toast.service';
 import { TubeInformation } from './tube-information';
 import { TubePlotComponent } from './tube-plot.component';
@@ -59,7 +59,7 @@ export class TubeComponent implements OnInit, AfterViewInit, OnDestroy {
     private firebaseTubeService = inject(FirebaseTubeService);
     private authService = inject(AuthService);
     private toastService = inject(ToastService);
-    private serialService = inject(SerialService);
+    private uTracerService = inject(UTracerService);
 
     ngOnInit() {
         // tube id from route
@@ -67,7 +67,7 @@ export class TubeComponent implements OnInit, AfterViewInit, OnDestroy {
         // new tube flag
         this.isNewTube = this.tubeId === 'new';
         // check if Web Serial API is supported (do this once on init)
-        this.isSerialSupported = this.serialService.isSupported();
+        this.isSerialSupported = this.uTracerService.isSupported();
         // load or create tube
         if (this.isNewTube)
             this.tube = this.createNewTube();
@@ -83,9 +83,9 @@ export class TubeComponent implements OnInit, AfterViewInit, OnDestroy {
 
     ngOnDestroy() {
         // disconnect serial port if connected
-        if (this.serialService.isConnected()) {
+        if (this.uTracerService.isConnected()) {
             // disconnect
-            this.serialService.disconnect()
+            this.uTracerService.disconnect()
                 // ignore errors
                 .catch((error: unknown) => {
                     // log error
@@ -419,7 +419,7 @@ export class TubeComponent implements OnInit, AfterViewInit, OnDestroy {
                 this.serialImportProgress = 'Requesting serial port access...';
 
                 // Request port from user (using required 9600-8-N-1 configuration)
-                await this.serialService.requestPort();
+                await this.uTracerService.connect();
 
                 this.serialImportProgress = 'Connected to uTracer';
                 this.toastService.success('Serial port connected. You can now import files.');
@@ -461,9 +461,9 @@ export class TubeComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     async disconnectSerial() {
-        if (this.serialService.isConnected()) {
+        if (this.uTracerService.isConnected()) {
             try {
-                await this.serialService.disconnect();
+                await this.uTracerService.disconnect();
                 this.isSerialConnected = false;
                 this.toastService.info('Disconnected from uTracer.');
             }
@@ -475,8 +475,8 @@ export class TubeComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     cancelSerialImport() {
-        if (this.serialService.isConnected()) {
-            this.serialService.disconnect()
+        if (this.uTracerService.isConnected()) {
+            this.uTracerService.disconnect()
                 .then(() => {
                     this.toastService.info('Serial import cancelled.');
                 })

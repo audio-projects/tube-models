@@ -8,9 +8,11 @@ import {
 } from '@angular/core';
 import { File as TubeFile } from '../files';
 import { FormsModule } from '@angular/forms';
-import { SerialService } from '../services/serial.service';
-import { SettingsService } from '../services/settings.service';
+import { Averaging, Compliance, UTracerResponse, UTracerService } from '../services/utracer.service';
+import { ToastService } from '../services/toast.service';
 import { TubeInformation } from './tube-information';
+import { UTracerSetupComponent } from './utracer-setup.component';
+import { string } from 'mathjs';
 
 interface MeasurementConfig {
     type: string;
@@ -43,7 +45,7 @@ interface MeasurementConfig {
     selector: 'app-utracer',
     templateUrl: './utracer.component.html',
     styleUrl: './utracer.component.scss',
-    imports: [CommonModule, FormsModule]
+    imports: [CommonModule, FormsModule, UTracerSetupComponent]
 })
 export class UTracerComponent {
 
@@ -51,19 +53,20 @@ export class UTracerComponent {
     @Output() closed = new EventEmitter<void>();
     @Input() tube: TubeInformation | null = null;
 
-    private serialService = inject(SerialService);
-    private settingsService = inject(SettingsService);
+    private uTracerService = inject(UTracerService);
+    private toast = inject(ToastService);
 
     importStatus = '';
     isImporting = false;
     pingStatus = '';
     isPinging = false;
+    showSetupModal = false;
 
-    // Measurement process state
+    // measurement process state
     measurementState: 'idle' | 'heating' | 'ready' | 'measuring' = 'idle';
     heatingProgress = 0;
-    heatingTimeSeconds = 10;
-    private heatingInterval: ReturnType<typeof setInterval> | null = null;
+    stop = false;
+    abortController: AbortController | null = null;
 
     // Measurement configuration
     selectedMeasurementType = '';
@@ -80,6 +83,47 @@ export class UTracerComponent {
     discreteValuesArray: number[] = [];
     constantValues: Record<string, number> = {};
 
+    // Additional measurement settings
+    compliance: Compliance = 200;
+    average: Averaging = 0x40;
+    iaRange = 'Automatic';
+    isRange = 'Automatic';
+
+    // Dropdown options
+    complianceOptions = [
+        { label: '200mA', value: 200 },
+        { label: '175mA', value: 175 },
+        { label: '150mA', value: 150 },
+        { label: '125mA', value: 125 },
+        { label: '100mA', value: 100 },
+        { label: '75mA', value: 75 },
+        { label: '50mA', value: 50 },
+        { label: '25mA', value: 25 },
+        { label: 'Off', value: 0 }
+    ];
+
+    averageOptions = [
+        { label: 'None', value: 0 },
+        { label: '2X', value: 2 },
+        { label: '4X', value: 4 },
+        { label: '8X', value: 8 },
+        { label: '16X', value: 16 },
+        { label: '32X', value: 32 },
+        { label: 'Automatic', value: 0x40 }
+    ];
+
+    rangeOptions = [
+        '0-200mA',
+        '0-100mA',
+        '0-40mA',
+        '0-20mA',
+        '0-10mA',
+        '0-5mA',
+        '0-2mA',
+        '0-1mA',
+        'Automatic'
+    ];
+
     // Measurement type configurations
     private measurementConfigs: Record<string, MeasurementConfig> = {
         'IP_VA_VG_VH': {
@@ -90,7 +134,6 @@ export class UTracerComponent {
             sweptParam: { name: 'ep', symbol: 'Va', description: 'Plate Voltage' },
             seriesParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
             constantParams: [
-                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 0 }
             ]
         },
         'IP_VG_VA_VH': {
@@ -101,7 +144,6 @@ export class UTracerComponent {
             sweptParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
             seriesParam: { name: 'ep', symbol: 'Va', description: 'Plate Voltage' },
             constantParams: [
-                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 0 }
             ]
         },
         'IPIS_VA_VG_VS_VH': {
@@ -112,8 +154,7 @@ export class UTracerComponent {
             sweptParam: { name: 'ep', symbol: 'Va', description: 'Plate Voltage' },
             seriesParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
             constantParams: [
-                { name: 'es', symbol: 'Vs', description: 'Screen Grid Voltage', defaultValue: 100 },
-                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 0 }
+                { name: 'es', symbol: 'Vs', description: 'Screen Grid Voltage', defaultValue: 100 }
             ]
         },
         'IPIS_VG_VA_VS_VH': {
@@ -124,8 +165,7 @@ export class UTracerComponent {
             sweptParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
             seriesParam: { name: 'ep', symbol: 'Va', description: 'Plate Voltage' },
             constantParams: [
-                { name: 'es', symbol: 'Vs', description: 'Screen Grid Voltage', defaultValue: 100 },
-                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 0 }
+                { name: 'es', symbol: 'Vs', description: 'Screen Grid Voltage', defaultValue: 100 }
             ]
         },
         'IPIS_VS_VG_VA_VH': {
@@ -136,8 +176,7 @@ export class UTracerComponent {
             sweptParam: { name: 'es', symbol: 'Vs', description: 'Screen Grid Voltage' },
             seriesParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
             constantParams: [
-                { name: 'ep', symbol: 'Va', description: 'Plate Voltage', defaultValue: 200 },
-                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 0 }
+                { name: 'ep', symbol: 'Va', description: 'Plate Voltage', defaultValue: 200 }
             ]
         },
         'IPIS_VG_VS_VA_VH': {
@@ -148,8 +187,7 @@ export class UTracerComponent {
             sweptParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
             seriesParam: { name: 'es', symbol: 'Vs', description: 'Screen Grid Voltage' },
             constantParams: [
-                { name: 'ep', symbol: 'Va', description: 'Plate Voltage', defaultValue: 200 },
-                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 0 }
+                { name: 'ep', symbol: 'Va', description: 'Plate Voltage', defaultValue: 200 }
             ]
         },
         'IPIS_VA_VS_VG_VH': {
@@ -160,8 +198,7 @@ export class UTracerComponent {
             sweptParam: { name: 'ep', symbol: 'Va', description: 'Plate Voltage' },
             seriesParam: { name: 'es', symbol: 'Vs', description: 'Screen Grid Voltage' },
             constantParams: [
-                { name: 'eg', symbol: 'Vg', description: 'Grid Voltage', defaultValue: -2 },
-                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 0 }
+                { name: 'eg', symbol: 'Vg', description: 'Grid Voltage', defaultValue: -2 }
             ]
         },
         'IPIS_VG_VAVS_VH': {
@@ -172,7 +209,6 @@ export class UTracerComponent {
             sweptParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
             seriesParam: { name: 'ep', symbol: 'Va=Vs', description: 'Plate/Screen Voltage (tied)' },
             constantParams: [
-                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 0 }
             ]
         },
         'IPIS_VAVS_VG_VH': {
@@ -183,7 +219,6 @@ export class UTracerComponent {
             sweptParam: { name: 'ep', symbol: 'Va=Vs', description: 'Plate/Screen Voltage (tied)' },
             seriesParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
             constantParams: [
-                { name: 'eh', symbol: 'Vh', description: 'Heater Voltage', defaultValue: 0 }
             ]
         }
     };
@@ -215,19 +250,12 @@ export class UTracerComponent {
             this.measureIa = this.currentConfig.measuredCurrents.ia;
             this.measureIs = this.currentConfig.measuredCurrents.is;
             // initialize constant values
-            this.constantValues = {};
+            this.constantValues = {
+                eh: this.calculateInitialHeaterVoltage()
+            };
+            // default values for other constant params
             this.currentConfig.constantParams
-                .forEach(param => {
-                    // check for special case of heater voltage
-                    if (param.name === 'eh') {
-                        // set heater voltage from tube data
-                        this.constantValues[param.name] = this.calculateInitialHeaterVoltage();
-                    }
-                    else if (param.defaultValue !== undefined) {
-                        // use default value
-                        this.constantValues[param.name] = param.defaultValue;
-                    }
-                });
+                .forEach(param => this.constantValues[param.name] = param.defaultValue ?? 0);
             // update discrete values
             this.updateDiscreteValuesArray();
             // set default ranges based on swept parameter
@@ -349,90 +377,84 @@ export class UTracerComponent {
         this.constantValues[paramName] = value;
     }
 
-    startMeasurement() {
-        // Validate that measurement type is selected
-        if (!this.currentConfig) {
-            return;
-        }
+    async checkProgress(signal: AbortSignal): Promise<void> {
+        // check for abort signal
+        return signal.aborted ? Promise.reject(signal.reason || 'Stopped') : Promise.resolve();
+    }
 
-        // Start heating process
-        this.measurementState = 'heating';
-        this.heatingProgress = 0;
-        this.isImporting = true;
-
-        // TODO: Send heating command via serial port
-        console.log('Sending heating command to uTracer...');
-
-        // Simulate heating progress (10 seconds)
-        const startTime = Date.now();
-        this.heatingInterval = setInterval(() => {
-            const elapsed = (Date.now() - startTime) / 1000;
-            this.heatingProgress = Math.min((elapsed / this.heatingTimeSeconds) * 100, 100);
-
-            if (this.heatingProgress >= 100) {
-                this.completeHeating();
+    async startMeasurement(): Promise<void> {
+        try {
+            // validate that measurement type is selected
+            if (!this.currentConfig)
+                return;
+            // check state
+            if (this.measurementState !== 'idle')
+                return;
+            // state
+            this.heatingProgress = 0;
+            this.measurementState = 'heating';
+            this.abortController = new AbortController();
+            // signal
+            const signal = this.abortController.signal;
+            // reset uTracer
+            await this.uTracerService.start(0, 0, 0, 0);
+            // check progress
+            await this.checkProgress(signal);
+            // ping uTracer, read data
+            const response: UTracerResponse = await this.uTracerService.ping();
+            // check progress
+            await this.checkProgress(signal);
+            // heater value
+            const eh = this.constantValues['eh'] || 0;
+            // use 15 steps in the heating process (10s ramp up + 5s hold)
+            for (let it = 1; it <= 15; it++) {
+                // voltage at iteration
+                const voltage = Math.min((eh * it) / 10, eh);
+                // send utracer command
+                await this.uTracerService.setHeaterVoltage(voltage, response.powerSupplyVoltage);
+                // check progress
+                await this.checkProgress(signal);
+                // update progress
+                this.heatingProgress = (it / 15) * 100;
+                // wait 1 second between steps
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                // check progress
+                await this.checkProgress(signal);
             }
-        }, 100); // Update every 100ms for smooth progress
-    }
-
-    private completeHeating() {
-        if (this.heatingInterval) {
-            clearInterval(this.heatingInterval);
-            this.heatingInterval = null;
+            // update state
+            this.measurementState = 'ready';
         }
-        this.heatingProgress = 100;
-        this.measurementState = 'ready';
-        console.log('Heating complete. Ready to measure.');
+        catch (error) {
+            try {
+                // shutdown heater
+                await this.uTracerService.setHeaterVoltage(0, 0);
+            }
+            catch (error) {
+                // ignore errors, only log in console
+                console.error('Failed to shut down heater: ', error);
+                // show user message
+                this.toast.error('Failed to shut down heater after error');
+            }
+            // reset state
+            this.measurementState = 'idle';
+            this.abortController = null;
+            // show user message
+            this.toast.warning(typeof error === 'string' ? error : 'Stopped');
+        }
     }
 
-    measureData() {
+    async measureData() {
         if (this.measurementState !== 'ready') {
             return;
         }
 
-        this.measurementState = 'measuring';
-
-        // TODO: Send measurement commands via serial port
-        console.log('Starting measurement with config:', {
-            type: this.currentConfig?.type,
-            sweptMin: this.sweptMin,
-            sweptMax: this.sweptMax,
-            sweptSteps: this.sweptSteps,
-            sweptLogarithmic: this.sweptLogarithmic,
-            discreteValues: this.discreteValuesArray,
-            constantValues: this.constantValues,
-            measureIa: this.measureIa,
-            measureIs: this.measureIs
-        });
-
-        // For now, simulate measurement completion after a short delay
-        setTimeout(() => {
-            console.log('Measurement complete (simulated)');
-            this.resetMeasurement();
-        }, 3000);
     }
 
     abortMeasurement() {
-        // Stop heating if in progress
-        if (this.heatingInterval) {
-            clearInterval(this.heatingInterval);
-            this.heatingInterval = null;
-        }
-
-        // TODO: Send abort command via serial port
-        console.log('Aborting measurement...');
-
-        this.resetMeasurement();
-    }
-
-    private resetMeasurement() {
-        this.measurementState = 'idle';
-        this.heatingProgress = 0;
-        this.isImporting = false;
-
-        if (this.heatingInterval) {
-            clearInterval(this.heatingInterval);
-            this.heatingInterval = null;
+        // check we can abort measurement
+        if (this.abortController != null) {
+            // indicate stop
+            this.abortController.abort('Cancelled by user');
         }
     }
 
@@ -448,26 +470,33 @@ export class UTracerComponent {
         this.closed.emit();
     }
 
-    cancel() {
-        this.close();
-    }
-
-    async testPing(): Promise<void> {
-        this.isPinging = true;
-        this.pingStatus = 'Pinging uTracer...';
+    async cancel(): Promise<void> {
+        // check current state, this is only called if ready
+        if (this.measurementState !== 'ready')
+            return;
 
         try {
-            await this.serialService.ping();
-            this.pingStatus = 'Ping successful! ✓';
-            setTimeout(() => {
-                this.pingStatus = '';
-            }, 3000);
+            // heater is on, shut it down
+            await this.uTracerService.setHeaterVoltage(0, 0);
         }
         catch (error) {
-            this.pingStatus = `Ping failed: ${error}`;
+            // ignore errors, only log in console
+            console.error('Failed to shut down heater: ', error);
+            // show user message
+            this.toast.error('Failed to shut down heater after cancel');
         }
         finally {
-            this.isPinging = false;
+            // nothing is running at the moment, just reset state
+            this.measurementState = 'idle';
+            this.abortController = null;
         }
+    }
+
+    showSetup() {
+        this.showSetupModal = true;
+    }
+
+    closeSetup() {
+        this.showSetupModal = false;
     }
 }

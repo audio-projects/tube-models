@@ -22,7 +22,6 @@ export interface SerialPort {
     readonly writable: WritableStream<Uint8Array> | null;
     open(options: SerialOptions): Promise<void>;
     close(): Promise<void>;
-    getInfo(): SerialPortInfo;
 }
 
 export interface Serial extends EventTarget {

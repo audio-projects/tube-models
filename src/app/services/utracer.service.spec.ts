@@ -1,19 +1,19 @@
 import { TestBed } from '@angular/core/testing';
-import { SerialService } from './serial.service';
+import { UTracerService } from './utracer.service';
 import type { SerialPort } from './serial.types';
 
-describe('SerialService', () => {
+describe('UTracerService', () => {
 
-    let service: SerialService;
+    let service: UTracerService;
     let mockPort: jasmine.SpyObj<SerialPort>;
     let mockReader: jasmine.SpyObj<ReadableStreamDefaultReader<Uint8Array>>;
     let mockWriter: jasmine.SpyObj<WritableStreamDefaultWriter<Uint8Array>>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [SerialService]
+            providers: [UTracerService]
         });
-        service = TestBed.inject(SerialService);
+        service = TestBed.inject(UTracerService);
         mockReader = jasmine.createSpyObj('ReadableStreamDefaultReader', ['read', 'cancel']);
         mockWriter = jasmine.createSpyObj('WritableStreamDefaultWriter', ['write', 'close']);
         mockPort = jasmine.createSpyObj('SerialPort', ['open', 'close', 'getInfo'], {
@@ -54,7 +54,7 @@ describe('SerialService', () => {
         it('should return true when connected', async () => {
             mockPort.open.and.returnValue(Promise.resolve());
             spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
-            await service.requestPort();
+            await service.connect();
             expect(service.isConnected()).toBe(true);
         });
 
@@ -64,27 +64,27 @@ describe('SerialService', () => {
             mockReader.cancel.and.returnValue(Promise.resolve());
             mockWriter.close.and.returnValue(Promise.resolve());
             spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
-            await service.requestPort();
+            await service.connect();
             expect(service.isConnected()).toBe(true);
             await service.disconnect();
         });
     });
 
-    describe('requestPort', () => {
+    describe('connect', () => {
         it('should reject if Web Serial API is not supported', async () => {
             // arrange
             spyOn(service, 'isSupported').and.returnValue(false);
             // act + assert
-            await expectAsync(service.requestPort()).toBeRejectedWithError('Web Serial API is not supported in this browser');
+            await expectAsync(service.connect()).toBeRejectedWithError('Web Serial API is not supported in this browser');
         });
 
         it('should reject if already connected', async () => {
             // arrange
             mockPort.open.and.returnValue(Promise.resolve());
             spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
-            await service.requestPort();
+            await service.connect();
             // act + assert
-            await expectAsync(service.requestPort()).toBeRejectedWithError('A serial port is already connected. Disconnect first.');
+            await expectAsync(service.connect()).toBeRejectedWithError('A serial port is already connected. Disconnect first.');
         });
 
         it('should request port from user', async () => {
@@ -92,7 +92,7 @@ describe('SerialService', () => {
             mockPort.open.and.returnValue(Promise.resolve());
             const requestSpy = spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
             // act
-            await service.requestPort();
+            await service.connect();
             // assert
             expect(requestSpy).toHaveBeenCalled();
         });
@@ -102,7 +102,7 @@ describe('SerialService', () => {
             mockPort.open.and.returnValue(Promise.resolve());
             spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
             // act
-            await service.requestPort();
+            await service.connect();
             // assert
             expect(mockPort.open).toHaveBeenCalledWith(jasmine.objectContaining({ baudRate: 9600 }));
         });
@@ -112,7 +112,7 @@ describe('SerialService', () => {
             mockPort.open.and.returnValue(Promise.resolve());
             spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
             // act
-            await service.requestPort();
+            await service.connect();
             // assert
             expect(mockPort.open).toHaveBeenCalledWith(jasmine.objectContaining({ dataBits: 8 }));
         });
@@ -122,7 +122,7 @@ describe('SerialService', () => {
             mockPort.open.and.returnValue(Promise.resolve());
             spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
             // act
-            await service.requestPort();
+            await service.connect();
             // assert
             expect(mockPort.open).toHaveBeenCalledWith(jasmine.objectContaining({ stopBits: 1 }));
         });
@@ -132,7 +132,7 @@ describe('SerialService', () => {
             mockPort.open.and.returnValue(Promise.resolve());
             spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
             // act
-            await service.requestPort();
+            await service.connect();
             // assert
             expect(mockPort.open).toHaveBeenCalledWith(jasmine.objectContaining({ parity: 'none' }));
         });
@@ -142,7 +142,7 @@ describe('SerialService', () => {
             mockPort.open.and.returnValue(Promise.resolve());
             spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
             // act
-            await service.requestPort();
+            await service.connect();
             // assert
             expect(mockPort.open).toHaveBeenCalledWith({baudRate: 9600, dataBits: 8, stopBits: 1, parity: 'none', bufferSize: 255, flowControl: 'none'});
         });
@@ -152,7 +152,7 @@ describe('SerialService', () => {
             mockPort.open.and.returnValue(Promise.resolve());
             spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
             // act
-            await service.requestPort();
+            await service.connect();
             // assert
             expect(service.isConnected()).toBe(true);
         });
@@ -162,7 +162,7 @@ describe('SerialService', () => {
             mockPort.open.and.returnValue(Promise.resolve());
             spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
             // act
-            await service.requestPort();
+            await service.connect();
             // assert
             expect(service.isConnected()).toBe(true);
         });
@@ -173,7 +173,7 @@ describe('SerialService', () => {
             mockPort.open.and.returnValue(Promise.reject(error));
             spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
             // act + assert
-            await expectAsync(service.requestPort()).toBeRejectedWithError(/Failed to connect to serial port/);
+            await expectAsync(service.connect()).toBeRejectedWithError(/Failed to connect to serial port/);
         });
 
         it('should cleanup port on connection failure', async () => {
@@ -183,7 +183,7 @@ describe('SerialService', () => {
             spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
             // act
             try {
-                await service.requestPort();
+                await service.connect();
             }
             catch {
                 // Expected to fail
@@ -206,7 +206,7 @@ describe('SerialService', () => {
             mockWriter.close.and.returnValue(Promise.resolve());
             mockPort.close.and.returnValue(Promise.resolve());
             spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
-            await service.requestPort();
+            await service.connect();
             // act
             await service.disconnect();
             // assert
@@ -220,7 +220,7 @@ describe('SerialService', () => {
             mockWriter.close.and.returnValue(Promise.resolve());
             mockPort.close.and.returnValue(Promise.resolve());
             spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
-            await service.requestPort();
+            await service.connect();
             // act
             await service.disconnect();
             // assert
@@ -234,7 +234,7 @@ describe('SerialService', () => {
             mockWriter.close.and.returnValue(Promise.resolve());
             mockPort.close.and.returnValue(Promise.resolve());
             spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
-            await service.requestPort();
+            await service.connect();
             // act
             await service.disconnect();
             // assert
@@ -248,7 +248,7 @@ describe('SerialService', () => {
             mockWriter.close.and.returnValue(Promise.resolve());
             mockPort.close.and.returnValue(Promise.resolve());
             spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
-            await service.requestPort();
+            await service.connect();
             expect(service.isConnected()).toBe(true);
             // act
             await service.disconnect();
@@ -261,7 +261,7 @@ describe('SerialService', () => {
             mockPort.open.and.returnValue(Promise.resolve());
             mockReader.cancel.and.returnValue(Promise.reject(new Error('Cancel failed')));
             spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
-            await service.requestPort();
+            await service.connect();
             // act + assert
             await expectAsync(service.disconnect()).toBeRejectedWithError(/Failed to disconnect/);
         });
@@ -271,7 +271,7 @@ describe('SerialService', () => {
         beforeEach(async () => {
             mockPort.open.and.returnValue(Promise.resolve());
             spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
-            await service.requestPort();
+            await service.connect();
         });
 
         it('should send exact abort command bytes [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]', async () => {
@@ -329,7 +329,7 @@ describe('SerialService', () => {
         beforeEach(async () => {
             mockPort.open.and.returnValue(Promise.resolve());
             spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
-            await service.requestPort();
+            await service.connect();
         });
 
         it('should send exact end command bytes [0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]', async () => {
@@ -387,7 +387,7 @@ describe('SerialService', () => {
         beforeEach(async () => {
             mockPort.open.and.returnValue(Promise.resolve());
             spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
-            await service.requestPort();
+            await service.connect();
         });
 
         it('should send exact ping command bytes [0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]', async () => {
@@ -445,7 +445,7 @@ describe('SerialService', () => {
         beforeEach(async () => {
             mockPort.open.and.returnValue(Promise.resolve());
             spyOn(navigator.serial, 'requestPort').and.returnValue(Promise.resolve(mockPort));
-            await service.requestPort();
+            await service.connect();
         });
 
         it('should send exact command format [0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, high_byte, low_byte]', async () => {

@@ -1,19 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UTracerComponent } from './utracer.component';
-import { SerialService } from '../services/serial.service';
+import { UTracerService } from '../services/utracer.service';
 
 describe('UTracerComponent', () => {
     let component: UTracerComponent;
     let fixture: ComponentFixture<UTracerComponent>;
-    let mockSerialService: jasmine.SpyObj<SerialService>;
+    let mockUTracerService: jasmine.SpyObj<UTracerService>;
 
     beforeEach(async () => {
-        mockSerialService = jasmine.createSpyObj('SerialService', ['isConnected', 'disconnect']);
+        mockUTracerService = jasmine.createSpyObj('UTracerService', ['isConnected', 'disconnect']);
 
         await TestBed.configureTestingModule({
             imports: [UTracerComponent],
             providers: [
-                { provide: SerialService, useValue: mockSerialService }
+                { provide: UTracerService, useValue: mockUTracerService }
             ]
         }).compileComponents();
 

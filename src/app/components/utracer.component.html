@@ -186,32 +186,132 @@
                       <i class="bi bi-lock-fill me-2"></i>Constant Values
                     </h6>
 
-                    <!-- Dynamic Constant Parameters -->
-                    @for (param of currentConfig.constantParams; track param.name) {
-                      <div class="form-group parameter-group constant-group">
-                        <label class="form-label parameter-label">
-                        <span class="param-name">{{ param.symbol }}</span>
-                        <span class="param-description">{{ param.description }}</span>
+                    <div class="form-group parameter-group constant-group">
+                      <label class="form-label parameter-label">
+                        <span class="param-name">Vh</span>
+                        <span class="param-description">Heater Voltage</span>
                         <span class="badge bg-secondary ms-auto">Constant</span>
                       </label>
-                      
+                    
                       <div class="row g-2">
                         <div class="col-12">
-                          <label [attr.for]="'const_' + param.name" class="form-label-sm">Voltage (V)</label>
+                          <label attr="const_eh" class="form-label-sm">Voltage (V)</label>
                           <div class="input-group input-group-sm">
                             <input 
                               type="number" 
-                              [id]="'const_' + param.name"
+                              id="const_eh"
                               class="form-control"
-                              [(ngModel)]="constantValues[param.name]"
+                              [(ngModel)]="constantValues['eh']"
                               step="0.1"
-                              [disabled]="isImporting">
+                              [disabled]="measurementState !== 'idle'">
                             <span class="input-group-text">V</span>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    <!-- Dynamic Constant Parameters -->
+                    @for (param of currentConfig.constantParams; track param.name) {
+                      <div class="form-group parameter-group constant-group">
+                        <label class="form-label parameter-label">
+                          <span class="param-name">{{ param.symbol }}</span>
+                          <span class="param-description">{{ param.description }}</span>
+                          <span class="badge bg-secondary ms-auto">Constant</span>
+                        </label>
+                      
+                        <div class="row g-2">
+                          <div class="col-12">
+                            <label [attr.for]="'const_' + param.name" class="form-label-sm">Voltage (V)</label>
+                            <div class="input-group input-group-sm">
+                              <input 
+                                type="number" 
+                                [id]="'const_' + param.name"
+                                class="form-control"
+                                [(ngModel)]="constantValues[param.name]"
+                                step="0.1"
+                                [disabled]="isImporting">
+                              <span class="input-group-text">V</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     }
+
+                  </div>
+
+                  <!-- Measurement Settings Section -->
+                  <div class="settings-section">
+                    <h6 class="subsection-title">
+                      <i class="bi bi-gear-fill me-2"></i>Measurement Settings
+                    </h6>
+
+                    <!-- Compliance -->
+                    <div class="form-group parameter-group">
+                      <label for="compliance" class="form-label parameter-label">
+                        <span class="param-name">Compliance</span>
+                        <span class="param-description">Maximum allowed current</span>
+                      </label>
+                      <select 
+                        id="compliance" 
+                        class="form-select form-select-sm"
+                        [(ngModel)]="compliance"
+                        [disabled]="isImporting">
+                        @for (option of complianceOptions; track option.value) {
+                          <option [value]="option.value">{{ option.label }}</option>
+                        }
+                      </select>
+                    </div>
+
+                    <!-- Average -->
+                    <div class="form-group parameter-group">
+                      <label for="average" class="form-label parameter-label">
+                        <span class="param-name">Average</span>
+                        <span class="param-description">Number of measurements to average</span>
+                      </label>
+                      <select 
+                        id="average" 
+                        class="form-select form-select-sm"
+                        [(ngModel)]="average"
+                        [disabled]="isImporting">
+                        @for (option of averageOptions; track option.value) {
+                          <option [value]="option.value">{{ option.label }}</option>
+                        }
+                      </select>
+                    </div>
+
+                    <!-- Ia Range -->
+                    <div class="form-group parameter-group">
+                      <label for="iaRange" class="form-label parameter-label">
+                        <span class="param-name">Ia Range</span>
+                        <span class="param-description">Plate current measurement range</span>
+                      </label>
+                      <select 
+                        id="iaRange" 
+                        class="form-select form-select-sm"
+                        [(ngModel)]="iaRange"
+                        [disabled]="isImporting">
+                        @for (option of rangeOptions; track option) {
+                          <option [value]="option">{{ option }}</option>
+                        }
+                      </select>
+                    </div>
+
+                    <!-- Is Range -->
+                    <div class="form-group parameter-group">
+                      <label for="isRange" class="form-label parameter-label">
+                        <span class="param-name">Is Range</span>
+                        <span class="param-description">Screen current measurement range</span>
+                      </label>
+                      <select 
+                        id="isRange" 
+                        class="form-select form-select-sm"
+                        [(ngModel)]="isRange"
+                        [disabled]="isImporting">
+                        @for (option of rangeOptions; track option) {
+                          <option [value]="option">{{ option }}</option>
+                        }
+                      </select>
+                    </div>
 
                   </div>
 
@@ -260,9 +360,6 @@
                         {{ heatingProgress.toFixed(0) }}%
                       </div>
                     </div>
-                    <small class="text-muted d-block text-center mt-2">
-                      Estimated time: {{ heatingTimeSeconds }} seconds
-                    </small>
                   </div>
                 }
 
@@ -303,26 +400,20 @@
 
       <!-- Footer -->
       <div class="modal-footer">
+        <!-- Setup button - bottom-left corner -->
+        <button 
+          type="button" 
+          class="btn btn-outline-secondary btn-sm me-auto" 
+          (click)="showSetup()">
+          <i class="bi bi-gear me-1"></i>
+          Setup
+        </button>
+
         <!-- Ping status message -->
         @if (pingStatus) {
-          <div class="me-auto text-muted small">
+          <div class="text-muted small">
             {{ pingStatus }}
           </div>
-        }
-
-        <!-- Ping Test button - always shown when idle -->
-        @if (measurementState === 'idle') {
-          <button 
-            type="button" 
-            class="btn btn-outline-primary btn-sm" 
-            (click)="testPing()"
-            [disabled]="isPinging">
-            <i class="bi bi-broadcast me-1"></i>
-            @if (isPinging) {
-              <span class="spinner-border spinner-border-sm me-1"></span>
-            }
-            Test Connection
-          </button>
         }
 
         <!-- Abort button - shown during heating or measuring -->
@@ -336,8 +427,8 @@
           </button>
         }
 
-        <!-- Cancel button - shown when idle or ready -->
-        @if (measurementState === 'idle' || measurementState === 'ready') {
+        <!-- Cancel button - shown when ready -->
+        @if (measurementState === 'ready') {
           <button 
             type="button" 
             class="btn btn-secondary" 
@@ -373,3 +464,8 @@
     </div>
   </div>
 </div>
+
+<!-- uTracer Setup Modal -->
+@if (showSetupModal) {
+  <app-utracer-setup (closed)="closeSetup()"></app-utracer-setup>
+}
