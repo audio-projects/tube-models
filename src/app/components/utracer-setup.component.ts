@@ -29,6 +29,10 @@ export class UTracerSetupComponent implements OnInit {
     plateCurrentGain!: number;
     screenCurrentGain!: number;
     powerSupplyVoltageFactor!: number;
+    saturationVoltageFactor!: number;
+    grid40VoltVoltageFactor!: number;
+    grid4VoltVoltageFactor!: number;
+    gridSaturationVoltageFactor!: number;
 
     // read values
     plateVoltage: number | null = null;
@@ -46,6 +50,10 @@ export class UTracerSetupComponent implements OnInit {
         this.plateCurrentGain = this.uTracerService.plateCurrentGain;
         this.screenCurrentGain = this.uTracerService.screenCurrentGain;
         this.powerSupplyVoltageFactor = this.uTracerService.powerSupplyVoltageFactor;
+        this.saturationVoltageFactor = this.uTracerService.saturationVoltageFactor;
+        this.grid40VoltVoltageFactor = this.uTracerService.grid40VoltVoltageFactor;
+        this.grid4VoltVoltageFactor = this.uTracerService.grid4VoltVoltageFactor;
+        this.gridSaturationVoltageFactor = this.uTracerService.gridSaturationVoltageFactor;
     }
 
     onVersionChange() {
@@ -68,8 +76,25 @@ export class UTracerSetupComponent implements OnInit {
         this.uTracerService.screenCurrentGain = this.screenCurrentGain;
     }
 
+
     onPowerSupplyVoltageFactorChange() {
         this.uTracerService.powerSupplyVoltageFactor = this.powerSupplyVoltageFactor;
+    }
+
+    onSaturationVoltageFactorChange() {
+        this.uTracerService.saturationVoltageFactor = this.saturationVoltageFactor;
+    }
+
+    onGrid40VoltVoltageFactorChange() {
+        this.uTracerService.grid40VoltVoltageFactor = this.grid40VoltVoltageFactor;
+    }
+
+    onGrid4VoltVoltageFactorChange() {
+        this.uTracerService.grid4VoltVoltageFactor = this.grid4VoltVoltageFactor;
+    }
+
+    onGridSaturationVoltageFactorChange() {
+        this.uTracerService.gridSaturationVoltageFactor = this.gridSaturationVoltageFactor;
     }
 
     async read() {

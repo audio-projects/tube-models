@@ -20,6 +20,8 @@ export type Compliance = 200 | 175 | 150 | 125 | 100 | 75 | 50 | 25 | 0;
 
 export type Averaging = 0 | 2 | 4 | 8 | 16 | 32 | 0x40;
 
+export type CurrentGain = 0x00 | 0x01 | 0x02 | 0x03 | 0x04 | 0x05 | 0x06 | 0x07 | 0x08;
+
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
@@ -45,6 +47,11 @@ export class UTracerService {
     private _plateCurrentGain = this.settingsService.get<number>('utracer.calibration.plateCurrentGain') ?? 1.0;
     private _screenCurrentGain = this.settingsService.get<number>('utracer.calibration.screenCurrentGain') ?? 1.0;
     private _powerSupplyVoltageFactor = this.settingsService.get<number>('utracer.calibration.powerSupplyVoltageFactor') ?? 1.0;
+    private _saturationVoltageFactor = this.settingsService.get<number>('utracer.calibration.saturationVoltageFactor') ?? 1.0;
+    private _grid40VoltVoltageFactor = this.settingsService.get<number>('utracer.calibration.grid40VoltVoltageFactor') ?? 1.0;
+    private _grid4VoltVoltageFactor = this.settingsService.get<number>('utracer.calibration.grid4VoltVoltageFactor') ?? 1.0;
+    private _gridSaturationVoltageFactor = this.settingsService.get<number>('utracer.calibration.gridSaturationVoltageFactor') ?? 1.0;
+
 
     get hardwareVersion(): string {
         return this._hardwareVersion;
@@ -104,6 +111,46 @@ export class UTracerService {
         // set and persist value
         this._powerSupplyVoltageFactor = value;
         this.settingsService.set('utracer.calibration.powerSupplyVoltageFactor', value);
+    }
+
+    get saturationVoltageFactor(): number {
+        return this._saturationVoltageFactor;
+    }
+
+    set saturationVoltageFactor(value: number) {
+        // set and persist value
+        this._saturationVoltageFactor = value;
+        this.settingsService.set('utracer.calibration.saturationVoltageFactor', value);
+    }
+
+    get grid40VoltVoltageFactor(): number {
+        return this._grid40VoltVoltageFactor;
+    }
+
+    set grid40VoltVoltageFactor(value: number) {
+        // set and persist value
+        this._grid40VoltVoltageFactor = value;
+        this.settingsService.set('utracer.calibration.grid40VoltVoltageFactor', value);
+    }
+
+    get grid4VoltVoltageFactor(): number {
+        return this._grid4VoltVoltageFactor;
+    }
+
+    set grid4VoltVoltageFactor(value: number) {
+        // set and persist value
+        this._grid4VoltVoltageFactor = value;
+        this.settingsService.set('utracer.calibration.grid4VoltVoltageFactor', value);
+    }
+
+    get gridSaturationVoltageFactor(): number {
+        return this._gridSaturationVoltageFactor;
+    }
+
+    set gridSaturationVoltageFactor(value: number) {
+        // set and persist value
+        this._gridSaturationVoltageFactor = value;
+        this.settingsService.set('utracer.calibration.gridSaturationVoltageFactor', value);
     }
 
     /**
@@ -245,6 +292,21 @@ export class UTracerService {
         return await this.sendCommandWithResponse(command);
     }
 
+    private calculatePlateBytes(plateVoltage: number): [number, number] {
+        // bytes
+        return this.valueTo10BitBytes(0);
+    }
+
+    private calculateScreenBytes(screenVoltage: number): [number, number] {
+        // bytes
+        return this.valueTo10BitBytes(0);
+    }
+
+    private calculateGridBytes(gridVoltage: number): [number, number] {
+        // bytes
+        return this.valueTo10BitBytes(0);
+    }
+
     private calculateHeaterBytes(heaterVoltage: number, powerSupplyVoltage: number): [number, number] {
         // prevent division by zero
         if (powerSupplyVoltage <= 0)
@@ -279,14 +341,14 @@ export class UTracerService {
      *
      * @param compliance Maximum allowed current (compliance limit)
      * @param averaging Number of measurements to average
-     * @param screenGain Screen grid gain setting
      * @param plateGain Plate (anode) gain setting
+     * @param screenGain Screen grid gain setting
      * @returns Promise that resolves when measurement sequence is started
      * @throws Error if not connected or command fails
      */
-    async start(compliance: Compliance = 0, averaging: Averaging = 0x40, screenGain: number, plateGain: number): Promise<void> {
+    async start(compliance: Compliance = 0, averaging: Averaging = 0x40, plateGain: CurrentGain = 0x08, screenGain: CurrentGain = 0x08): Promise<void> {
         // 00 0000 0000 (compliance, 1 byte) (averaging, 1 byte) (screen gain, 1 byte) (plate gain, 1 byte)
-        const command = new Uint8Array([0x00, 0x00, 0x00, 0x00, 0x00, compliance & 0xFF, averaging & 0xFF, screenGain & 0xFF, plateGain & 0xFF]);
+        const command = new Uint8Array([0x00, 0x00, 0x00, 0x00, 0x00, compliance & 0xFF, averaging & 0xFF, plateGain & 0xFF, screenGain & 0xFF]);
         // send command with echo validation
         await this.sendCommand(command);
     }
@@ -305,7 +367,7 @@ export class UTracerService {
      */
     async set(powerSupplyVoltage: number, plateVoltage: number, screenVoltage: number, gridVoltage: number, heaterVoltage: number): Promise<void> {
         // build command: 20 (plate voltage) (screen voltage) (grid voltage) (heater voltage)
-        const command = new Uint8Array([0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00].concat(this.calculateHeaterBytes(heaterVoltage, powerSupplyVoltage)));
+        const command = new Uint8Array([0x20].concat(...this.calculatePlateBytes(plateVoltage), ...this.calculateScreenBytes(screenVoltage),  ...this.calculateGridBytes(gridVoltage), ...this.calculateHeaterBytes(heaterVoltage, powerSupplyVoltage)));
         // send command with echo validation
         await this.sendCommand(command);
     }
@@ -319,11 +381,11 @@ export class UTracerService {
      * @returns Promise that resolves when measurement is complete
      * @throws Error if not connected or command fails
      */
-    async measure(powerSupplyVoltage: number, _plateVoltage: number, _screenVoltage: number, _gridVoltage: number, heaterVoltage: number): Promise<void> {
-        // build command: 20 (plate voltage) (screen voltage) (grid voltage) (heater voltage)
-        const command = new Uint8Array([0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00].concat(this.calculateHeaterBytes(heaterVoltage, powerSupplyVoltage)));
-        // send command with echo validation
-        await this.sendCommand(command);
+    async measure(powerSupplyVoltage: number, plateVoltage: number, screenVoltage: number, gridVoltage: number, heaterVoltage: number): Promise<UTracerResponse> {
+        // build command: 10 (plate voltage) (screen voltage) (grid voltage) (heater voltage)
+        const command = new Uint8Array([0x10].concat(...this.calculatePlateBytes(plateVoltage), ...this.calculateScreenBytes(screenVoltage),  ...this.calculateGridBytes(gridVoltage), ...this.calculateHeaterBytes(heaterVoltage, powerSupplyVoltage)));
+        // send command
+        return await this.sendCommandWithResponse(command);
     }
 
     /**

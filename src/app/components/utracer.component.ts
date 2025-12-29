@@ -8,11 +8,10 @@ import {
 } from '@angular/core';
 import { File as TubeFile } from '../files';
 import { FormsModule } from '@angular/forms';
-import { Averaging, Compliance, UTracerResponse, UTracerService } from '../services/utracer.service';
+import { Averaging, Compliance, CurrentGain, UTracerResponse, UTracerService } from '../services/utracer.service';
 import { ToastService } from '../services/toast.service';
 import { TubeInformation } from './tube-information';
 import { UTracerSetupComponent } from './utracer-setup.component';
-import { string } from 'mathjs';
 
 interface MeasurementConfig {
     type: string;
@@ -23,12 +22,13 @@ interface MeasurementConfig {
         is: boolean;
     };
     sweptParam: {
-        name: string;
+        name: string[];
         symbol: string;
         description: string;
+        logarithmic: boolean;
     };
     seriesParam: {
-        name: string;
+        name: string[];
         symbol: string;
         description: string;
     };
@@ -56,16 +56,11 @@ export class UTracerComponent {
     private uTracerService = inject(UTracerService);
     private toast = inject(ToastService);
 
-    importStatus = '';
-    isImporting = false;
-    pingStatus = '';
-    isPinging = false;
     showSetupModal = false;
 
     // measurement process state
-    measurementState: 'idle' | 'heating' | 'ready' | 'measuring' = 'idle';
+    state: 'idle' | 'heating' | 'ready' | 'measuring' = 'idle';
     heatingProgress = 0;
-    stop = false;
     abortController: AbortController | null = null;
 
     // Measurement configuration
@@ -86,8 +81,8 @@ export class UTracerComponent {
     // Additional measurement settings
     compliance: Compliance = 200;
     average: Averaging = 0x40;
-    iaRange = 'Automatic';
-    isRange = 'Automatic';
+    plateCurrentGain: CurrentGain = 0x08;
+    screenCurrentGain: CurrentGain = 0x08;
 
     // Dropdown options
     complianceOptions = [
@@ -112,16 +107,16 @@ export class UTracerComponent {
         { label: 'Automatic', value: 0x40 }
     ];
 
-    rangeOptions = [
-        '0-200mA',
-        '0-100mA',
-        '0-40mA',
-        '0-20mA',
-        '0-10mA',
-        '0-5mA',
-        '0-2mA',
-        '0-1mA',
-        'Automatic'
+    currentGainOptions = [
+        { label: '0-200mA', value: 0x07 },
+        { label: '0-100mA', value: 0x06 },
+        { label: '0-50mA', value: 0x05 },
+        { label: '0-20mA', value: 0x04 },
+        { label: '0-10mA', value: 0x03 },
+        { label: '0-5mA', value: 0x02 },
+        { label: '0-2mA', value: 0x01 },
+        { label: '0-1mA', value: 0x00 },
+        { label: 'Automatic', value: 0x08 },
     ];
 
     // Measurement type configurations
@@ -131,8 +126,8 @@ export class UTracerComponent {
             label: 'Ia(Va, Vg) - Plate current vs Plate/Grid voltage (*)',
             category: 'triode',
             measuredCurrents: { ia: true, is: false },
-            sweptParam: { name: 'ep', symbol: 'Va', description: 'Plate Voltage' },
-            seriesParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
+            sweptParam: { name: ['ep'], symbol: 'Va', description: 'Plate Voltage', logarithmic: true },
+            seriesParam: { name: ['eg'], symbol: 'Vg', description: 'Grid Voltage' },
             constantParams: [
             ]
         },
@@ -141,8 +136,8 @@ export class UTracerComponent {
             label: 'Ia(Vg, Va) - Plate current vs Grid/Plate voltage',
             category: 'triode',
             measuredCurrents: { ia: true, is: false },
-            sweptParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
-            seriesParam: { name: 'ep', symbol: 'Va', description: 'Plate Voltage' },
+            sweptParam: { name: ['eg'], symbol: 'Vg', description: 'Grid Voltage', logarithmic: false },
+            seriesParam: { name: ['ep'], symbol: 'Va', description: 'Plate Voltage' },
             constantParams: [
             ]
         },
@@ -151,8 +146,8 @@ export class UTracerComponent {
             label: 'Ia(Va, Vg), Is(Va, Vg) - Plate/Screen current vs Plate/Grid voltage (*)',
             category: 'pentode',
             measuredCurrents: { ia: true, is: true },
-            sweptParam: { name: 'ep', symbol: 'Va', description: 'Plate Voltage' },
-            seriesParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
+            sweptParam: { name: ['ep'], symbol: 'Va', description: 'Plate Voltage', logarithmic: true },
+            seriesParam: { name: ['eg'], symbol: 'Vg', description: 'Grid Voltage' },
             constantParams: [
                 { name: 'es', symbol: 'Vs', description: 'Screen Grid Voltage', defaultValue: 100 }
             ]
@@ -162,8 +157,8 @@ export class UTracerComponent {
             label: 'Ia(Vg, Va), Is(Vg, Va) - Plate/Screen current vs Grid/Plate voltage',
             category: 'pentode',
             measuredCurrents: { ia: true, is: true },
-            sweptParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
-            seriesParam: { name: 'ep', symbol: 'Va', description: 'Plate Voltage' },
+            sweptParam: { name: ['eg'], symbol: 'Vg', description: 'Grid Voltage', logarithmic: false },
+            seriesParam: { name: ['ep'], symbol: 'Va', description: 'Plate Voltage' },
             constantParams: [
                 { name: 'es', symbol: 'Vs', description: 'Screen Grid Voltage', defaultValue: 100 }
             ]
@@ -173,8 +168,8 @@ export class UTracerComponent {
             label: 'Ia(Vs, Vg), Is(Vs, Vg) - Plate/Screen current vs Screen/Grid voltage',
             category: 'pentode',
             measuredCurrents: { ia: true, is: true },
-            sweptParam: { name: 'es', symbol: 'Vs', description: 'Screen Grid Voltage' },
-            seriesParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
+            sweptParam: { name: ['es'], symbol: 'Vs', description: 'Screen Grid Voltage', logarithmic: true },
+            seriesParam: { name: ['eg'], symbol: 'Vg', description: 'Grid Voltage' },
             constantParams: [
                 { name: 'ep', symbol: 'Va', description: 'Plate Voltage', defaultValue: 200 }
             ]
@@ -184,8 +179,8 @@ export class UTracerComponent {
             label: 'Ia(Vg, Vs), Is(Vg, Vs) - Plate/Screen current vs Grid/Screen voltage',
             category: 'pentode',
             measuredCurrents: { ia: true, is: true },
-            sweptParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
-            seriesParam: { name: 'es', symbol: 'Vs', description: 'Screen Grid Voltage' },
+            sweptParam: { name: ['eg'], symbol: 'Vg', description: 'Grid Voltage', logarithmic: false },
+            seriesParam: { name: ['es'], symbol: 'Vs', description: 'Screen Grid Voltage' },
             constantParams: [
                 { name: 'ep', symbol: 'Va', description: 'Plate Voltage', defaultValue: 200 }
             ]
@@ -195,8 +190,8 @@ export class UTracerComponent {
             label: 'Ia(Va, Vs), Is(Va, Vs) - Plate/Screen current vs Plate/Screen voltage',
             category: 'pentode',
             measuredCurrents: { ia: true, is: true },
-            sweptParam: { name: 'ep', symbol: 'Va', description: 'Plate Voltage' },
-            seriesParam: { name: 'es', symbol: 'Vs', description: 'Screen Grid Voltage' },
+            sweptParam: { name: ['ep'], symbol: 'Va', description: 'Plate Voltage', logarithmic: true },
+            seriesParam: { name: ['es'], symbol: 'Vs', description: 'Screen Grid Voltage' },
             constantParams: [
                 { name: 'eg', symbol: 'Vg', description: 'Grid Voltage', defaultValue: -2 }
             ]
@@ -206,8 +201,8 @@ export class UTracerComponent {
             label: 'Ia(Vg, Va=Vs), Is(Vg, Va=Vs) - Plate/Screen tied together (Grid sweep)',
             category: 'special',
             measuredCurrents: { ia: true, is: true },
-            sweptParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
-            seriesParam: { name: 'ep', symbol: 'Va=Vs', description: 'Plate/Screen Voltage (tied)' },
+            sweptParam: { name: ['eg'], symbol: 'Vg', description: 'Grid Voltage', logarithmic: false },
+            seriesParam: { name: ['ep', 'es'], symbol: 'Va=Vs', description: 'Plate/Screen Voltage (tied)' },
             constantParams: [
             ]
         },
@@ -216,8 +211,8 @@ export class UTracerComponent {
             label: 'Ia(Va=Vs, Vg), Is(Va=Vs, Vg) - Plate/Screen tied together (Voltage sweep) (*)',
             category: 'special',
             measuredCurrents: { ia: true, is: true },
-            sweptParam: { name: 'ep', symbol: 'Va=Vs', description: 'Plate/Screen Voltage (tied)' },
-            seriesParam: { name: 'eg', symbol: 'Vg', description: 'Grid Voltage' },
+            sweptParam: { name: ['ep', 'es'], symbol: 'Va=Vs', description: 'Plate/Screen Voltage (tied)', logarithmic: true },
+            seriesParam: { name: ['eg'], symbol: 'Vg', description: 'Grid Voltage' },
             constantParams: [
             ]
         }
@@ -267,6 +262,9 @@ export class UTracerComponent {
         // default
         if (!this.tube)
             return 0;
+        // use previously calculated (or user defined) heater voltage
+        if (this.constantValues['eh'])
+            return this.constantValues['eh'];
         // values from tube data
         const minHeater = this.tube.minimumHeaterVoltage;
         const maxHeater = this.tube.maximumHeaterVoltage;
@@ -289,7 +287,7 @@ export class UTracerComponent {
             return;
         // x axis parameter
         const symbol = this.currentConfig.sweptParam.symbol;
-        // set sensible defaults based on parameter type
+        // set defaults based on parameter type
         if (symbol.includes('Va') && symbol.includes('Vs')) {
             this.sweptMin = 0;
             this.sweptMax = Math.min(this.getMaxVoltageForParameter('Va'), this.getMaxVoltageForParameter('Vs'));
@@ -310,6 +308,8 @@ export class UTracerComponent {
             this.sweptMax = 0;
             this.sweptSteps = 20;
         }
+        // defaults to non-logarithmic
+        this.sweptLogarithmic = this.currentConfig.sweptParam.logarithmic ? this.sweptLogarithmic : false;
         // series parameter
         const series = this.currentConfig.seriesParam.symbol;
         // set default values for series parameter
@@ -373,37 +373,28 @@ export class UTracerComponent {
         this.updateDiscreteValuesArray();
     }
 
-    setConstantValue(paramName: string, value: number) {
-        this.constantValues[paramName] = value;
-    }
-
-    async checkProgress(signal: AbortSignal): Promise<void> {
-        // check for abort signal
-        return signal.aborted ? Promise.reject(signal.reason || 'Stopped') : Promise.resolve();
-    }
-
     async startMeasurement(): Promise<void> {
         try {
             // validate that measurement type is selected
             if (!this.currentConfig)
                 return;
             // check state
-            if (this.measurementState !== 'idle')
+            if (this.state !== 'idle')
                 return;
             // state
             this.heatingProgress = 0;
-            this.measurementState = 'heating';
+            this.state = 'heating';
             this.abortController = new AbortController();
             // signal
             const signal = this.abortController.signal;
             // reset uTracer
             await this.uTracerService.start(0, 0, 0, 0);
             // check progress
-            await this.checkProgress(signal);
+            signal.throwIfAborted();
             // ping uTracer, read data
             const response: UTracerResponse = await this.uTracerService.ping();
             // check progress
-            await this.checkProgress(signal);
+            signal.throwIfAborted();
             // heater value
             const eh = this.constantValues['eh'] || 0;
             // use 15 steps in the heating process (10s ramp up + 5s hold)
@@ -413,41 +404,125 @@ export class UTracerComponent {
                 // send utracer command
                 await this.uTracerService.setHeaterVoltage(voltage, response.powerSupplyVoltage);
                 // check progress
-                await this.checkProgress(signal);
+                signal.throwIfAborted();
                 // update progress
                 this.heatingProgress = (it / 15) * 100;
                 // wait 1 second between steps
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 // check progress
-                await this.checkProgress(signal);
+                signal.throwIfAborted();
             }
             // update state
-            this.measurementState = 'ready';
+            this.state = 'ready';
         }
         catch (error) {
             try {
                 // shutdown heater
                 await this.uTracerService.setHeaterVoltage(0, 0);
             }
-            catch (error) {
+            catch (ex) {
                 // ignore errors, only log in console
-                console.error('Failed to shut down heater: ', error);
+                console.error('Failed to shut down heater: ', ex);
                 // show user message
                 this.toast.error('Failed to shut down heater after error');
             }
             // reset state
-            this.measurementState = 'idle';
-            this.abortController = null;
+            this.state = 'idle';
             // show user message
             this.toast.warning(typeof error === 'string' ? error : 'Stopped');
         }
+        finally {
+            // clear abort controller
+            this.abortController = null;
+        }
+    }
+
+    private createMeasurementPoint(seriesValue: number, sweptValue: number): {eh: number, ep: number, es: number, eg: number} {
+        // point object
+        const point: Record<string, number> = { eh: this.constantValues['eh'] || 0, ep: 0, es: 0, eg: 0 };
+        // loop constants
+        for (const param of this.currentConfig?.constantParams || [])
+            point[param.name] = this.constantValues[param.name] || 0;
+        // set series value
+        for (const name of this.currentConfig?.seriesParam.name || [])
+            point[name] = seriesValue;
+        // set swept value
+        for (const name of this.currentConfig?.sweptParam.name || [])
+            point[name] = sweptValue;
+        // return typed point
+        return point as {eh: number, ep: number, es: number, eg: number};
     }
 
     async measureData() {
-        if (this.measurementState !== 'ready') {
-            return;
+        try {
+            // validate that measurement type is selected
+            if (!this.currentConfig)
+                return;
+            // check state
+            if (this.state !== 'ready')
+                return;
+            // state
+            this.state = 'measuring';
+            this.abortController = new AbortController();
+            // signal
+            const signal = this.abortController.signal;
+            // initialize uTracer
+            await this.uTracerService.start(this.compliance, this.average, this.plateCurrentGain, this.screenCurrentGain);
+            // check progress
+            signal.throwIfAborted();
+            // ping uTracer, read data
+            const pingData: UTracerResponse = await this.uTracerService.ping();
+            // check progress
+            signal.throwIfAborted();
+            // loop series
+            for (const seriesValue of this.discreteValuesArray) {
+                // swept value
+                let sweptValue = this.sweptMin;
+                // loop swept
+                for (let step = 0; step <= this.sweptSteps; step++) {
+                    // create measurement point
+                    const point = this.createMeasurementPoint(seriesValue, sweptValue);
+                    // measure currents at point
+                    await this.uTracerService.measure(pingData.powerSupplyVoltage, point.ep, point.es, point.eg, point.eh);
+                    // increase swept value
+                    if (this.sweptLogarithmic) {
+                        // logarithmic step
+                        const logMin = Math.log10(Math.max(this.sweptMin, 0.1));
+                        const logMax = Math.log10(this.sweptMax);
+                        // increment
+                        const logStep = (logMax - logMin) / this.sweptSteps;
+                        // value
+                        sweptValue = Math.min(Math.pow(10, logMin + logStep * step), this.sweptMax);
+                    }
+                    else {
+                        // linear step
+                        sweptValue = Math.min(this.sweptMin + ((this.sweptMax - this.sweptMin) / this.sweptSteps) * step, this.sweptMax);
+                    }
+                }
+            }
+            // update state
+            this.state = 'ready';
         }
-
+        catch (error) {
+            try {
+                // shutdown heater
+                await this.uTracerService.setHeaterVoltage(0, 0);
+            }
+            catch (ex) {
+                // ignore errors, only log in console
+                console.error('Failed to shut down heater: ', ex);
+                // show user message
+                this.toast.error('Failed to shut down heater after error');
+            }
+            // reset state
+            this.state = 'idle';
+            // show user message
+            this.toast.warning(typeof error === 'string' ? error : 'Stopped');
+        }
+        finally {
+            // clear abort controller
+            this.abortController = null;
+        }
     }
 
     abortMeasurement() {
@@ -463,16 +538,17 @@ export class UTracerComponent {
     }
 
     close() {
-        // Abort measurement if in progress
-        if (this.measurementState !== 'idle') {
-            this.abortMeasurement();
-        }
+        // check current state, this is only called if ready
+        if (this.state !== 'idle')
+            return;
+
+        // emit event
         this.closed.emit();
     }
 
     async cancel(): Promise<void> {
         // check current state, this is only called if ready
-        if (this.measurementState !== 'ready')
+        if (this.state !== 'ready')
             return;
 
         try {
@@ -487,7 +563,7 @@ export class UTracerComponent {
         }
         finally {
             // nothing is running at the moment, just reset state
-            this.measurementState = 'idle';
+            this.state = 'idle';
             this.abortController = null;
         }
     }

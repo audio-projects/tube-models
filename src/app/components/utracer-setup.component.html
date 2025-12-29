@@ -20,7 +20,7 @@
             <option value="3">uTracer 3 (300V)</option>
             <option value="3+">uTracer 3+ (400V)</option>
           </select>
-          <div class="form-text">Select your uTracer hardware version - selecting incorrect version could damage your uTracer</div>
+          <div class="form-text text-danger">Select your uTracer hardware version - selecting incorrect version could damage your uTracer</div>
         </div>
 
         <h6 class="mt-4 mb-3">Calibration</h6>
@@ -38,6 +38,7 @@
             (input)="onPlateVoltageGainChange()"
             [disabled]="isReading">
         </div>
+        <!-- ...existing calibration sliders... -->
 
         <div class="mb-3">
           <label for="screen-voltage-gain" class="form-label">Screen Voltage Gain: {{screenVoltageGain.toFixed(3)}}</label>
@@ -81,6 +82,7 @@
             [disabled]="isReading">
         </div>
 
+
         <div class="mb-3">
           <label for="power-supply-voltage" class="form-label">Power Supply Voltage Factor: {{powerSupplyVoltageFactor.toFixed(3)}}</label>
           <input 
@@ -92,6 +94,62 @@
             step="0.001"
             [(ngModel)]="powerSupplyVoltageFactor" 
             (input)="onPowerSupplyVoltageFactorChange()"
+            [disabled]="isReading">
+        </div>
+
+        <div class="mb-3">
+          <label for="saturation-voltage-factor" class="form-label">Saturation Voltage Factor: {{saturationVoltageFactor.toFixed(3)}}</label>
+          <input 
+            type="range" 
+            class="form-range" 
+            id="saturation-voltage-factor"
+            min="0.9" 
+            max="1.1" 
+            step="0.001"
+            [(ngModel)]="saturationVoltageFactor" 
+            (input)="onSaturationVoltageFactorChange()"
+            [disabled]="isReading">
+        </div>
+
+        <div class="mb-3">
+          <label for="grid40-volt-voltage-factor" class="form-label">Grid 40V Voltage Factor: {{grid40VoltVoltageFactor.toFixed(3)}}</label>
+          <input 
+            type="range" 
+            class="form-range" 
+            id="grid40-volt-voltage-factor"
+            min="0.9" 
+            max="1.1" 
+            step="0.001"
+            [(ngModel)]="grid40VoltVoltageFactor" 
+            (input)="onGrid40VoltVoltageFactorChange()"
+            [disabled]="isReading">
+        </div>
+
+        <div class="mb-3">
+          <label for="grid4-volt-voltage-factor" class="form-label">Grid 4V Voltage Factor: {{grid4VoltVoltageFactor.toFixed(3)}}</label>
+          <input 
+            type="range" 
+            class="form-range" 
+            id="grid4-volt-voltage-factor"
+            min="0.9" 
+            max="1.1" 
+            step="0.001"
+            [(ngModel)]="grid4VoltVoltageFactor" 
+            (input)="onGrid4VoltVoltageFactorChange()"
+            [disabled]="isReading">
+        </div>
+
+        <div class="mb-3">
+          <label for="grid-saturation-voltage-factor" class="form-label">Grid Saturation Voltage Factor: {{gridSaturationVoltageFactor.toFixed(3)}}</label>
+          <input 
+            type="range" 
+            class="form-range" 
+            id="grid-saturation-voltage-factor"
+            min="0.9" 
+            max="1.1" 
+            step="0.001"
+            [(ngModel)]="gridSaturationVoltageFactor" 
+            (input)="onGridSaturationVoltageFactorChange()"
             [disabled]="isReading">
         </div>
 
