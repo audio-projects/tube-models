@@ -8,185 +8,138 @@
         </h5>
         <button type="button" class="btn-close" (click)="close()" [disabled]="isReading" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body" style="padding-bottom: 0;">
         <div class="mb-3">
           <label for="utracer-version" class="form-label">uTracer Version</label>
-          <select 
-            id="utracer-version" 
-            class="form-select" 
-            [(ngModel)]="uTracerVersion" 
-            (change)="onVersionChange()"
+          <select id="utracer-version" class="form-select" [(ngModel)]="uTracerVersion" (change)="onVersionChange()"
             [disabled]="isReading">
             <option value="3">uTracer 3 (300V)</option>
             <option value="3+">uTracer 3+ (400V)</option>
           </select>
-          <div class="form-text text-danger">Select your uTracer hardware version - selecting incorrect version could damage your uTracer</div>
+          <div class="form-text text-danger">Select your uTracer hardware version - selecting incorrect version could
+            damage your uTracer</div>
         </div>
 
-        <h6 class="mt-4 mb-3">Calibration</h6>
-
-        <div class="mb-3">
-          <label for="plate-voltage-gain" class="form-label">Plate Voltage Gain: {{plateVoltageGain.toFixed(3)}}</label>
-          <input 
-            type="range" 
-            class="form-range" 
-            id="plate-voltage-gain"
-            min="0.9" 
-            max="1.1" 
-            step="0.001"
-            [(ngModel)]="plateVoltageGain" 
-            (input)="onPlateVoltageGainChange()"
-            [disabled]="isReading">
-        </div>
-        <!-- ...existing calibration sliders... -->
-
-        <div class="mb-3">
-          <label for="screen-voltage-gain" class="form-label">Screen Voltage Gain: {{screenVoltageGain.toFixed(3)}}</label>
-          <input 
-            type="range" 
-            class="form-range" 
-            id="screen-voltage-gain"
-            min="0.9" 
-            max="1.1" 
-            step="0.001"
-            [(ngModel)]="screenVoltageGain" 
-            (input)="onScreenVoltageGainChange()"
-            [disabled]="isReading">
-        </div>
-
-        <div class="mb-3">
-          <label for="plate-current-gain" class="form-label">Plate Current Gain: {{plateCurrentGain.toFixed(3)}}</label>
-          <input 
-            type="range" 
-            class="form-range" 
-            id="plate-current-gain"
-            min="0.9" 
-            max="1.1" 
-            step="0.001"
-            [(ngModel)]="plateCurrentGain" 
-            (input)="onPlateCurrentGainChange()"
-            [disabled]="isReading">
-        </div>
-
-        <div class="mb-3">
-          <label for="screen-current-gain" class="form-label">Screen Current Gain: {{screenCurrentGain.toFixed(3)}}</label>
-          <input 
-            type="range" 
-            class="form-range" 
-            id="screen-current-gain"
-            min="0.9" 
-            max="1.1" 
-            step="0.001"
-            [(ngModel)]="screenCurrentGain" 
-            (input)="onScreenCurrentGainChange()"
-            [disabled]="isReading">
-        </div>
-
-
-        <div class="mb-3">
-          <label for="power-supply-voltage" class="form-label">Power Supply Voltage Factor: {{powerSupplyVoltageFactor.toFixed(3)}}</label>
-          <input 
-            type="range" 
-            class="form-range" 
-            id="power-supply-voltage-factor"
-            min="0.9" 
-            max="1.1" 
-            step="0.001"
-            [(ngModel)]="powerSupplyVoltageFactor" 
-            (input)="onPowerSupplyVoltageFactorChange()"
-            [disabled]="isReading">
-        </div>
-
-        <div class="mb-3">
-          <label for="saturation-voltage-factor" class="form-label">Saturation Voltage Factor: {{saturationVoltageFactor.toFixed(3)}}</label>
-          <input 
-            type="range" 
-            class="form-range" 
-            id="saturation-voltage-factor"
-            min="0.9" 
-            max="1.1" 
-            step="0.001"
-            [(ngModel)]="saturationVoltageFactor" 
-            (input)="onSaturationVoltageFactorChange()"
-            [disabled]="isReading">
-        </div>
-
-        <div class="mb-3">
-          <label for="grid40-volt-voltage-factor" class="form-label">Grid 40V Voltage Factor: {{grid40VoltVoltageFactor.toFixed(3)}}</label>
-          <input 
-            type="range" 
-            class="form-range" 
-            id="grid40-volt-voltage-factor"
-            min="0.9" 
-            max="1.1" 
-            step="0.001"
-            [(ngModel)]="grid40VoltVoltageFactor" 
-            (input)="onGrid40VoltVoltageFactorChange()"
-            [disabled]="isReading">
-        </div>
-
-        <div class="mb-3">
-          <label for="grid4-volt-voltage-factor" class="form-label">Grid 4V Voltage Factor: {{grid4VoltVoltageFactor.toFixed(3)}}</label>
-          <input 
-            type="range" 
-            class="form-range" 
-            id="grid4-volt-voltage-factor"
-            min="0.9" 
-            max="1.1" 
-            step="0.001"
-            [(ngModel)]="grid4VoltVoltageFactor" 
-            (input)="onGrid4VoltVoltageFactorChange()"
-            [disabled]="isReading">
-        </div>
-
-        <div class="mb-3">
-          <label for="grid-saturation-voltage-factor" class="form-label">Grid Saturation Voltage Factor: {{gridSaturationVoltageFactor.toFixed(3)}}</label>
-          <input 
-            type="range" 
-            class="form-range" 
-            id="grid-saturation-voltage-factor"
-            min="0.9" 
-            max="1.1" 
-            step="0.001"
-            [(ngModel)]="gridSaturationVoltageFactor" 
-            (input)="onGridSaturationVoltageFactorChange()"
-            [disabled]="isReading">
-        </div>
-
-        @if (plateVoltage !== null) {
-          <h6 class="mt-4 mb-3">Read Values</h6>
-          <div class="table-responsive">
-            <table class="table table-sm table-bordered">
-              <thead>
-                <tr>
-                  <th class="text-center w-12p">Ia (mA)</th>
-                  <th class="text-center w-12p">Ia comp (mA)</th>
-                  <th class="text-center w-12p">Is (mA)</th>
-                  <th class="text-center w-12p">Is comp (mA)</th>
-                  <th class="text-center w-12p">Va (V)</th>
-                  <th class="text-center w-12p">Vs (V)</th>
-                  <th class="text-center w-12p">Vpower (V)</th>
-                  <th class="text-center w-12p">Vneg (V)</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="text-center w-12p">{{plateCurrentAfterPGA?.toFixed(3)}}</td>
-                  <td class="text-center w-12p">{{(plateCurrentAfterPGA! * plateCurrentGain).toFixed(3)}}</td>
-                  <td class="text-center w-12p">{{screenCurrentAfterPGA?.toFixed(3)}}</td>
-                  <td class="text-center w-12p">{{(screenCurrentAfterPGA! * screenCurrentGain).toFixed(3)}}</td>
-                  <td class="text-center w-12p">{{plateVoltage?.toFixed(3)}}</td>
-                  <td class="text-center w-12p">{{screenVoltage?.toFixed(3)}}</td>
-                  <td class="text-center w-12p">{{powerSupplyVoltage?.toFixed(3)}}</td>
-                  <td class="text-center w-12p">{{negativeVoltage?.toFixed(3)}}</td>
-                </tr>
-              </tbody>
-            </table>
+        <div style="max-height: 45vh; overflow-y: auto;">
+          <h6 class="mt-4 mb-3">Calibration</h6>
+          <div class="mb-3">
+            <label for="plate-voltage-gain" class="form-label">Plate Voltage Gain:
+              {{plateVoltageGain.toFixed(3)}}</label>
+            <input type="range" class="form-range" id="plate-voltage-gain" min="0.9" max="1.1" step="0.001"
+              [(ngModel)]="plateVoltageGain" (input)="onPlateVoltageGainChange()" [disabled]="isReading">
           </div>
+          <!-- ...existing calibration sliders... -->
+          <div class="mb-3">
+            <label for="screen-voltage-gain" class="form-label">Screen Voltage Gain:
+              {{screenVoltageGain.toFixed(3)}}</label>
+            <input type="range" class="form-range" id="screen-voltage-gain" min="0.9" max="1.1" step="0.001"
+              [(ngModel)]="screenVoltageGain" (input)="onScreenVoltageGainChange()" [disabled]="isReading">
+          </div>
+          <div class="mb-3">
+            <label for="plate-current-gain" class="form-label">Plate Current Gain:
+              {{plateCurrentGain.toFixed(3)}}</label>
+            <input type="range" class="form-range" id="plate-current-gain" min="0.9" max="1.1" step="0.001"
+              [(ngModel)]="plateCurrentGain" (input)="onPlateCurrentGainChange()" [disabled]="isReading">
+          </div>
+          <div class="mb-3">
+            <label for="screen-current-gain" class="form-label">Screen Current Gain:
+              {{screenCurrentGain.toFixed(3)}}</label>
+            <input type="range" class="form-range" id="screen-current-gain" min="0.9" max="1.1" step="0.001"
+              [(ngModel)]="screenCurrentGain" (input)="onScreenCurrentGainChange()" [disabled]="isReading">
+          </div>
+          <div class="mb-3">
+            <label for="power-supply-voltage" class="form-label">Power Supply Voltage Factor:
+              {{powerSupplyVoltageFactor.toFixed(3)}}</label>
+            <input type="range" class="form-range" id="power-supply-voltage-factor" min="0.9" max="1.1" step="0.001"
+              [(ngModel)]="powerSupplyVoltageFactor" (input)="onPowerSupplyVoltageFactorChange()"
+              [disabled]="isReading">
+          </div>
+          <div class="mb-3">
+            <label for="saturation-voltage-factor" class="form-label">Saturation Voltage Factor:
+              {{saturationVoltageFactor.toFixed(3)}}</label>
+            <input type="range" class="form-range" id="saturation-voltage-factor" min="0.9" max="1.1" step="0.001"
+              [(ngModel)]="saturationVoltageFactor" (input)="onSaturationVoltageFactorChange()" [disabled]="isReading">
+          </div>
+          <div class="mb-3">
+            <label for="grid40-volt-voltage-factor" class="form-label">Grid 40V Voltage Factor:
+              {{grid40VoltVoltageFactor.toFixed(3)}}</label>
+            <input type="range" class="form-range" id="grid40-volt-voltage-factor" min="0.9" max="1.1" step="0.001"
+              [(ngModel)]="grid40VoltVoltageFactor" (input)="onGrid40VoltVoltageFactorChange()" [disabled]="isReading">
+          </div>
+          <div class="mb-3">
+            <label for="grid4-volt-voltage-factor" class="form-label">Grid 4V Voltage Factor:
+              {{grid4VoltVoltageFactor.toFixed(3)}}</label>
+            <input type="range" class="form-range" id="grid4-volt-voltage-factor" min="0.9" max="1.1" step="0.001"
+              [(ngModel)]="grid4VoltVoltageFactor" (input)="onGrid4VoltVoltageFactorChange()" [disabled]="isReading">
+          </div>
+          <div class="mb-3">
+            <label for="grid-saturation-voltage-factor" class="form-label">Grid Saturation Voltage Factor:
+              {{gridSaturationVoltageFactor.toFixed(3)}}</label>
+            <input type="range" class="form-range" id="grid-saturation-voltage-factor" min="0.9" max="1.1" step="0.001"
+              [(ngModel)]="gridSaturationVoltageFactor" (input)="onGridSaturationVoltageFactorChange()"
+              [disabled]="isReading">
+          </div>
+        </div>
+
+        @if (adcData !== null) {
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered">
+            <thead>
+              <tr>
+                <th class="text-center w-6p"> </th>
+                <th class="text-center w-12p">Ia (mA)</th>
+                <th class="text-center w-12p">Ia comp (mA)</th>
+                <th class="text-center w-12p">Is (mA)</th>
+                <th class="text-center w-12p">Is comp (mA)</th>
+                <th class="text-center w-12p">Va (V)</th>
+                <th class="text-center w-12p">Vs (V)</th>
+                <th class="text-center w-12p">Vpower (V)</th>
+                <th class="text-center w-12p">Vneg (V)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-center w-6p">HEX</td>
+                <td class="text-center w-12p">{{adcData!.plateCurrentRawBytes[0].toString(16).padStart(2, '0').toUpperCase()}}{{adcData!.plateCurrentRawBytes[1].toString(16).padStart(2, '0').toUpperCase()}}</td>
+                <td class="text-center w-12p">{{adcData!.plateCurrentBytes[0].toString(16).padStart(2, '0').toUpperCase()}}{{adcData!.plateCurrentBytes[1].toString(16).padStart(2, '0').toUpperCase()}}</td>
+                <td class="text-center w-12p">{{adcData!.screenCurrentRawBytes[0].toString(16).padStart(2, '0').toUpperCase()}}{{adcData!.screenCurrentRawBytes[1].toString(16).padStart(2, '0').toUpperCase()}}</td>
+                <td class="text-center w-12p">{{adcData!.screenCurrentBytes[0].toString(16).padStart(2, '0').toUpperCase()}}{{adcData!.screenCurrentBytes[1].toString(16).padStart(2, '0').toUpperCase()}}</td>
+                <td class="text-center w-12p">{{adcData!.plateVoltageBytes[0].toString(16).padStart(2, '0').toUpperCase()}}{{adcData!.plateVoltageBytes[1].toString(16).padStart(2, '0').toUpperCase()}}</td>
+                <td class="text-center w-12p">{{adcData!.screenVoltageBytes[0].toString(16).padStart(2, '0').toUpperCase()}}{{adcData!.screenVoltageBytes[1].toString(16).padStart(2, '0').toUpperCase()}}</td>
+                <td class="text-center w-12p">{{adcData!.powerSupplyVoltageBytes[0].toString(16).padStart(2, '0').toUpperCase()}}{{adcData!.powerSupplyVoltageBytes[1].toString(16).padStart(2, '0').toUpperCase()}}</td>
+                <td class="text-center w-12p">{{adcData!.negativeVoltageBytes[0].toString(16).padStart(2, '0').toUpperCase()}}{{adcData!.negativeVoltageBytes[1].toString(16).padStart(2, '0').toUpperCase()}}</td>
+              </tr>
+              <tr>
+                <td class="text-center w-6p">DEC</td>
+                <td class="text-center w-12p">{{adcData!.plateCurrentRaw}}</td>
+                <td class="text-center w-12p">{{adcData!.plateCurrent}}</td>
+                <td class="text-center w-12p">{{adcData!.screenCurrentRaw}}</td>
+                <td class="text-center w-12p">{{adcData!.screenCurrent}}</td>
+                <td class="text-center w-12p">{{adcData!.plateVoltage}}</td>
+                <td class="text-center w-12p">{{adcData!.screenVoltage}}</td>
+                <td class="text-center w-12p">{{adcData!.powerSupplyVoltage}}</td>
+                <td class="text-center w-12p">{{adcData!.negativeVoltage}}</td>
+              </tr>
+              <tr>
+                <td class="text-center w-6p">VAL</td>
+                <td class="text-center w-12p"></td>
+                <td class="text-center w-12p"></td>
+                <td class="text-center w-12p"></td>
+                <td class="text-center w-12p"></td>
+                <td class="text-center w-12p">{{uTracerService.readPlateVoltage(this.adcData).toFixed(3)}}</td>
+                <td class="text-center w-12p">{{uTracerService.readScreenVoltage(this.adcData).toFixed(3)}}</td>
+                <td class="text-center w-12p">{{uTracerService.readPowerSupplyVoltage(this.adcData).toFixed(3)}}</td>
+                <td class="text-center w-12p">{{uTracerService.readNegativeVoltage(this.adcData).toFixed(3)}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         }
       </div>
       <style>
-        .w-12p { width: 12.5%; }
+        .w-12p {
+          width: 12.5%;
+        }
       </style>
       <div class="modal-footer">
         <button type="button" class="btn btn-primary me-auto" (click)="read()" [disabled]="isReading">Read</button>

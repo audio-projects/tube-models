@@ -391,27 +391,27 @@ export class UTracerComponent {
             await this.uTracerService.start(0, 0, 0, 0);
             // check progress
             signal.throwIfAborted();
-            // ping uTracer, read data
-            const response: UTracerResponse = await this.uTracerService.ping();
-            // check progress
-            signal.throwIfAborted();
-            // heater value
-            const eh = this.constantValues['eh'] || 0;
-            // use 15 steps in the heating process (10s ramp up + 5s hold)
-            for (let it = 1; it <= 15; it++) {
-                // voltage at iteration
-                const voltage = Math.min((eh * it) / 10, eh);
-                // send utracer command
-                await this.uTracerService.setHeaterVoltage(voltage, response.powerSupplyVoltage);
-                // check progress
-                signal.throwIfAborted();
-                // update progress
-                this.heatingProgress = (it / 15) * 100;
-                // wait 1 second between steps
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                // check progress
-                signal.throwIfAborted();
-            }
+            // // ping uTracer, read data
+            // const response: UTracerResponse = await this.uTracerService.ping();
+            // // check progress
+            // signal.throwIfAborted();
+            // // heater value
+            // const eh = this.constantValues['eh'] || 0;
+            // // use 15 steps in the heating process (10s ramp up + 5s hold)
+            // for (let it = 1; it <= 15; it++) {
+            //     // voltage at iteration
+            //     const voltage = Math.min((eh * it) / 10, eh);
+            //     // send utracer command
+            //     await this.uTracerService.setHeaterVoltage(voltage, response.powerSupplyVoltage);
+            //     // check progress
+            //     signal.throwIfAborted();
+            //     // update progress
+            //     this.heatingProgress = (it / 15) * 100;
+            //     // wait 1 second between steps
+            //     await new Promise(resolve => setTimeout(resolve, 1000));
+            //     // check progress
+            //     signal.throwIfAborted();
+            // }
             // update state
             this.state = 'ready';
         }
@@ -470,36 +470,36 @@ export class UTracerComponent {
             await this.uTracerService.start(this.compliance, this.average, this.plateCurrentGain, this.screenCurrentGain);
             // check progress
             signal.throwIfAborted();
-            // ping uTracer, read data
-            const pingData: UTracerResponse = await this.uTracerService.ping();
-            // check progress
-            signal.throwIfAborted();
-            // loop series
-            for (const seriesValue of this.discreteValuesArray) {
-                // swept value
-                let sweptValue = this.sweptMin;
-                // loop swept
-                for (let step = 0; step <= this.sweptSteps; step++) {
-                    // create measurement point
-                    const point = this.createMeasurementPoint(seriesValue, sweptValue);
-                    // measure currents at point
-                    await this.uTracerService.measure(pingData.powerSupplyVoltage, point.ep, point.es, point.eg, point.eh);
-                    // increase swept value
-                    if (this.sweptLogarithmic) {
-                        // logarithmic step
-                        const logMin = Math.log10(Math.max(this.sweptMin, 0.1));
-                        const logMax = Math.log10(this.sweptMax);
-                        // increment
-                        const logStep = (logMax - logMin) / this.sweptSteps;
-                        // value
-                        sweptValue = Math.min(Math.pow(10, logMin + logStep * step), this.sweptMax);
-                    }
-                    else {
-                        // linear step
-                        sweptValue = Math.min(this.sweptMin + ((this.sweptMax - this.sweptMin) / this.sweptSteps) * step, this.sweptMax);
-                    }
-                }
-            }
+            // // ping uTracer, read data
+            // const pingData: UTracerResponse = await this.uTracerService.ping();
+            // // check progress
+            // signal.throwIfAborted();
+            // // loop series
+            // for (const seriesValue of this.discreteValuesArray) {
+            //     // swept value
+            //     let sweptValue = this.sweptMin;
+            //     // loop swept
+            //     for (let step = 0; step <= this.sweptSteps; step++) {
+            //         // create measurement point
+            //         const point = this.createMeasurementPoint(seriesValue, sweptValue);
+            //         // measure currents at point
+            //         await this.uTracerService.measure(pingData.powerSupplyVoltage, point.ep, point.es, point.eg, point.eh);
+            //         // increase swept value
+            //         if (this.sweptLogarithmic) {
+            //             // logarithmic step
+            //             const logMin = Math.log10(Math.max(this.sweptMin, 0.1));
+            //             const logMax = Math.log10(this.sweptMax);
+            //             // increment
+            //             const logStep = (logMax - logMin) / this.sweptSteps;
+            //             // value
+            //             sweptValue = Math.min(Math.pow(10, logMin + logStep * step), this.sweptMax);
+            //         }
+            //         else {
+            //             // linear step
+            //             sweptValue = Math.min(this.sweptMin + ((this.sweptMax - this.sweptMin) / this.sweptSteps) * step, this.sweptMax);
+            //         }
+            //     }
+            // }
             // update state
             this.state = 'ready';
         }

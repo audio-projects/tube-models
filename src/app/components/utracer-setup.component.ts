@@ -1,3 +1,4 @@
+import { AdcData, UTracerResponse, UTracerService } from '../services/utracer.service';
 import { CommonModule } from '@angular/common';
 import {
     Component,
@@ -7,7 +8,6 @@ import {
     Output
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { UTracerService, UTracerResponse } from '../services/utracer.service';
 
 @Component({
     selector: 'app-utracer-setup',
@@ -19,7 +19,7 @@ export class UTracerSetupComponent implements OnInit {
 
     @Output() closed = new EventEmitter<void>();
 
-    private uTracerService = inject(UTracerService);
+    uTracerService = inject(UTracerService);
 
     isReading = false;
 
@@ -34,7 +34,8 @@ export class UTracerSetupComponent implements OnInit {
     grid4VoltVoltageFactor!: number;
     gridSaturationVoltageFactor!: number;
 
-    // read values
+    adcData: AdcData | null = null;
+
     plateVoltage: number | null = null;
     screenVoltage: number | null = null;
     plateCurrentAfterPGA: number | null = null;
@@ -97,6 +98,14 @@ export class UTracerSetupComponent implements OnInit {
         this.uTracerService.gridSaturationVoltageFactor = this.gridSaturationVoltageFactor;
     }
 
+    get computedPowerSupplyVoltage(): number {
+        // after reading
+        if (this.adcData === null)
+            return 0;
+        // use service method
+        return this.uTracerService.readPowerSupplyVoltage(this.adcData);
+    }
+
     async read() {
         try {
             // set reading state
@@ -104,14 +113,7 @@ export class UTracerSetupComponent implements OnInit {
             // reset uTracer
             await this.uTracerService.start(0, 0x40, 0, 0);
             // ping uTracer, read data
-            const response: UTracerResponse = await this.uTracerService.ping();
-            // read values
-            this.plateVoltage = response.plateVoltage;
-            this.screenVoltage = response.screenVoltage;
-            this.plateCurrentAfterPGA = response.plateCurrentAfterPGA;
-            this.screenCurrentAfterPGA = response.screenCurrentAfterPGA;
-            this.powerSupplyVoltage = response.powerSupplyVoltage;
-            this.negativeVoltage = response.negativeVoltage;
+            this.adcData = await this.uTracerService.ping();
         }
         catch (error) {
             // log error
