@@ -601,18 +601,6 @@ export class UTracerService {
     /**
      * Convert 10-bit ADC value to high voltage using uTracer voltage divider formula
      * The buffer capacitor voltage is measured via resistive divider ([0, 350V] mapped to [0, 5V])
-     * Note: Cathode is referenced to 18.5V power supply, so actual tube voltage = Vhv - 18.5V
-     *
-     * @param rawValue 10-bit ADC value (0-1023)
-     * @returns High voltage in volts
-     */
-    private readPlateAndScreenVoltage(rawValue: number, powerSupplyVoltage: number, gain: number): number {
-        return rawValue * 350 / (1023 * gain) - powerSupplyVoltage;
-    }
-
-    /**
-     * Convert 10-bit ADC value to high voltage using uTracer voltage divider formula
-     * The buffer capacitor voltage is measured via resistive divider ([0, 350V] mapped to [0, 5V])
      * Note: Cathode is referenced to power supply voltage, so actual tube voltage = Vhv - powerSupplyVoltage
      *
      * @param rawValue 10-bit ADC value (0-1023)
@@ -654,32 +642,5 @@ export class UTracerService {
      */
     readNegativeVoltage(adcData: AdcData): number {
         return (5 * negativeVoltageScale * (adcData.negativeVoltage / 1023 - 1) + 5) * this.saturationVoltageFactor;
-    }
-
-    processAdcData(adcData: AdcData): UTracerResponse {
-        // gains
-        const plateCurrentGain = Math.min(adcData.plateCurrentGain, 7);
-        const screenCurrentGain =  Math.min(adcData.screenCurrentGain, 7);
-        // calculate actual voltages and currents
-        const powerSupplyVoltage = this.readPowerSupplyVoltage(adcData);
-        const plateVoltage = this.readPlateAndScreenVoltage(adcData.plateVoltage, powerSupplyVoltage, this.plateVoltageGain) * this.saturationVoltageFactor;
-        const screenVoltage = this.readPlateAndScreenVoltage(adcData.screenVoltage, powerSupplyVoltage, this.screenVoltageGain) * this.saturationVoltageFactor;
-        const plateCurrentScaleFactor = (adcData.plateCurrentGain === 0x04) ? plateCurrent400Scale : plateCurrentScale;
-        const screenCurrentScaleFactor = (adcData.screenCurrentGain === 0x04) ? screenCurrent400Scale : screenCurrentScale;
-        const plateCurrent = adcData.plateCurrent * plateCurrentScaleFactor * this.plateCurrentGain;
-        const screenCurrent = adcData.screenCurrent * screenCurrentScaleFactor * this.screenCurrentGain;
-        return {
-            status: adcData.status,
-            plateCurrentAfterPGA: plateCurrent,
-            plateCurrentBeforePGA: adcData.plateCurrent * plateCurrentScaleFactor,
-            screenCurrentAfterPGA: screenCurrent,
-            screenCurrentBeforePGA: adcData.screenCurrent * screenCurrentScaleFactor,
-            plateVoltage: plateVoltage,
-            screenVoltage: screenVoltage,
-            powerSupplyVoltage: powerSupplyVoltage,
-            negativeVoltage: adcData.negativeVoltage * negativeVoltageScale,
-            platePGAGain: adcData.plateCurrentGain,
-            screenPGAGain: adcData.screenCurrentGain,
-        };
     }
 }

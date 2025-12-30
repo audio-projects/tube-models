@@ -98,14 +98,6 @@ export class UTracerSetupComponent implements OnInit {
         this.uTracerService.gridSaturationVoltageFactor = this.gridSaturationVoltageFactor;
     }
 
-    get computedPowerSupplyVoltage(): number {
-        // after reading
-        if (this.adcData === null)
-            return 0;
-        // use service method
-        return this.uTracerService.readPowerSupplyVoltage(this.adcData);
-    }
-
     async read() {
         try {
             // set reading state
