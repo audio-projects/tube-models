@@ -12,6 +12,7 @@ export class UTracerDebugComponent {
     @Input() adcData: AdcData | null = null;
     @Input() averaging: Averaging = 0x40;
     @Input() details = false;
+    @Input() alwaysShow = false;
 
     uTracerService = inject(UTracerService);
 }
