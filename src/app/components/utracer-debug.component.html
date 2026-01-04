@@ -1,0 +1,65 @@
+@if (adcData) {
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered">
+            <thead class="table-primary">
+                <tr>
+                    <th class="text-center w-4p"> </th>
+                    <th class="text-center w-12p">Ia (mA)</th>
+                    <th class="text-center w-12p">Ia comp (mA)</th>
+                    <th class="text-center w-12p">Is (mA)</th>
+                    <th class="text-center w-12p">Is comp (mA)</th>
+                    <th class="text-center w-12p">Va (V)</th>
+                    <th class="text-center w-12p">Vs (V)</th>
+                    <th class="text-center w-12p">Vpower (V)</th>
+                    <th class="text-center w-12p">Vneg (V)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (details) {
+                    <tr>
+                        <td class="text-center w-4p">HEX</td>
+                        <td class="text-center w-12p">{{adcData!.plateCurrentRawBytes[0].toString(16).padStart(2, '0').toUpperCase()}}{{adcData!.plateCurrentRawBytes[1].toString(16).padStart(2, '0').toUpperCase()}}</td>
+                        <td class="text-center w-12p">{{adcData!.plateCurrentBytes[0].toString(16).padStart(2, '0').toUpperCase()}}{{adcData!.plateCurrentBytes[1].toString(16).padStart(2, '0').toUpperCase()}}</td>
+                        <td class="text-center w-12p">{{adcData!.screenCurrentRawBytes[0].toString(16).padStart(2, '0').toUpperCase()}}{{adcData!.screenCurrentRawBytes[1].toString(16).padStart(2, '0').toUpperCase()}}</td>
+                        <td class="text-center w-12p">{{adcData!.screenCurrentBytes[0].toString(16).padStart(2, '0').toUpperCase()}}{{adcData!.screenCurrentBytes[1].toString(16).padStart(2, '0').toUpperCase()}}</td>
+                        <td class="text-center w-12p">{{adcData!.plateVoltageBytes[0].toString(16).padStart(2, '0').toUpperCase()}}{{adcData!.plateVoltageBytes[1].toString(16).padStart(2, '0').toUpperCase()}}</td>
+                        <td class="text-center w-12p">{{adcData!.screenVoltageBytes[0].toString(16).padStart(2, '0').toUpperCase()}}{{adcData!.screenVoltageBytes[1].toString(16).padStart(2, '0').toUpperCase()}}</td>
+                        <td class="text-center w-12p">{{adcData!.powerSupplyVoltageBytes[0].toString(16).padStart(2, '0').toUpperCase()}}{{adcData!.powerSupplyVoltageBytes[1].toString(16).padStart(2, '0').toUpperCase()}}</td>
+                        <td class="text-center w-12p">{{adcData!.negativeVoltageBytes[0].toString(16).padStart(2, '0').toUpperCase()}}{{adcData!.negativeVoltageBytes[1].toString(16).padStart(2, '0').toUpperCase()}}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-center w-4p">DEC</td>
+                        <td class="text-center w-12p">{{adcData!.plateCurrentRaw}}</td>
+                        <td class="text-center w-12p">{{adcData!.plateCurrent}}</td>
+                        <td class="text-center w-12p">{{adcData!.screenCurrentRaw}}</td>
+                        <td class="text-center w-12p">{{adcData!.screenCurrent}}</td>
+                        <td class="text-center w-12p">{{adcData!.plateVoltage}}</td>
+                        <td class="text-center w-12p">{{adcData!.screenVoltage}}</td>
+                        <td class="text-center w-12p">{{adcData!.powerSupplyVoltage}}</td>
+                        <td class="text-center w-12p">{{adcData!.negativeVoltage}}</td>
+                    </tr>
+                }
+                <tr>
+                    <td class="text-center w-4p">VAL</td>
+                    <td class="text-center w-12p">{{uTracerService.readPlateCurrentRaw(adcData, averaging).toFixed(3)}}</td>
+                    <td class="text-center w-12p">{{uTracerService.readPlateCurrent(adcData, averaging).toFixed(3)}}</td>
+                    <td class="text-center w-12p">{{uTracerService.readScreenCurrentRaw(adcData, averaging).toFixed(3)}}</td>
+                    <td class="text-center w-12p">{{uTracerService.readScreenCurrent(adcData, averaging).toFixed(3)}}</td>
+                    <td class="text-center w-12p">{{uTracerService.readPlateVoltage(adcData, averaging).toFixed(3)}}</td>
+                    <td class="text-center w-12p">{{uTracerService.readScreenVoltage(adcData, averaging).toFixed(3)}}</td>
+                    <td class="text-center w-12p">{{uTracerService.readPowerSupplyVoltage(adcData).toFixed(3)}}</td>
+                    <td class="text-center w-12p">{{uTracerService.readNegativeVoltage(adcData).toFixed(3)}}</td>
+                </tr>
+                @if (details) {
+                    <tr>
+                        <td class="text-center w-4p"></td>
+                        <td colspan="2" class="text-center w-24p">Plate Current Gain: {{uTracerService.readGain(adcData.plateCurrentGain)}}</td>
+                        <td colspan="2" class="text-center w-24p">Screen Current Gain: {{uTracerService.readGain(adcData.screenCurrentGain)}}</td>
+                        <td colspan="2" class="text-center w-24p">Plate Current Average: {{uTracerService.readAverage(adcData.plateCurrentGain, averaging)}}</td>
+                        <td colspan="2" class="text-center w-24p">Screen Current Average: {{uTracerService.readAverage(adcData.screenCurrentGain, averaging)}}</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

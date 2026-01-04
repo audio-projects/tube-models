@@ -422,7 +422,7 @@ export class TubeComponent implements OnInit, AfterViewInit, OnDestroy {
                 await this.uTracerService.connect();
 
                 this.serialImportProgress = 'Connected to uTracer';
-                this.toastService.success('Serial port connected. You can now import files.');
+                this.toastService.success('Connected to uTracer');
                 this.isSerialConnected = true;
             }
 

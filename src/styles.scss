@@ -208,10 +208,10 @@
   }
 
   /* application classes */
-  .center {
-    width: 110em;
-    margin-left: auto;
-    margin-right: auto;
+  /* Use Bootstrap's .text-center for centering text and .mx-auto for horizontal centering */
+  /* Example for icon sizing: use Bootstrap's .fs-4 for large icons */
+  .bi {
+    vertical-align: -.125em;
   }
 
   .user-information {

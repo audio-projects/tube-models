@@ -1,4 +1,4 @@
-import { AdcData, UTracerResponse, UTracerService } from '../services/utracer.service';
+import { AdcData, Averaging, UTracerService } from '../services/utracer.service';
 import { CommonModule } from '@angular/common';
 import {
     Component,
@@ -8,12 +8,13 @@ import {
     Output
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { UTracerDebugComponent } from './utracer-debug.component';
 
 @Component({
     selector: 'app-utracer-setup',
     templateUrl: './utracer-setup.component.html',
     styleUrl: './utracer-setup.component.scss',
-    imports: [CommonModule, FormsModule]
+    imports: [CommonModule, FormsModule, UTracerDebugComponent]
 })
 export class UTracerSetupComponent implements OnInit {
 
@@ -24,37 +25,35 @@ export class UTracerSetupComponent implements OnInit {
     isReading = false;
 
     uTracerVersion!: string;
+
+    powerSupplyVoltageGain!: number;
+
     plateVoltageGain!: number;
     screenVoltageGain!: number;
     plateCurrentGain!: number;
     screenCurrentGain!: number;
-    powerSupplyVoltageFactor!: number;
-    saturationVoltageFactor!: number;
-    grid40VoltVoltageFactor!: number;
-    grid4VoltVoltageFactor!: number;
-    gridSaturationVoltageFactor!: number;
+
+    negativeVoltageGain!: number;
+    grid1VoltVoltageGain!: number;
+    grid4VoltVoltageGain!: number;
+    grid40VoltVoltageGain!: number;
 
     adcData: AdcData | null = null;
-
-    plateVoltage: number | null = null;
-    screenVoltage: number | null = null;
-    plateCurrentAfterPGA: number | null = null;
-    screenCurrentAfterPGA: number | null = null;
-    powerSupplyVoltage: number | null = null;
-    negativeVoltage: number | null = null;
+    averaging: Averaging = 0x40;
 
     ngOnInit() {
         // initialize settings
         this.uTracerVersion = this.uTracerService.hardwareVersion;
+        this.powerSupplyVoltageGain = this.uTracerService.powerSupplyVoltageGain;
         this.plateVoltageGain = this.uTracerService.plateVoltageGain;
         this.screenVoltageGain = this.uTracerService.screenVoltageGain;
         this.plateCurrentGain = this.uTracerService.plateCurrentGain;
         this.screenCurrentGain = this.uTracerService.screenCurrentGain;
-        this.powerSupplyVoltageFactor = this.uTracerService.powerSupplyVoltageFactor;
-        this.saturationVoltageFactor = this.uTracerService.saturationVoltageFactor;
-        this.grid40VoltVoltageFactor = this.uTracerService.grid40VoltVoltageFactor;
-        this.grid4VoltVoltageFactor = this.uTracerService.grid4VoltVoltageFactor;
-        this.gridSaturationVoltageFactor = this.uTracerService.gridSaturationVoltageFactor;
+
+        this.negativeVoltageGain = this.uTracerService.negativeVoltageGain;
+        this.grid1VoltVoltageGain = this.uTracerService.grid1VoltVoltageGain;
+        this.grid4VoltVoltageGain = this.uTracerService.grid4VoltVoltageGain;
+        this.grid40VoltVoltageGain = this.uTracerService.grid40VoltVoltageGain;
     }
 
     onVersionChange() {
@@ -78,24 +77,24 @@ export class UTracerSetupComponent implements OnInit {
     }
 
 
-    onPowerSupplyVoltageFactorChange() {
-        this.uTracerService.powerSupplyVoltageFactor = this.powerSupplyVoltageFactor;
+    onPowerSupplyVoltageGainChange() {
+        this.uTracerService.powerSupplyVoltageGain = this.powerSupplyVoltageGain;
     }
 
-    onSaturationVoltageFactorChange() {
-        this.uTracerService.saturationVoltageFactor = this.saturationVoltageFactor;
+    onNegativeVoltageGainChange() {
+        this.uTracerService.negativeVoltageGain = this.negativeVoltageGain;
     }
 
-    onGrid40VoltVoltageFactorChange() {
-        this.uTracerService.grid40VoltVoltageFactor = this.grid40VoltVoltageFactor;
+    onGrid1VoltVoltageGainChange() {
+        this.uTracerService.grid1VoltVoltageGain = this.grid1VoltVoltageGain;
     }
 
-    onGrid4VoltVoltageFactorChange() {
-        this.uTracerService.grid4VoltVoltageFactor = this.grid4VoltVoltageFactor;
+    onGrid4VoltVoltageGainChange() {
+        this.uTracerService.grid4VoltVoltageGain = this.grid4VoltVoltageGain;
     }
 
-    onGridSaturationVoltageFactorChange() {
-        this.uTracerService.gridSaturationVoltageFactor = this.gridSaturationVoltageFactor;
+    onGrid40VoltVoltageGainChange() {
+        this.uTracerService.grid40VoltVoltageGain = this.grid40VoltVoltageGain;
     }
 
     async read() {

@@ -8,10 +8,11 @@ import {
 } from '@angular/core';
 import { File as TubeFile } from '../files';
 import { FormsModule } from '@angular/forms';
-import { Averaging, Compliance, CurrentGain, UTracerResponse, UTracerService } from '../services/utracer.service';
+import { AdcData, Averaging, Compliance, CurrentGain, UTracerService } from '../services/utracer.service';
 import { ToastService } from '../services/toast.service';
 import { TubeInformation } from './tube-information';
 import { UTracerSetupComponent } from './utracer-setup.component';
+import { UTracerDebugComponent } from './utracer-debug.component';
 
 interface MeasurementConfig {
     type: string;
@@ -45,7 +46,7 @@ interface MeasurementConfig {
     selector: 'app-utracer',
     templateUrl: './utracer.component.html',
     styleUrl: './utracer.component.scss',
-    imports: [CommonModule, FormsModule, UTracerSetupComponent]
+    imports: [CommonModule, FormsModule, UTracerDebugComponent, UTracerSetupComponent]
 })
 export class UTracerComponent {
 
@@ -80,9 +81,13 @@ export class UTracerComponent {
 
     // Additional measurement settings
     compliance: Compliance = 200;
-    average: Averaging = 0x40;
+    averaging: Averaging = 0x40;
     plateCurrentGain: CurrentGain = 0x08;
     screenCurrentGain: CurrentGain = 0x08;
+
+    // runtime data
+    heaterVoltage = 0;
+    adcData: AdcData | null = null;
 
     // Dropdown options
     complianceOptions = [
@@ -289,17 +294,17 @@ export class UTracerComponent {
         const symbol = this.currentConfig.sweptParam.symbol;
         // set defaults based on parameter type
         if (symbol.includes('Va') && symbol.includes('Vs')) {
-            this.sweptMin = 0;
+            this.sweptMin = 2;
             this.sweptMax = Math.min(this.getMaxVoltageForParameter('Va'), this.getMaxVoltageForParameter('Vs'));
             this.sweptSteps = 50;
         }
         else if (symbol.includes('Va')) {
-            this.sweptMin = 0;
+            this.sweptMin = 2;
             this.sweptMax = this.getMaxVoltageForParameter('Va');
             this.sweptSteps = 50;
         }
         else if (symbol.includes('Vs')) {
-            this.sweptMin = 0;
+            this.sweptMin = 2;
             this.sweptMax = this.getMaxVoltageForParameter('Vs');
             this.sweptSteps = 50;
         }
@@ -343,10 +348,10 @@ export class UTracerComponent {
         // plate
         if (param === 'Va') {
             // max plate voltage
-            return this.tube?.maximumPlateVoltage ?? 300;
+            return Math.min(this.tube?.maximumPlateVoltage ?? this.uTracerService.maximumHighVoltage, this.uTracerService.maximumHighVoltage);
         }
         // for screen voltage, use max grid 2 voltage
-        return this.tube?.maximumGrid2Voltage ?? 300;
+        return Math.min(this.tube?.maximumGrid2Voltage ?? this.uTracerService.maximumHighVoltage, this.uTracerService.maximumHighVoltage);
     }
 
     private generateDiscreteValues(min: number, max: number, count: number): string {
@@ -391,27 +396,31 @@ export class UTracerComponent {
             await this.uTracerService.start(0, 0, 0, 0);
             // check progress
             signal.throwIfAborted();
-            // // ping uTracer, read data
-            // const response: UTracerResponse = await this.uTracerService.ping();
-            // // check progress
-            // signal.throwIfAborted();
-            // // heater value
-            // const eh = this.constantValues['eh'] || 0;
-            // // use 15 steps in the heating process (10s ramp up + 5s hold)
-            // for (let it = 1; it <= 15; it++) {
-            //     // voltage at iteration
-            //     const voltage = Math.min((eh * it) / 10, eh);
-            //     // send utracer command
-            //     await this.uTracerService.setHeaterVoltage(voltage, response.powerSupplyVoltage);
-            //     // check progress
-            //     signal.throwIfAborted();
-            //     // update progress
-            //     this.heatingProgress = (it / 15) * 100;
-            //     // wait 1 second between steps
-            //     await new Promise(resolve => setTimeout(resolve, 1000));
-            //     // check progress
-            //     signal.throwIfAborted();
-            // }
+            // ping uTracer, read data
+            this.adcData = await this.uTracerService.ping();
+            // check progress
+            signal.throwIfAborted();
+            // power supply voltage
+            const powerSupplyVoltage = this.uTracerService.readPowerSupplyVoltage(this.adcData);
+            // heater value
+            const eh = this.constantValues['eh'] || 0;
+            // set initial heater voltage to 0
+            this.heaterVoltage = 0;
+            // use 15 steps in the heating process (10s ramp up + 5s hold)
+            for (let it = 1; it <= 15; it++) {
+                // voltage at iteration
+                this.heaterVoltage = Math.min((eh * it) / 10, eh);
+                // send utracer command
+                await this.uTracerService.setHeaterVoltage(powerSupplyVoltage, this.heaterVoltage);
+                // check progress
+                signal.throwIfAborted();
+                // update progress
+                this.heatingProgress = (it / 15) * 100;
+                // wait 1 second between steps
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                // check progress
+                signal.throwIfAborted();
+            }
             // update state
             this.state = 'ready';
         }
@@ -449,6 +458,11 @@ export class UTracerComponent {
         // set swept value
         for (const name of this.currentConfig?.sweptParam.name || [])
             point[name] = sweptValue;
+        // check we are measuring a triode
+        if (this.currentConfig?.category === 'triode') {
+            // disable screen voltage
+            point['es'] = 0;
+        }
         // return typed point
         return point as {eh: number, ep: number, es: number, eg: number};
     }
@@ -467,39 +481,51 @@ export class UTracerComponent {
             // signal
             const signal = this.abortController.signal;
             // initialize uTracer
-            await this.uTracerService.start(this.compliance, this.average, this.plateCurrentGain, this.screenCurrentGain);
+            await this.uTracerService.start(this.compliance, this.averaging, this.plateCurrentGain, this.screenCurrentGain);
             // check progress
             signal.throwIfAborted();
-            // // ping uTracer, read data
-            // const pingData: UTracerResponse = await this.uTracerService.ping();
-            // // check progress
-            // signal.throwIfAborted();
-            // // loop series
-            // for (const seriesValue of this.discreteValuesArray) {
-            //     // swept value
-            //     let sweptValue = this.sweptMin;
-            //     // loop swept
-            //     for (let step = 0; step <= this.sweptSteps; step++) {
-            //         // create measurement point
-            //         const point = this.createMeasurementPoint(seriesValue, sweptValue);
-            //         // measure currents at point
-            //         await this.uTracerService.measure(pingData.powerSupplyVoltage, point.ep, point.es, point.eg, point.eh);
-            //         // increase swept value
-            //         if (this.sweptLogarithmic) {
-            //             // logarithmic step
-            //             const logMin = Math.log10(Math.max(this.sweptMin, 0.1));
-            //             const logMax = Math.log10(this.sweptMax);
-            //             // increment
-            //             const logStep = (logMax - logMin) / this.sweptSteps;
-            //             // value
-            //             sweptValue = Math.min(Math.pow(10, logMin + logStep * step), this.sweptMax);
-            //         }
-            //         else {
-            //             // linear step
-            //             sweptValue = Math.min(this.sweptMin + ((this.sweptMax - this.sweptMin) / this.sweptSteps) * step, this.sweptMax);
-            //         }
-            //     }
-            // }
+            // ping uTracer, read data
+            this.adcData = await this.uTracerService.ping();
+            // check progress
+            signal.throwIfAborted();
+            try {
+                // loop series
+                for (const seriesValue of this.discreteValuesArray) {
+                    // swept value
+                    let sweptValue = this.sweptMin;
+                    // loop swept
+                    for (let step = 0; step <= this.sweptSteps; step++) {
+                        // create measurement point
+                        const point = this.createMeasurementPoint(seriesValue, sweptValue);
+                        // power supply voltage
+                        const powerSupplyVoltage = this.uTracerService.readPowerSupplyVoltage(this.adcData!);
+                        // negative supply voltage
+                        const negativeSupplyVoltage = this.uTracerService.readNegativeVoltage(this.adcData!);
+                        // measure currents at point
+                        this.adcData = await this.uTracerService.measure(powerSupplyVoltage, negativeSupplyVoltage, point.ep, point.es, point.eg, point.eh);
+                        // check progress
+                        signal.throwIfAborted();
+                        // increase swept value
+                        if (this.sweptLogarithmic) {
+                            // logarithmic step
+                            const logMin = Math.log10(Math.max(this.sweptMin, 0.1));
+                            const logMax = Math.log10(this.sweptMax);
+                            // increment
+                            const logStep = (logMax - logMin) / this.sweptSteps;
+                            // value
+                            sweptValue = Math.min(Math.pow(10, logMin + logStep * step), this.sweptMax);
+                        }
+                        else {
+                            // linear step
+                            sweptValue = Math.min(this.sweptMin + ((this.sweptMax - this.sweptMin) / this.sweptSteps) * step, this.sweptMax);
+                        }
+                    }
+                }
+            }
+            finally {
+                // end
+                await this.uTracerService.end();
+            }
             // update state
             this.state = 'ready';
         }
@@ -534,7 +560,11 @@ export class UTracerComponent {
     }
 
     isFormValid(): boolean {
-        return !!this.currentConfig && this.discreteValuesArray.length > 0;
+        // heater voltage
+        if (!this.constantValues['eh'] || this.constantValues['eh'] <= 0)
+            return false;
+        // config must be set
+        return !!this.currentConfig;
     }
 
     close() {

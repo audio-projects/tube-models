@@ -109,13 +109,7 @@
                       <div class="col-md-4">
                         <label for="sweptMax" class="form-label-sm">Maximum (V)</label>
                         <div class="input-group input-group-sm">
-                          <input 
-                            type="number" 
-                            id="sweptMax" 
-                            class="form-control"
-                            [(ngModel)]="sweptMax"
-                            step="1"
-                            [disabled]="state === 'measuring'">
+                          <input type="number" id="sweptMax" class="form-control" [(ngModel)]="sweptMax" step="1" [disabled]="state === 'measuring'">
                           <span class="input-group-text">V</span>
                         </div>
                       </div>
@@ -271,7 +265,7 @@
                       <select 
                         id="average" 
                         class="form-select form-select-sm"
-                        [(ngModel)]="average"
+                        [(ngModel)]="averaging"
                         [disabled]="state === 'measuring'">
                         @for (option of averageOptions; track option.value) {
                           <option [value]="option.value">{{ option.label }}</option>
@@ -350,16 +344,9 @@
                       <p class="text-muted">Please wait while the tube heats up...</p>
                     </div>
                     <div class="progress" style="height: 25px;">
-                      <div 
-                        class="progress-bar progress-bar-striped progress-bar-animated bg-warning" 
-                        role="progressbar" 
-                        [style.width.%]="heatingProgress"
-                        [attr.aria-valuenow]="heatingProgress" 
-                        aria-valuemin="0" 
-                        aria-valuemax="100">
-                        {{ heatingProgress.toFixed(0) }}%
-                      </div>
+                      <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" [style.width.%]="heatingProgress" [attr.aria-valuenow]="heatingProgress" aria-valuemin="0" aria-valuemax="100"> {{ heatingProgress.toFixed(0) }}% ({{ heaterVoltage.toFixed(1) }}V)</div>
                     </div>
+                    <app-utracer-debug [adcData]="adcData" [averaging]="averaging" [details]="true"></app-utracer-debug>
                   </div>
                 }
 
@@ -375,6 +362,7 @@
                         Click "Measure Data" to start capturing measurements
                       </p>
                     </div>
+                    <app-utracer-debug [adcData]="adcData" [averaging]="averaging" [details]="true"></app-utracer-debug>
                   </div>
                 }
 
@@ -389,6 +377,7 @@
                       <p class="text-muted">Capturing tube characteristics</p>
                       <small class="text-muted">This may take a few moments</small>
                     </div>
+                    <app-utracer-debug [adcData]="adcData" [averaging]="averaging" [details]="true"></app-utracer-debug>
                   </div>
                 }
               </div>
@@ -408,10 +397,7 @@
 
         <!-- Abort button - shown during heating or measuring -->
         @if (state === 'heating' || state === 'measuring') {
-          <button 
-            type="button" 
-            class="btn btn-danger" 
-            (click)="abortMeasurement()">
+          <button type="button" class="btn btn-danger" (click)="abortMeasurement()">
             <i class="bi bi-x-circle me-1"></i>
             Abort
           </button>
@@ -419,28 +405,18 @@
 
         <!-- Cancel button - shown when ready -->
         @if (state === 'ready') {
-          <button 
-            type="button" 
-            class="btn btn-secondary" 
-            (click)="cancel()">
+          <button type="button" class="btn btn-secondary" (click)="cancel()">
             Cancel
           </button>
         }
 
         <!-- Start Measurement & Close buttons - shown when idle -->
         @if (state === 'idle') {
-          <button 
-            type="button" 
-            class="btn btn-success" 
-            (click)="startMeasurement()"
-            [disabled]="!isFormValid()">
+          <button type="button" class="btn btn-success" (click)="startMeasurement()"[disabled]="!isFormValid()">
             <i class="bi bi-play-fill me-1"></i>
             Start Measurement
           </button>
-          <button 
-            type="button" 
-            class="btn btn-secondary" 
-            (click)="close()">
+          <button type="button" class="btn btn-secondary" (click)="close()">
             <i class="bi bi-x-lg me-1"></i>
             Close
           </button>
@@ -448,10 +424,7 @@
 
         <!-- Measure Data button - shown when ready -->
         @if (state === 'ready') {
-          <button 
-            type="button" 
-            class="btn btn-primary" 
-            (click)="measureData()">
+          <button type="button" class="btn btn-primary" (click)="measureData()">
             <i class="bi bi-graph-up me-1"></i>
             Measure Data
           </button>
