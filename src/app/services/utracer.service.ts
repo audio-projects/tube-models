@@ -521,6 +521,8 @@ export class UTracerService {
             // this.writableStreamClosed = null;
         }
         catch (error) {
+            // reset value
+            this.port = null;
             // error
             return Promise.reject(new Error(`Failed to disconnect: ${error}`));
         }
@@ -785,7 +787,7 @@ export class UTracerService {
             const readPromise = Promise.race([reader.read(), timeoutPromise]);
             // await read
             const { value, done } = await readPromise;
-            // check channel is closed
+            // check stream closed
             if (done)
                 return Promise.reject(new Error('Serial port stream closed'));
             // return data

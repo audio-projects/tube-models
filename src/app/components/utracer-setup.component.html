@@ -40,22 +40,22 @@
             <div class="row g-2 mb-2">
               <div class="col-3">
                 <label for="test-grid-voltage" class="form-label small mb-0">Grid (V)</label>
-                <input type="number" class="form-control form-control-sm" id="test-grid-voltage" [(ngModel)]="testGridVoltage" [min]="minGridVoltage" max="0" step="0.1" (blur)="validateGridVoltage()" [disabled]="voltagesActive || isReading">
+                <input type="number" class="form-control form-control-sm" id="test-grid-voltage" [(ngModel)]="testGridVoltage" [min]="negativeVoltage" max="0" step="0.1" (blur)="validateGridVoltage()" [disabled]="!adcData || voltagesActive || isReading">
               </div>
               <div class="col-3">
                 <label for="test-plate-voltage" class="form-label small mb-0">Plate (V)</label>
-                <input type="number" class="form-control form-control-sm" id="test-plate-voltage" [(ngModel)]="testPlateVoltage" min="0" [max]="maxVoltage" step="1" (blur)="validatePlateVoltage()" [disabled]="voltagesActive || isReading">
+                <input type="number" class="form-control form-control-sm" id="test-plate-voltage" [(ngModel)]="testPlateVoltage" min="0" [max]="maximumHighVoltage" step="1" (blur)="validatePlateVoltage()" [disabled]="!adcData || voltagesActive || isReading">
               </div>
               <div class="col-3">
                 <label for="test-screen-voltage" class="form-label small mb-0">Screen (V)</label>
-                <input type="number" class="form-control form-control-sm" id="test-screen-voltage" [(ngModel)]="testScreenVoltage" min="0" [max]="maxVoltage" step="1" (blur)="validateScreenVoltage()" [disabled]="voltagesActive || isReading">
+                <input type="number" class="form-control form-control-sm" id="test-screen-voltage" [(ngModel)]="testScreenVoltage" min="0" [max]="maximumHighVoltage" step="1" (blur)="validateScreenVoltage()" [disabled]="!adcData || voltagesActive || isReading">
               </div>
               <div class="col-3">
                 <label for="test-heater-voltage" class="form-label small mb-0">Heater (V)</label>
-                <input type="number" class="form-control form-control-sm" id="test-heater-voltage" [(ngModel)]="testHeaterVoltage" min="0" [max]="maxHeaterVoltage" step="0.1" (blur)="validateHeaterVoltage()" [disabled]="voltagesActive || isReading">
+                <input type="number" class="form-control form-control-sm" id="test-heater-voltage" [(ngModel)]="testHeaterVoltage" min="0" [max]="powerSupplyVoltage" step="0.1" (blur)="validateHeaterVoltage()" [disabled]="!adcData || voltagesActive || isReading">
               </div>
             </div>
-            
+
             <!-- ADC Data Display (moved up) -->
             <app-utracer-debug [adcData]="adcData" [averaging]="averaging" [details]="true" [alwaysShow]="true"></app-utracer-debug>
 
@@ -87,51 +87,51 @@
               <div class="col-md-6">
                 <div class="mb-1">
                   <label for="power-supply-voltage-gain" class="form-label d-block">Power Supply Voltage: {{powerSupplyVoltageGain.toFixed(4)}}</label>
-                  <input type="range" class="form-range" id="power-supply-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="powerSupplyVoltageGain" (input)="onPowerSupplyVoltageGainChange()" [disabled]="isReading || voltagesActive">
+                  <input type="range" class="form-range" id="power-supply-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="powerSupplyVoltageGain" (input)="onPowerSupplyVoltageGainChange()" [disabled]="!adcData || isReading || voltagesActive">
                 </div>
                 <div class="mb-1">
                   <label for="plate-voltage-gain" class="form-label d-block">Plate Voltage: {{plateVoltageGain.toFixed(4)}}</label>
-                  <input type="range" class="form-range" id="plate-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="plateVoltageGain" (input)="onPlateVoltageGainChange()" [disabled]="isReading || voltagesActive">
+                  <input type="range" class="form-range" id="plate-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="plateVoltageGain" (input)="onPlateVoltageGainChange()" [disabled]="!adcData || isReading || voltagesActive">
                 </div>
                 <div class="mb-1">
                   <label for="screen-voltage-gain" class="form-label d-block">Screen Voltage: {{screenVoltageGain.toFixed(4)}}</label>
-                  <input type="range" class="form-range" id="screen-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="screenVoltageGain" (input)="onScreenVoltageGainChange()" [disabled]="isReading || voltagesActive">
+                  <input type="range" class="form-range" id="screen-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="screenVoltageGain" (input)="onScreenVoltageGainChange()" [disabled]="!adcData || isReading || voltagesActive">
                 </div>
                 <div class="mb-1">
                   <label for="plate-current-gain" class="form-label d-block">Plate Current: {{plateCurrentGain.toFixed(4)}}</label>
-                  <input type="range" class="form-range" id="plate-current-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="plateCurrentGain" (input)="onPlateCurrentGainChange()" [disabled]="isReading || voltagesActive">
+                  <input type="range" class="form-range" id="plate-current-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="plateCurrentGain" (input)="onPlateCurrentGainChange()" [disabled]="!adcData || isReading || voltagesActive">
                 </div>
                 <div class="mb-1">
                   <label for="screen-current-gain" class="form-label d-block">Screen Current: {{screenCurrentGain.toFixed(4)}}</label>
-                  <input type="range" class="form-range" id="screen-current-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="screenCurrentGain" (input)="onScreenCurrentGainChange()" [disabled]="isReading || voltagesActive">
+                  <input type="range" class="form-range" id="screen-current-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="screenCurrentGain" (input)="onScreenCurrentGainChange()" [disabled]="!adcData || isReading || voltagesActive">
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="mb-1">
                   <label for="negative-voltage-gain" class="form-label d-block">Negative Voltage: {{negativeVoltageGain.toFixed(4)}}</label>
-                  <input type="range" class="form-range" id="negative-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="negativeVoltageGain" (input)="onNegativeVoltageGainChange()" [disabled]="isReading || voltagesActive">
+                  <input type="range" class="form-range" id="negative-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="negativeVoltageGain" (input)="onNegativeVoltageGainChange()" [disabled]="!adcData || isReading || voltagesActive">
                 </div>
                 <div class="mb-1">
                   <label for="grid1-volt-voltage-gain" class="form-label d-block">Grid -1V Voltage: {{grid1VoltVoltageGain.toFixed(4)}}</label>
-                  <input type="range" class="form-range" id="grid1-volt-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="grid1VoltVoltageGain" (input)="onGrid1VoltVoltageGainChange()" [disabled]="isReading || voltagesActive">
+                  <input type="range" class="form-range" id="grid1-volt-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="grid1VoltVoltageGain" (input)="onGrid1VoltVoltageGainChange()" [disabled]="!adcData || isReading || voltagesActive">
                 </div>
                 <div class="mb-1">
                   <label for="grid4-volt-voltage-gain" class="form-label d-block">Grid -4V Voltage: {{grid4VoltVoltageGain.toFixed(4)}}</label>
-                  <input type="range" class="form-range" id="grid4-volt-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="grid4VoltVoltageGain" (input)="onGrid4VoltVoltageGainChange()" [disabled]="isReading || voltagesActive">
+                  <input type="range" class="form-range" id="grid4-volt-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="grid4VoltVoltageGain" (input)="onGrid4VoltVoltageGainChange()" [disabled]="!adcData || isReading || voltagesActive">
                 </div>
                 <div class="mb-1">
                   <label for="grid40-volt-voltage-gain" class="form-label d-block">Grid -40V Voltage: {{grid40VoltVoltageGain.toFixed(4)}}</label>
-                  <input type="range" class="form-range" id="grid40-volt-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="grid40VoltVoltageGain" (input)="onGrid40VoltVoltageGainChange()" [disabled]="isReading || voltagesActive">
+                  <input type="range" class="form-range" id="grid40-volt-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="grid40VoltVoltageGain" (input)="onGrid40VoltVoltageGainChange()" [disabled]="!adcData || isReading || voltagesActive">
                 </div>
               </div>
             </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-success" (click)="applyTestVoltages()" [disabled]="voltagesActive || isReading">
+        <button type="button" class="btn btn-success" (click)="applyTestVoltages()" [disabled]="!adcData || voltagesActive || isReading">
           <i class="bi bi-play-fill me-1"></i>Apply
         </button>
-        <button type="button" class="btn btn-danger" (click)="stopAllVoltages()" [disabled]="!voltagesActive || isReading">
+        <button type="button" class="btn btn-danger" (click)="stopAllVoltages()" [disabled]="!adcData || !voltagesActive || isReading">
           <i class="bi bi-stop-fill me-1"></i>Stop
         </button>
         <button type="button" class="btn btn-primary ms-auto" (click)="read()" [disabled]="isReading || voltagesActive">Read</button>
