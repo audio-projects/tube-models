@@ -1,4 +1,4 @@
-<div class="modal-backdrop" (click)="!isReading && !voltagesActive && close()"></div>
+<div class="modal-backdrop"></div>
 <div class="modal d-block">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
@@ -6,16 +6,16 @@
         <h5 class="modal-title">
           <i class="bi bi-gear-fill me-2"></i>uTracer Setup
         </h5>
-        <button type="button" class="btn-close" (click)="close()" [disabled]="isReading || voltagesActive" aria-label="Close"></button>
+        <button type="button" class="btn-close" (click)="onClose()" [disabled]="uTracerReaderService.state !== 'idle' && uTracerReaderService.state !== 'ready' && uTracerReaderService.state !== 'error'" aria-label="Close"></button>
       </div>
       <div class="modal-body" style="padding-bottom: 0">
         <div class="mb-2">
-          <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2">
             <label class="form-label mb-0 me-2">uTracer</label>
             <div class="btn-group btn-group-sm" role="radiogroup" aria-label="uTracer version">
-              <input type="radio" class="btn-check" name="utracerVersion" id="utracer-v3" autocomplete="off" [(ngModel)]="uTracerVersion" [value]="'3'" (change)="onVersionChange()" [disabled]="isReading || voltagesActive">
+              <input type="radio" class="btn-check" name="utracerVersion" id="utracer-v3" autocomplete="off" [(ngModel)]="uTracerVersion" [value]="'3'" (change)="onVersionChange()" [disabled]="!adcData || uTracerReaderService.state !== 'idle'">
               <label class="btn btn-outline-primary btn-sm" for="utracer-v3">3 (300V)</label>
-              <input type="radio" class="btn-check" name="utracerVersion" id="utracer-v3plus" autocomplete="off" [(ngModel)]="uTracerVersion" [value]="'3+'" (change)="onVersionChange()" [disabled]="isReading || voltagesActive">
+              <input type="radio" class="btn-check" name="utracerVersion" id="utracer-v3plus" autocomplete="off" [(ngModel)]="uTracerVersion" [value]="'3+'" (change)="onVersionChange()" [disabled]="!adcData || uTracerReaderService.state !== 'idle'">
               <label class="btn btn-outline-primary btn-sm" for="utracer-v3plus">3+ (400V)</label>
             </div>
             <button type="button" class="btn btn-outline-secondary btn-sm" title="Selecting wrong version may damage your uTracer">
@@ -23,16 +23,6 @@
             </button>
           </div>
         </div>
-
-        <!-- Safety Warning Banner -->
-        <div *ngIf="voltagesActive" class="alert alert-danger d-flex align-items-center mb-2" role="alert">
-          <i class="bi bi-exclamation-triangle-fill me-2"></i>
-          <strong>VOLTAGES ACTIVE - EXERCISE CAUTION</strong>
-          <button type="button" class="btn btn-danger btn-sm ms-auto" (click)="stopAllVoltages()" [disabled]="isReading">
-            <i class="bi bi-stop-fill me-1"></i>Emergency Stop
-          </button>
-        </div>
-
         <!-- Test Voltage Application Section (Collapsed by default) -->
         <div class="mb-3">
           <div class="border rounded p-2 bg-light">
@@ -40,102 +30,139 @@
             <div class="row g-2 mb-2">
               <div class="col-3">
                 <label for="test-grid-voltage" class="form-label small mb-0">Grid (V)</label>
-                <input type="number" class="form-control form-control-sm" id="test-grid-voltage" [(ngModel)]="testGridVoltage" [min]="negativeVoltage" max="0" step="0.1" (blur)="validateGridVoltage()" [disabled]="!adcData || voltagesActive || isReading">
+                <input type="number" class="form-control form-control-sm" id="test-grid-voltage" [(ngModel)]="testGridVoltage" [min]="adcData?.negativePowerSupplyVoltage || 0" max="0" step="0.1" (blur)="validateGridVoltage()" [disabled]="!adcData || (uTracerReaderService.state !== 'idle' && uTracerReaderService.state !== 'ready')">
               </div>
               <div class="col-3">
                 <label for="test-plate-voltage" class="form-label small mb-0">Plate (V)</label>
-                <input type="number" class="form-control form-control-sm" id="test-plate-voltage" [(ngModel)]="testPlateVoltage" min="0" [max]="maximumHighVoltage" step="1" (blur)="validatePlateVoltage()" [disabled]="!adcData || voltagesActive || isReading">
+                <input type="number" class="form-control form-control-sm" id="test-plate-voltage" [(ngModel)]="testPlateVoltage" min="0" [max]="maximumHighVoltage" step="1" (blur)="validatePlateVoltage()" [disabled]="!adcData || (uTracerReaderService.state !== 'idle' && uTracerReaderService.state !== 'ready')">
               </div>
               <div class="col-3">
                 <label for="test-screen-voltage" class="form-label small mb-0">Screen (V)</label>
-                <input type="number" class="form-control form-control-sm" id="test-screen-voltage" [(ngModel)]="testScreenVoltage" min="0" [max]="maximumHighVoltage" step="1" (blur)="validateScreenVoltage()" [disabled]="!adcData || voltagesActive || isReading">
+                <input type="number" class="form-control form-control-sm" id="test-screen-voltage" [(ngModel)]="testScreenVoltage" min="0" [max]="maximumHighVoltage" step="1" (blur)="validateScreenVoltage()" [disabled]="!adcData || (uTracerReaderService.state !== 'idle' && uTracerReaderService.state !== 'ready')">
               </div>
               <div class="col-3">
                 <label for="test-heater-voltage" class="form-label small mb-0">Heater (V)</label>
-                <input type="number" class="form-control form-control-sm" id="test-heater-voltage" [(ngModel)]="testHeaterVoltage" min="0" [max]="powerSupplyVoltage" step="0.1" (blur)="validateHeaterVoltage()" [disabled]="!adcData || voltagesActive || isReading">
+                <input type="number" class="form-control form-control-sm" id="test-heater-voltage" [(ngModel)]="testHeaterVoltage" min="0" [max]="adcData?.positivePowerSupplyVoltage || 0" step="0.1" (blur)="validateHeaterVoltage()" [disabled]="!adcData || uTracerReaderService.state !== 'idle'">
               </div>
             </div>
 
-            <!-- ADC Data Display (moved up) -->
-            <app-utracer-debug [adcData]="adcData" [averaging]="averaging" [details]="true" [alwaysShow]="true"></app-utracer-debug>
+            <!-- ADC Data Display -->
+            <app-utracer-debug [adcData]="adcData" [details]="true" [alwaysShow]="true"></app-utracer-debug>
 
             <!-- Auto-Read Toggle -->
             <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="auto-read-toggle" [(ngModel)]="autoReadEnabled" [disabled]="isReading">
+              <input class="form-check-input" type="checkbox" id="auto-read-toggle" [(ngModel)]="autoReadEnabled" [disabled]="!adcData || (uTracerReaderService.state !== 'idle' && uTracerReaderService.state !== 'ready')">
               <label class="form-check-label small" for="auto-read-toggle">
-                Auto-read every 2 seconds
+                Hold voltages for 3 seconds
               </label>
             </div>
-            
-            <!-- Heating Progress -->
-            @if (isHeating) {
-              <div class="mb-2">
-                <div class="d-flex align-items-center justify-content-between mb-1">
-                  <small class="text-muted">Heating tube...</small>
-                  <small class="text-muted">{{heatingProgress.toFixed(0)}}%</small>
-                </div>
-                <div class="progress" style="height: 8px;">
-                  <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" [style.width.%]="heatingProgress"></div>
-                </div>
-              </div>
-            }
           </div>
         </div>
 
-        <div style="max-height: 30vh; overflow-y: auto; margin-top: 1rem;">
-            <div class="row g-2">
-              <div class="col-md-6">
+        <div>
+          <div class="row g-2">
+            <!-- Left Column -->
+            <div class="col-md-6">
+              <!-- Power Supply Voltage Gain -->
+              <div class="border rounded p-2 bg-light mb-2">
+                <label for="power-supply-voltage-gain" class="form-label d-block small mb-1">Power Supply Voltage Gain: {{powerSupplyVoltageGain.toFixed(4)}}</label>
+                <input type="range" class="form-range" id="power-supply-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="powerSupplyVoltageGain" (input)="onPowerSupplyVoltageGainChange()" [disabled]="!adcData || (uTracerReaderService.state !== 'idle' && uTracerReaderService.state !== 'ready')">
+              </div>
+
+              <!-- Grid Calibration Group -->
+              <div class="border rounded p-2 bg-light mb-2">
                 <div class="mb-1">
-                  <label for="power-supply-voltage-gain" class="form-label d-block">Power Supply Voltage: {{powerSupplyVoltageGain.toFixed(4)}}</label>
-                  <input type="range" class="form-range" id="power-supply-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="powerSupplyVoltageGain" (input)="onPowerSupplyVoltageGainChange()" [disabled]="!adcData || isReading || voltagesActive">
+                  <label for="grid40-volt-voltage-gain" class="form-label d-block small mb-0">Grid -40V Gain: {{grid40VoltVoltageGain.toFixed(4)}}</label>
+                  <input type="range" class="form-range" id="grid40-volt-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="grid40VoltVoltageGain" (input)="onGrid40VoltVoltageGainChange()" [disabled]="!adcData || (uTracerReaderService.state !== 'idle' && uTracerReaderService.state !== 'ready')">
                 </div>
                 <div class="mb-1">
-                  <label for="plate-voltage-gain" class="form-label d-block">Plate Voltage: {{plateVoltageGain.toFixed(4)}}</label>
-                  <input type="range" class="form-range" id="plate-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="plateVoltageGain" (input)="onPlateVoltageGainChange()" [disabled]="!adcData || isReading || voltagesActive">
+                  <label for="grid4-volt-voltage-gain" class="form-label d-block small mb-0">Grid -4V Gain: {{grid4VoltVoltageGain.toFixed(4)}}</label>
+                  <input type="range" class="form-range" id="grid4-volt-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="grid4VoltVoltageGain" (input)="onGrid4VoltVoltageGainChange()" [disabled]="!adcData || (uTracerReaderService.state !== 'idle' && uTracerReaderService.state !== 'ready')">
                 </div>
-                <div class="mb-1">
-                  <label for="screen-voltage-gain" class="form-label d-block">Screen Voltage: {{screenVoltageGain.toFixed(4)}}</label>
-                  <input type="range" class="form-range" id="screen-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="screenVoltageGain" (input)="onScreenVoltageGainChange()" [disabled]="!adcData || isReading || voltagesActive">
-                </div>
-                <div class="mb-1">
-                  <label for="plate-current-gain" class="form-label d-block">Plate Current: {{plateCurrentGain.toFixed(4)}}</label>
-                  <input type="range" class="form-range" id="plate-current-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="plateCurrentGain" (input)="onPlateCurrentGainChange()" [disabled]="!adcData || isReading || voltagesActive">
-                </div>
-                <div class="mb-1">
-                  <label for="screen-current-gain" class="form-label d-block">Screen Current: {{screenCurrentGain.toFixed(4)}}</label>
-                  <input type="range" class="form-range" id="screen-current-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="screenCurrentGain" (input)="onScreenCurrentGainChange()" [disabled]="!adcData || isReading || voltagesActive">
+                <div class="mb-0">
+                  <label for="grid1-volt-voltage-gain" class="form-label d-block small mb-0">Grid Saturation Voltage: {{(gridSaturationVoltage * 1000).toFixed(1)}}mV</label>
+                  <input type="range" class="form-range" id="grid1-volt-voltage-gain" min="-0.2" max="0.2" step="0.0001" [(ngModel)]="gridSaturationVoltage" (input)="onGridSaturationVoltageChange()" [disabled]="!adcData || (uTracerReaderService.state !== 'idle' && uTracerReaderService.state !== 'ready')">
                 </div>
               </div>
-              <div class="col-md-6">
-                <div class="mb-1">
-                  <label for="negative-voltage-gain" class="form-label d-block">Negative Voltage: {{negativeVoltageGain.toFixed(4)}}</label>
-                  <input type="range" class="form-range" id="negative-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="negativeVoltageGain" (input)="onNegativeVoltageGainChange()" [disabled]="!adcData || isReading || voltagesActive">
-                </div>
-                <div class="mb-1">
-                  <label for="grid1-volt-voltage-gain" class="form-label d-block">Grid -1V Voltage: {{grid1VoltVoltageGain.toFixed(4)}}</label>
-                  <input type="range" class="form-range" id="grid1-volt-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="grid1VoltVoltageGain" (input)="onGrid1VoltVoltageGainChange()" [disabled]="!adcData || isReading || voltagesActive">
-                </div>
-                <div class="mb-1">
-                  <label for="grid4-volt-voltage-gain" class="form-label d-block">Grid -4V Voltage: {{grid4VoltVoltageGain.toFixed(4)}}</label>
-                  <input type="range" class="form-range" id="grid4-volt-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="grid4VoltVoltageGain" (input)="onGrid4VoltVoltageGainChange()" [disabled]="!adcData || isReading || voltagesActive">
-                </div>
-                <div class="mb-1">
-                  <label for="grid40-volt-voltage-gain" class="form-label d-block">Grid -40V Voltage: {{grid40VoltVoltageGain.toFixed(4)}}</label>
-                  <input type="range" class="form-range" id="grid40-volt-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="grid40VoltVoltageGain" (input)="onGrid40VoltVoltageGainChange()" [disabled]="!adcData || isReading || voltagesActive">
-                </div>
+
+              <!-- Screen Current Gain -->
+              <div class="border rounded p-2 bg-light">
+                <label for="screen-current-gain" class="form-label d-block small mb-1">Screen Current Gain: {{screenCurrentGain.toFixed(4)}}</label>
+                <input type="range" class="form-range" id="screen-current-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="screenCurrentGain" (input)="onScreenCurrentGainChange()" [disabled]="!adcData || (uTracerReaderService.state !== 'idle' && uTracerReaderService.state !== 'ready')">
               </div>
             </div>
+
+            <!-- Right Column -->
+            <div class="col-md-6">
+              <!-- Plate Voltage & Saturation Group -->
+              <div class="border rounded p-2 bg-light mb-2">
+                <div class="mb-1">
+                  <label for="plate-voltage-gain" class="form-label d-block small mb-0">Plate Voltage Gain: {{plateVoltageGain.toFixed(4)}}</label>
+                  <input type="range" class="form-range" id="plate-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="plateVoltageGain" (input)="onPlateVoltageGainChange()" [disabled]="!adcData || (uTracerReaderService.state !== 'idle' && uTracerReaderService.state !== 'ready')">
+                </div>
+                <div class="mb-0">
+                  <label for="plate-saturation-voltage" class="form-label d-block small mb-0">Plate Saturation Voltage: {{plateSaturationVoltage.toFixed(4)}}V</label>
+                  <input type="range" class="form-range" id="plate-saturation-voltage" min="-1" max="1" step="0.0001" [(ngModel)]="plateSaturationVoltage" (input)="onPlateSaturationVoltageChange()" [disabled]="!adcData || (uTracerReaderService.state !== 'idle' && uTracerReaderService.state !== 'ready')">
+                </div>
+              </div>
+              
+              <!-- Screen Voltage & Saturation Group -->
+              <div class="border rounded p-2 bg-light mb-2">
+                <div class="mb-1">
+                  <label for="screen-voltage-gain" class="form-label d-block small mb-0">Screen Voltage Gain: {{screenVoltageGain.toFixed(4)}}</label>
+                  <input type="range" class="form-range" id="screen-voltage-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="screenVoltageGain" (input)="onScreenVoltageGainChange()" [disabled]="!adcData || (uTracerReaderService.state !== 'idle' && uTracerReaderService.state !== 'ready')">
+                </div>
+                <div class="mb-0">
+                  <label for="screen-saturation-voltage" class="form-label d-block small mb-0">Screen Saturation Voltage: {{screenSaturationVoltage.toFixed(4)}}V</label>
+                  <input type="range" class="form-range" id="screen-saturation-voltage" min="-1" max="1" step="0.0001" [(ngModel)]="screenSaturationVoltage" (input)="onScreenSaturationVoltageChange()" [disabled]="!adcData || (uTracerReaderService.state !== 'idle' && uTracerReaderService.state !== 'ready')">
+                </div>
+              </div>
+              
+              <!-- Plate Current Gain -->
+              <div class="border rounded p-2 bg-light">
+                <label for="plate-current-gain" class="form-label d-block small mb-1">Plate Current Gain: {{plateCurrentGain.toFixed(4)}}</label>
+                <input type="range" class="form-range" id="plate-current-gain" min="0.9" max="1.1" step="0.0001" [(ngModel)]="plateCurrentGain" (input)="onPlateCurrentGainChange()" [disabled]="!adcData || (uTracerReaderService.state !== 'idle' && uTracerReaderService.state !== 'ready')">
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-success" (click)="applyTestVoltages()" [disabled]="!adcData || voltagesActive || isReading">
-          <i class="bi bi-play-fill me-1"></i>Apply
-        </button>
-        <button type="button" class="btn btn-danger" (click)="stopAllVoltages()" [disabled]="!adcData || !voltagesActive || isReading">
-          <i class="bi bi-stop-fill me-1"></i>Stop
-        </button>
-        <button type="button" class="btn btn-primary ms-auto" (click)="read()" [disabled]="isReading || voltagesActive">Read</button>
-        <button type="button" class="btn btn-secondary" (click)="close()" [disabled]="isReading || voltagesActive">Close</button>
+      <div class="modal-footer d-flex align-items-center">
+        
+        <span class="me-3">
+          Status: {{uTracerReaderService.state}} 
+          @if (uTracerReaderService.state === 'heating') {
+            {{ ' => ' + heaterVoltage.toFixed(2) + 'V (' + (heatingProgress || 0).toFixed(1) + '%)'}}
+          }
+        </span>
+
+        <div class="flex-grow-1" style="min-width:160px; max-width:60%;">
+          @if (uTracerReaderService.state === 'heating') {
+            <div class="mb-0">
+              <div class="progress w-100" style="height: 8px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" [attr.aria-valuenow]="heatingProgress || 0" aria-valuemin="0" aria-valuemax="100"[style.width.%]="heatingProgress || 0"></div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="d-flex align-items-center gap-2 ms-3">
+          <button type="button" class="btn btn-primary" (click)="onRead()" [hidden]="uTracerReaderService.state === 'heating'" [disabled]="uTracerReaderService.state !== 'idle' && uTracerReaderService.state !== 'ready'">
+            <i class="bi bi-play-fill me-1"></i>
+            Read
+          </button>
+          <button type="button" class="btn btn-danger" (click)="onAbort()" [hidden]="uTracerReaderService.state !== 'heating'">
+            <i class="bi bi-stop-circle me-1"></i>
+            Abort
+          </button>
+          <button type="button" class="btn btn-warning" (click)="onReset()" [disabled]="uTracerReaderService.state !== 'idle' && uTracerReaderService.state !== 'ready'">
+            <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="onClose()" [disabled]="uTracerReaderService.state !== 'idle' && uTracerReaderService.state !== 'ready' && uTracerReaderService.state !== 'error'">
+            <i class="bi bi-x-lg me-1"></i>
+            Close
+          </button>
+        </div>
       </div>
     </div>
   </div>

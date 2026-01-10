@@ -5,23 +5,35 @@ import { SettingsService } from './settings.service';
 export interface AdcData {
     status: number;
     plateCurrentBytes: number[];
+    plateCurrentValue: number;
     plateCurrent: number;
     plateCurrentRawBytes: number[];
+    plateCurrentRawValue: number;
     plateCurrentRaw: number;
     screenCurrentBytes: number[];
+    screenCurrentValue: number;
     screenCurrent: number;
     screenCurrentRawBytes: number[];
+    screenCurrentRawValue: number;
     screenCurrentRaw: number;
     plateVoltageBytes: number[];
+    plateVoltageValue: number;
     plateVoltage: number;
     screenVoltageBytes: number[];
+    screenVoltageValue: number;
     screenVoltage: number;
-    powerSupplyVoltageBytes: number[];
-    powerSupplyVoltage: number;
-    negativeVoltageBytes: number[];
-    negativeVoltage: number;
+    positivePowerSupplyVoltageBytes: number[];
+    positivePowerSupplyVoltageValue: number;
+    positivePowerSupplyVoltage: number;
+    negativePowerSupplyVoltageBytes: number[];
+    negativePowerSupplyVoltageValue: number;
+    negativePowerSupplyVoltage: number;
+    plateCurrentGainValue: number;
     plateCurrentGain: number;
+    screenCurrentGainValue: number;
     screenCurrentGain: number;
+    plateCurrentAverage: number;
+    screenCurrentAverage: number;
 }
 
 export type Compliance = 200 | 175 | 150 | 125 | 100 | 75 | 50 | 25 | 0;
@@ -57,9 +69,6 @@ export const screenVoltageDividerV3 = 6.8 / (470.0 + 6.8); // R18/R19
 export const screenVoltageDividerV3p = 5.23 / (470.0 + 5.23); // R18/R19
 export const negativeVoltageDividerV3 = 2.0 / (47.0 + 2.0); // R3/R4
 
-const diodeDropVoltage = 0.7; // drop voltage acreoss D11
-const darlingtonDropVoltage = 0.5; // drop voltage across MJE350
-
 const adcGainLookup: number[] = [1, 2, 5, 10, 20, 50, 100, 200];
 const autoAverageLookup: number[] = [1, 1, 1, 1, 2, 2, 4, 8];
 
@@ -69,10 +78,6 @@ const autoAverageLookup: number[] = [1, 1, 1, 1, 2, 2, 4, 8];
 export class UTracerService {
 
     private port: SerialPort | null = null;
-    // private reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
-    // private writer: WritableStreamDefaultWriter<Uint8Array> | null = null;
-    // private readableStreamClosed: Promise<void> | null = null;
-    // private writableStreamClosed: Promise<void> | null = null;
 
     private settingsService = inject(SettingsService);
 
@@ -81,14 +86,19 @@ export class UTracerService {
     private _maximumHighVoltage: number = this.settingsService.get<number>('utracer.calibration.maximumHighVoltage') ?? maximumHighVoltageV3;
     private _maximumNegativeVoltage: number = this.settingsService.get<number>('utracer.calibration.maximumNegativeVoltage') ?? maximumNegativeVoltageV3;
 
-    // calibration related fields
+    // calibration fields
+    private _powerSupplyVoltageGain = this.settingsService.get<number>('utracer.calibration.powerSupplyVoltageGain') ?? 1.0;
+
+    // plate & screen calibration fields
     private _plateVoltageGain = this.settingsService.get<number>('utracer.calibration.plateVoltageGain') ?? 1.0;
     private _screenVoltageGain = this.settingsService.get<number>('utracer.calibration.screenVoltageGain') ?? 1.0;
     private _plateCurrentGain = this.settingsService.get<number>('utracer.calibration.plateCurrentGain') ?? 1.0;
     private _screenCurrentGain = this.settingsService.get<number>('utracer.calibration.screenCurrentGain') ?? 1.0;
-    private _powerSupplyVoltageGain = this.settingsService.get<number>('utracer.calibration.powerSupplyVoltageGain') ?? 1.0;
-    private _negativeVoltageGain = this.settingsService.get<number>('utracer.calibration.negativeVoltageGain') ?? 1.0;
-    private _grid1VoltVoltageGain = this.settingsService.get<number>('utracer.calibration.grid1VoltVoltageGain') ?? 1.0;
+    private _plateSaturationVoltage = this.settingsService.get<number>('utracer.calibration.plateSaturationVoltage') ?? -0.2;
+    private _screenSaturationVoltage = this.settingsService.get<number>('utracer.calibration.screenSaturationVoltage') ?? -0.2;
+
+    // grid voltage calibration fields
+    private _gridSaturationVoltage = this.settingsService.get<number>('utracer.calibration.gridSaturationVoltage') ?? -0.08;
     private _grid4VoltVoltageGain = this.settingsService.get<number>('utracer.calibration.grid4VoltVoltageGain') ?? 1.0;
     private _grid40VoltVoltageGain = this.settingsService.get<number>('utracer.calibration.grid40VoltVoltageGain') ?? 1.0;
 
@@ -178,6 +188,25 @@ export class UTracerService {
     }
 
     /**
+     * Get the plate voltage saturation/drop offset for low voltage corrections
+     * Accounts for static voltage drops in the measurement circuit (diode, darlington)
+     * @returns Plate saturation voltage offset in volts (default: -0.2V)
+     */
+    get plateSaturationVoltage(): number {
+        return this._plateSaturationVoltage;
+    }
+
+    /**
+     * Set the plate voltage saturation/drop offset and persist to settings
+     * @param value Plate saturation voltage offset in volts
+     */
+    set plateSaturationVoltage(value: number) {
+        // set and persist value
+        this._plateSaturationVoltage = value;
+        this.settingsService.set('utracer.calibration.plateSaturationVoltage', value);
+    }
+
+    /**
      * Get the calibration gain factor for screen voltage measurements
      * @returns Screen voltage gain multiplier (default: 1.0)
      */
@@ -193,6 +222,25 @@ export class UTracerService {
         // set and persist value
         this._screenVoltageGain = value;
         this.settingsService.set('utracer.calibration.screenVoltageGain', value);
+    }
+
+    /**
+     * Get the screen voltage saturation/drop offset for low voltage corrections
+     * Accounts for static voltage drops in the measurement circuit (diode, darlington)
+     * @returns Screen saturation voltage offset in volts (default: -0.2V)
+     */
+    get screenSaturationVoltage(): number {
+        return this._screenSaturationVoltage;
+    }
+
+    /**
+     * Set the screen voltage saturation/drop offset and persist to settings
+     * @param value Screen saturation voltage offset in volts
+     */
+    set screenSaturationVoltage(value: number) {
+        // set and persist value
+        this._screenSaturationVoltage = value;
+        this.settingsService.set('utracer.calibration.screenSaturationVoltage', value);
     }
 
     /**
@@ -250,39 +298,22 @@ export class UTracerService {
     }
 
     /**
-     * Get the calibration gain factor for negative voltage measurements
-     * @returns Negative voltage gain multiplier (default: 1.0)
+     * Get the grid voltage saturation threshold for voltage calculation
+     * Defines the minimum negative voltage below which grid current begins to flow
+     * @returns Grid saturation voltage in volts (default: -0.08V)
      */
-    get negativeVoltageGain(): number {
-        return this._negativeVoltageGain;
+    get gridSaturationVoltage(): number {
+        return this._gridSaturationVoltage;
     }
 
     /**
-     * Set the negative voltage calibration gain and persist to settings
-     * @param value Negative voltage gain multiplier
+     * Set the grid voltage saturation threshold and persist to settings
+     * @param value Grid saturation voltage in volts
      */
-    set negativeVoltageGain(value: number) {
+    set gridSaturationVoltage(value: number) {
         // set and persist value
-        this._negativeVoltageGain = value;
-        this.settingsService.set('utracer.calibration.negativeVoltageGain', value);
-    }
-
-    /**
-     * Get the calibration gain for grid voltage in the -1V to 0V range
-     * @returns Grid 1 volt voltage gain multiplier (default: 1.0)
-     */
-    get grid1VoltVoltageGain(): number {
-        return this._grid1VoltVoltageGain;
-    }
-
-    /**
-     * Set the grid voltage calibration gain for -1V to 0V range and persist to settings
-     * @param value Grid 1 volt voltage gain multiplier
-     */
-    set grid1VoltVoltageGain(value: number) {
-        // set and persist value
-        this._grid1VoltVoltageGain = value;
-        this.settingsService.set('utracer.calibration.grid1VoltVoltageGain', value);
+        this._gridSaturationVoltage = value;
+        this.settingsService.set('utracer.calibration.gridSaturationVoltage', value);
     }
 
     /**
@@ -463,21 +494,10 @@ export class UTracerService {
             this.port = await navigator.serial.requestPort();
             // open port with uTracer settings
             await this.port.open({baudRate: 9600, dataBits: 8, stopBits: 1, parity: 'none', bufferSize: 255, flowControl: 'none'});
-            // // reader
-            // if (this.port.readable)
-            //     this.reader = this.port.readable.getReader();
-            // // writer
-            // if (this.port.writable)
-            //     this.writer = this.port.writable.getWriter();
-            // // validate connection
-            // if (!this.port || !this.reader || !this.writer)
-            //     return Promise.reject(new Error('Failed to establish serial port connection'));
         }
         catch (error) {
             // cleanup on failure
             this.port = null;
-            // this.reader = null;
-            // this.writer = null;
             // return rejected promise
             return Promise.reject(new Error(`Failed to connect to serial port: ${error}`));
         }
@@ -489,26 +509,6 @@ export class UTracerService {
      */
     async disconnect(): Promise<void> {
         try {
-            // // check reader is present
-            // if (this.reader) {
-            //     // cancel reader
-            //     await this.reader.cancel();
-            //     // cancel stream
-            //     this.readableStreamClosed = this.port?.readable?.cancel() ?? null;
-            //     // reset value
-            //     this.reader = null;
-            // }
-            // // check writer is present
-            // if (this.writer) {
-            //     // close writer
-            //     await this.writer.close();
-            //     // close stream
-            //     this.writableStreamClosed = this.port?.writable?.close() ?? null;
-            //     // reset value
-            //     this.writer = null;
-            // }
-            // // wait for streams to close
-            // await Promise.all([this.readableStreamClosed, this.writableStreamClosed]);
             // check port is present
             if (this.port) {
                 // close port
@@ -516,9 +516,6 @@ export class UTracerService {
                 // reset value
                 this.port = null;
             }
-            // reset streams
-            // this.readableStreamClosed = null;
-            // this.writableStreamClosed = null;
         }
         catch (error) {
             // reset value
@@ -567,7 +564,7 @@ export class UTracerService {
         // 50 0000 0000 0000 0000
         const command = new Uint8Array([0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
         // send command
-        return await this.sendCommandWithResponse(command, 1000);
+        return await this.sendCommandWithResponse(command, 0x40);
     }
 
     /**
@@ -575,16 +572,17 @@ export class UTracerService {
      * Converts target voltage to DAC setting, accounting for static hardware drops (diode, darlington)
      * but not current-dependent resistive drops (measured values will differ under load)
      *
-     * @param powerSupplyVoltage Current measured power supply voltage (Vin)
+     * @param positivePowerSupplyVoltage Current measured power supply voltage (Vin)
      * @param plateVoltage Target plate (anode) voltage relative to cathode
      * @returns Array with [high byte, low byte] representing the 10-bit ADC value
      */
-    calculatePlateBytes(powerSupplyVoltage: number, plateVoltage: number): [number, number] {
+    calculatePlateBytes(positivePowerSupplyVoltage: number, plateVoltage: number): [number, number] {
         // prevent negative voltages
         if (plateVoltage < 0)
             plateVoltage = 0;
         // int value [0...1023]
-        const value = Math.min(Math.floor((plateVoltage + powerSupplyVoltage - diodeDropVoltage + darlingtonDropVoltage) *  (1023 * this.plateVoltageDivider) / (this.plateVoltageGain * 5)), 1023);
+        // const value = Math.min(Math.floor((plateVoltage + positivePowerSupplyVoltage - diodeDropVoltage + darlingtonDropVoltage) *  (1023 * this.plateVoltageDivider) / (this.plateVoltageGain * 5)), 1023);
+        const value = (plateVoltage + positivePowerSupplyVoltage + 1) * this.plateVoltageDivider * 1023 / (this.plateVoltageGain * 5);
         // bytes`
         return this.valueTo10BitBytes(value);
     }
@@ -594,72 +592,68 @@ export class UTracerService {
      * Converts target voltage to DAC setting, accounting for static hardware drops (diode, darlington)
      * but not current-dependent resistive drops (measured values will differ under load)
      *
-     * @param powerSupplyVoltage Current measured power supply voltage (Vin)
+     * @param positivePowerSupplyVoltage Current measured power supply voltage (Vin)
      * @param screenVoltage Target screen grid voltage relative to cathode
      * @returns Array with [high byte, low byte] representing the 10-bit ADC value
      */
-    calculateScreenBytes(powerSupplyVoltage: number, screenVoltage: number): [number, number] {
+    calculateScreenBytes(positivePowerSupplyVoltage: number, screenVoltage: number): [number, number] {
         // prevent negative voltages
         if (screenVoltage < 0)
             screenVoltage = 0;
         // int value [0...1023]
-        const value = Math.min(Math.floor((screenVoltage + powerSupplyVoltage - diodeDropVoltage + darlingtonDropVoltage) *  (1023 * this.screenVoltageDivider) / (this.screenVoltageGain * 5)), 1023);
+        // const value = Math.min(Math.floor((screenVoltage + positivePowerSupplyVoltage - diodeDropVoltage + darlingtonDropVoltage) *  (1023 * this.screenVoltageDivider) / (this.screenVoltageGain * 5)), 1023);
+        const value = (screenVoltage + positivePowerSupplyVoltage + 1) * this.screenVoltageDivider * 1023 / (this.screenVoltageGain * 5);
         // bytes
         return this.valueTo10BitBytes(value);
     }
 
     /**
      * Calculate the 10-bit ADC bytes needed to set the grid voltage on the uTracer
-     * Uses piecewise linear interpolation for three voltage ranges:
-     * - 0V to -1V: Linear scaling
-     * - -1V to -4V: Linear interpolation between calibration points
-     * - -4V to -40V: Linear interpolation between calibration points
+     * Uses piecewise linear interpolation with saturation thresholds and dual-range calibration:
+     * - Range 1 [-4V to 0V]: Uses grid4VoltVoltageGain and grid40VoltVoltageGain
+     * - Range 2 [-40V to -4V]: Uses grid40VoltVoltageGain only
+     * - Below saturation voltage: Returns 0 (no bias)
      *
-     * @param negativeSupplyVoltage Current measured negative supply voltage from boost converter
-     * @param gridVoltage Target control grid voltage (negative values only)
+     * @param gridVoltage Target control grid voltage (must be ≤ 0V; positive values return [0,0])
      * @returns Array with [high byte, low byte] representing the 10-bit ADC value
      */
-    calculateGridBytes(negativeSupplyVoltage: number, gridVoltage: number): [number, number] {
+    calculateGridBytes(gridVoltage: number): [number, number] {
         // only negative values allowed
         if (gridVoltage >= 0)
             return [0, 0];
-        // prevent division by zero
-        if (negativeSupplyVoltage === 0)
-            return [0, 0];
-        // -1 < V < 0, linear interpolation between 0V and -1V
-        if (gridVoltage > -1) {
+        // -4 <= V <= 0, linear interpolation between 0V and -4V
+        if (gridVoltage >= -4) {
+            // line between point p0 = (Vsat, 0) and p1 = (4, 4 * 1023 * grid40VoltVoltageGain * grid4VoltVoltageGain / 50)
+            const x0 = this.gridSaturationVoltage;
+            const y0 = 0;
+            const x1 = 4;
+            const y1 = 1023 * 4 * this.grid40VoltVoltageGain * this.grid4VoltVoltageGain / 50;
             // scaled bytes
-            return this.valueTo10BitBytes(Math.min(Math.floor(1023 * Math.abs(gridVoltage / negativeSupplyVoltage) * this.grid1VoltVoltageGain), 1023));
-        }
-        // -4 < V <= -1, linear interpolation between -1V and -4V
-        if (gridVoltage > -4) {
-            // line between points
-            const v0 = 1023 * Math.abs(-1 / negativeSupplyVoltage) * this.grid1VoltVoltageGain;
-            const v1 = 1023 * Math.abs(-4 / negativeSupplyVoltage) * this.grid4VoltVoltageGain;
-            // scaled bytes
-            return this.valueTo10BitBytes(Math.min(Math.floor((v1 - v0) * (Math.abs(gridVoltage) - 1) / (4 - 1) + v0), 1023));
+            return this.valueTo10BitBytes(Math.min(Math.floor((y1 - y0) * (Math.abs(gridVoltage) - x0) / (x1 - x0) + y0), 1023));
         }
         // -40 < V <= -4, linear interpolation between -4V and -40V
-        const v0 = 1023 * Math.abs(-4 / negativeSupplyVoltage) * this.grid4VoltVoltageGain;
-        const v1 = 1023 * Math.abs(-40 / negativeSupplyVoltage) * this.grid40VoltVoltageGain;
+        const x0 = 4;
+        const y0 = 1023 * 4 * this.grid40VoltVoltageGain * this.grid4VoltVoltageGain / 50;
+        const x1 = 40;
+        const y1 = 1023 * 40 * this.grid40VoltVoltageGain / 50;
         // scaled bytes
-        return this.valueTo10BitBytes(Math.min(Math.floor((v1 - v0) * (Math.abs(gridVoltage) - 4) / (40 - 4) + v0), 1023));
+        return this.valueTo10BitBytes(Math.min(Math.floor((y1 - y0) * (Math.abs(gridVoltage) - x0) / (x1 - x0) + y0), 1023));
     }
 
     /**
      * Calculate the 10-bit PWM bytes needed to set the heater voltage on the uTracer
-     * Uses quadratic relationship: PWM = 1023 * (heaterVoltage / powerSupplyVoltage)²
+     * Uses quadratic relationship: PWM = 1023 * (heaterVoltage / positivePowerSupplyVoltage)²
      *
-     * @param powerSupplyVoltage Current measured power supply voltage
+     * @param positivePowerSupplyVoltage Current measured power supply voltage
      * @param heaterVoltage Target heater voltage
      * @returns Array with [high byte, low byte] representing the 10-bit PWM value
      */
-    calculateHeaterBytes(powerSupplyVoltage: number, heaterVoltage: number): [number, number] {
+    calculateHeaterBytes(positivePowerSupplyVoltage: number, heaterVoltage: number): [number, number] {
         // prevent division by zero
-        if (powerSupplyVoltage == 0)
+        if (positivePowerSupplyVoltage == 0)
             return [0, 0];
         // calculate 10-bit PWM value: n = 1023 * (voltage / powerSupply)^2
-        const ratio = heaterVoltage / powerSupplyVoltage;
+        const ratio = heaterVoltage / positivePowerSupplyVoltage;
         // n
         const n = Math.min(Math.floor(1023 * ratio * ratio), 1023);
         // bytes
@@ -670,14 +664,14 @@ export class UTracerService {
      * Set the heater voltage on the uTracer
      * Command: 40 0000 0000 0000 (heater voltage in last 2 bytes)
      *
-     * @param powerSupplyVoltage Current measured power supply voltage (used for PWM calculation)
+     * @param positivePowerSupplyVoltage Current measured power supply voltage (used for PWM calculation)
      * @param voltage Target heater voltage to set
      * @returns Promise that resolves when voltage is set
      * @throws Error if not connected or command fails
      */
-    async setHeaterVoltage(powerSupplyVoltage: number, voltage: number): Promise<void> {
+    async setHeaterVoltage(positivePowerSupplyVoltage: number, voltage: number): Promise<void> {
         // build command: 40 0000 0000 0000 (heater voltage in last 2 bytes)
-        const command = new Uint8Array([0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00].concat(this.calculateHeaterBytes(powerSupplyVoltage, voltage)));
+        const command = new Uint8Array([0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00].concat(this.calculateHeaterBytes(positivePowerSupplyVoltage, voltage)));
         // send command with echo validation
         await this.sendCommand(command);
     }
@@ -704,8 +698,7 @@ export class UTracerService {
      * Set all the voltages on the uTracer to the given values and hold
      * Command: 20 (plate voltage, 2 bytes) (screen voltage, 2 bytes) (grid voltage, 2 bytes) (heater voltage, 2 bytes)
      *
-     * @param powerSupplyVoltage Current measured power supply voltage (used for voltage calculations)
-     * @param negativeSupplyVoltage Current measured negative supply voltage from boost converter
+     * @param positivePowerSupplyVoltage Current measured power supply voltage (used for voltage calculations)
      * @param plateVoltage Target plate (anode) voltage relative to cathode
      * @param screenVoltage Target screen grid voltage relative to cathode
      * @param gridVoltage Target control grid voltage
@@ -713,9 +706,9 @@ export class UTracerService {
      * @returns Promise that resolves when voltages are set
      * @throws Error if not connected or command fails
      */
-    async set(powerSupplyVoltage: number, negativeSupplyVoltage: number, plateVoltage: number, screenVoltage: number, gridVoltage: number, heaterVoltage: number): Promise<void> {
+    async set(positivePowerSupplyVoltage: number, plateVoltage: number, screenVoltage: number, gridVoltage: number, heaterVoltage: number): Promise<void> {
         // build command: 20 (plate voltage) (screen voltage) (grid voltage) (heater voltage)
-        const command = new Uint8Array([0x20].concat(...this.calculatePlateBytes(powerSupplyVoltage, plateVoltage), ...this.calculateScreenBytes(powerSupplyVoltage, screenVoltage),  ...this.calculateGridBytes(negativeSupplyVoltage, gridVoltage), ...this.calculateHeaterBytes(powerSupplyVoltage, heaterVoltage)));
+        const command = new Uint8Array([0x20].concat(...this.calculatePlateBytes(positivePowerSupplyVoltage, plateVoltage), ...this.calculateScreenBytes(positivePowerSupplyVoltage, screenVoltage),  ...this.calculateGridBytes(gridVoltage), ...this.calculateHeaterBytes(positivePowerSupplyVoltage, heaterVoltage)));
         // send command with echo validation
         await this.sendCommand(command);
     }
@@ -724,8 +717,8 @@ export class UTracerService {
      * Perform a measurement on the uTracer at the specified voltages
      * Command: 10 (plate voltage, 2 bytes) (screen voltage, 2 bytes) (grid voltage, 2 bytes) (heater voltage, 2 bytes)
      *
-     * @param powerSupplyVoltage Current measured power supply voltage (used for voltage calculations)
-     * @param negativeSupplyVoltage Current measured negative supply voltage from boost converter
+     * @param positivePowerSupplyVoltage Current measured power supply voltage (used for voltage calculations)
+     * @param averaging Averaging mode: 0x40 for auto (default), 0 for 1x, or manual count (2, 4, 8, 16, 32)
      * @param plateVoltage Target plate (anode) voltage relative to cathode
      * @param screenVoltage Target screen grid voltage relative to cathode
      * @param gridVoltage Target control grid voltage
@@ -733,11 +726,11 @@ export class UTracerService {
      * @returns Promise that resolves with the ADC measurement data when complete
      * @throws Error if not connected or command fails
      */
-    async measure(powerSupplyVoltage: number, negativeSupplyVoltage: number, plateVoltage: number, screenVoltage: number, gridVoltage: number, heaterVoltage: number): Promise<AdcData> {
+    async measure(positivePowerSupplyVoltage: number, averaging: Averaging, plateVoltage: number, screenVoltage: number, gridVoltage: number, heaterVoltage: number): Promise<AdcData> {
         // build command: 10 (plate voltage) (screen voltage) (grid voltage) (heater voltage)
-        const command = new Uint8Array([0x10].concat(...this.calculatePlateBytes(powerSupplyVoltage, plateVoltage), ...this.calculateScreenBytes(powerSupplyVoltage, screenVoltage),  ...this.calculateGridBytes(negativeSupplyVoltage, gridVoltage), ...this.calculateHeaterBytes(powerSupplyVoltage, heaterVoltage)));
+        const command = new Uint8Array([0x10].concat(...this.calculatePlateBytes(positivePowerSupplyVoltage, plateVoltage), ...this.calculateScreenBytes(positivePowerSupplyVoltage, screenVoltage),  ...this.calculateGridBytes(gridVoltage), ...this.calculateHeaterBytes(positivePowerSupplyVoltage, heaterVoltage)));
         // send command
-        return await this.sendCommandWithResponse(command, 10000);
+        return await this.sendCommandWithResponse(command, averaging);
     }
 
     /**
@@ -786,10 +779,7 @@ export class UTracerService {
             // apply timeout
             const readPromise = Promise.race([reader.read(), timeoutPromise]);
             // await read
-            const { value, done } = await readPromise;
-            // check stream closed
-            if (done)
-                return Promise.reject(new Error('Serial port stream closed'));
+            const { value } = await readPromise;
             // return data
             return value || new Uint8Array([]);
         }
@@ -850,7 +840,7 @@ export class UTracerService {
                 // compare echo
                 if (echo !== hex) {
                     // log command failure
-                    console.log(`uTracer => ${commandString} (failed at byte ${hex})`);
+                    console.warn(`uTracer => ${commandString} (failed at byte ${hex})`);
                     // error
                     return Promise.reject(new Error(`uTracer echo validation failed. Expected: ${hex}, Received: ${echo}`));
                 }
@@ -870,12 +860,13 @@ export class UTracerService {
      * Sends command, validates echo, then reads 19 bytes of ADC measurement data
      *
      * @param command 9-byte command array to send to uTracer
-     * @param timeout Timeout in milliseconds for reading response (default: 1000ms)
+     * @param averaging Averaging mode: 0x40 for auto (default), 0 for 1x, or manual count (2, 4, 8, 16, 32)
+     * @param timeout Timeout in milliseconds for reading response (default: 10s)
      * @returns Promise that resolves with parsed ADC measurement data
      * @throws Error if not connected, invalid command/response, or timeout occurs
      * @private
      */
-    private async sendCommandWithResponse(command: Uint8Array, timeout = 1000): Promise<AdcData> {
+    private async sendCommandWithResponse(command: Uint8Array, averaging: Averaging = 0x40, timeout = 10000): Promise<AdcData> {
         // ensure connected
         if (!this.isConnected())
             return Promise.reject(new Error('Serial port is not connected'));
@@ -942,24 +933,50 @@ export class UTracerService {
             const adcData: AdcData = {
                 status: response[0],
                 plateCurrentBytes: [response[1], response[2]],
-                plateCurrent: this.bytesTo10BitValue(response[1], response[2]),
+                plateCurrentValue: this.bytesTo10BitValue(response[1], response[2]),
+                plateCurrent: 0, // to be calculated later
                 plateCurrentRawBytes: [response[3], response[4]],
-                plateCurrentRaw: this.bytesTo10BitValue(response[3], response[4]),
+                plateCurrentRawValue: this.bytesTo10BitValue(response[3], response[4]),
+                plateCurrentRaw: 0, // to be calculated later
                 screenCurrentBytes: [response[5], response[6]],
-                screenCurrent: this.bytesTo10BitValue(response[5], response[6]),
+                screenCurrentValue: this.bytesTo10BitValue(response[5], response[6]),
+                screenCurrent: 0, // to be calculated later
                 screenCurrentRawBytes: [response[7], response[8]],
-                screenCurrentRaw: this.bytesTo10BitValue(response[7], response[8]),
+                screenCurrentRawValue: this.bytesTo10BitValue(response[7], response[8]),
+                screenCurrentRaw: 0, // to be calculated later
                 plateVoltageBytes: [response[9], response[10]],
-                plateVoltage: this.bytesTo10BitValue(response[9], response[10]),
+                plateVoltageValue: this.bytesTo10BitValue(response[9], response[10]),
+                plateVoltage: 0, // to be calculated later
                 screenVoltageBytes: [response[11], response[12]],
-                screenVoltage: this.bytesTo10BitValue(response[11], response[12]),
-                powerSupplyVoltageBytes: [response[13], response[14]],
-                powerSupplyVoltage: this.bytesTo10BitValue(response[13], response[14]),
-                negativeVoltageBytes: [response[15], response[16]],
-                negativeVoltage: this.bytesTo10BitValue(response[15], response[16]),
-                plateCurrentGain: response[17],
-                screenCurrentGain: response[18],
+                screenVoltageValue: this.bytesTo10BitValue(response[11], response[12]),
+                screenVoltage: 0, // to be calculated later
+                positivePowerSupplyVoltageBytes: [response[13], response[14]],
+                positivePowerSupplyVoltageValue: this.bytesTo10BitValue(response[13], response[14]),
+                positivePowerSupplyVoltage: 0, // to be calculated later
+                negativePowerSupplyVoltageBytes: [response[15], response[16]],
+                negativePowerSupplyVoltageValue: this.bytesTo10BitValue(response[15], response[16]),
+                negativePowerSupplyVoltage: 0, // to be calculated later
+                plateCurrentGainValue: response[17],
+                plateCurrentGain: 0, // to be calculated later
+                screenCurrentGainValue: response[18],
+                screenCurrentGain: 0, // to be calculated later
+                plateCurrentAverage: 0, // to be calculated later
+                screenCurrentAverage: 0, // to be calculated later
             };
+            // calculated values (primary)
+            adcData.plateCurrentGain = this.readGain(adcData.plateCurrentGainValue);
+            adcData.screenCurrentGain = this.readGain(adcData.screenCurrentGainValue);
+            adcData.positivePowerSupplyVoltage = this.readPowerSupplyVoltage(adcData);
+            adcData.negativePowerSupplyVoltage = this.readNegativeVoltage(adcData);
+            adcData.plateCurrentAverage = this.readAverage(adcData.plateCurrentGainValue, averaging);
+            adcData.screenCurrentAverage = this.readAverage(adcData.screenCurrentGainValue, averaging);
+            // calculated values (secondary)
+            adcData.plateVoltage = this.readPlateVoltage(adcData);
+            adcData.screenVoltage = this.readScreenVoltage(adcData);
+            adcData.plateCurrent = this.readPlateCurrent(adcData, averaging);
+            adcData.screenCurrent = this.readScreenCurrent(adcData, averaging);
+            adcData.plateCurrentRaw = this.readPlateCurrentRaw(adcData, averaging);
+            adcData.screenCurrentRaw = this.readScreenCurrentRaw(adcData, averaging);
             // log response
             console.log('uTracer <= ', adcData);
             // exit
@@ -1007,12 +1024,12 @@ export class UTracerService {
      */
     readPlateCurrentRaw(adcData: AdcData, averaging: Averaging): number {
         // zero
-        if (adcData.plateCurrentRaw === 0)
+        if (adcData.plateCurrentRawValue === 0)
             return 0;
         // average
-        const average = this.readAverage(adcData.plateCurrentGain, averaging);
+        const average = this.readAverage(adcData.plateCurrentGainValue, averaging);
         // current in mA
-        return adcData.plateCurrentRaw * plateCurrentScale  / average;
+        return adcData.plateCurrentRawValue * plateCurrentScale  / average;
     }
 
     /**
@@ -1025,14 +1042,12 @@ export class UTracerService {
      */
     readPlateCurrent(adcData: AdcData, averaging: Averaging): number {
         // zero
-        if (adcData.plateCurrent === 0)
+        if (adcData.plateCurrentValue === 0)
             return 0;
-        // gain
-        const gain = this.readGain(adcData.plateCurrentGain);
         // average
-        const average = this.readAverage(adcData.plateCurrentGain, averaging);
+        const average = this.readAverage(adcData.plateCurrentGainValue, averaging);
         // current in mA
-        return adcData.plateCurrent * plateCurrentScale / gain * this.plateCurrentGain / average;
+        return adcData.plateCurrentValue * plateCurrentScale / adcData.plateCurrentGain * this.plateCurrentGain / average;
     }
 
     /**
@@ -1045,12 +1060,12 @@ export class UTracerService {
      */
     readScreenCurrentRaw(adcData: AdcData, averaging: Averaging): number {
         // zero
-        if (adcData.screenCurrentRaw === 0)
+        if (adcData.screenCurrentRawValue === 0)
             return 0;
         // average
-        const average = this.readAverage(adcData.screenCurrentGain, averaging);
+        const average = this.readAverage(adcData.screenCurrentGainValue, averaging);
         // current in mA
-        return adcData.screenCurrentRaw * screenCurrentScale  / average;
+        return adcData.screenCurrentRawValue * screenCurrentScale  / average;
     }
 
     /**
@@ -1063,46 +1078,38 @@ export class UTracerService {
      */
     readScreenCurrent(adcData: AdcData, averaging: Averaging): number {
         // zero
-        if (adcData.screenCurrent === 0)
+        if (adcData.screenCurrentValue === 0)
             return 0;
-        // gain
-        const gain = this.readGain(adcData.screenCurrentGain);
         // average
-        const average = this.readAverage(adcData.screenCurrentGain, averaging);
+        const average = this.readAverage(adcData.screenCurrentGainValue, averaging);
         // current in mA
-        return adcData.screenCurrent * screenCurrentScale / gain * this.screenCurrentGain / average;
+        return adcData.screenCurrentValue * screenCurrentScale / adcData.screenCurrentGain * this.screenCurrentGain / average;
     }
 
     /**
      * Convert 10-bit ADC value to plate (anode) voltage using uTracer voltage divider formula
      * The plate voltage is measured via resistive divider and referenced to the cathode (power supply)
-     * Combines calibration gain, divider correction, hardware voltage drops, and current-dependent resistive drops
+     * Combines calibration gain, divider correction, and saturation voltage offset
      *
      * @param adcData The raw ADC measurement data from the uTracer
-     * @param averaging The averaging mode for computing current corrections
      * @returns Plate voltage in volts relative to cathode
      */
-    readPlateVoltage(adcData: AdcData, averaging: Averaging): number {
-        // plate current
-        const current = this.readPlateCurrentRaw(adcData, averaging);
-        // voltage = (ADC voltage) - (power supply voltage) + (diode drop) - (darlington drop) - (current limiting drop) + (current sensing drop)
-        return adcData.plateVoltage * this.plateVoltageGain * 5 / (1023 * this.plateVoltageDivider) - this.readPowerSupplyVoltage(adcData) + diodeDropVoltage - darlingtonDropVoltage - current * this.currentLimitingResistor / 1000 + current * this.currentSensingResistor / 1000;
+    readPlateVoltage(adcData: AdcData): number {
+        // plate voltage
+        return this.plateVoltageGain * adcData.plateVoltageValue * 5 / (this.plateVoltageDivider * 1023) - adcData.positivePowerSupplyVoltage + this.plateSaturationVoltage;
     }
 
     /**
      * Convert 10-bit ADC value to screen (suppressor/control grid) voltage using uTracer voltage divider formula
      * The screen voltage is measured via resistive divider and referenced to the cathode (power supply)
-     * Combines calibration gain, divider correction, hardware voltage drops, and current-dependent resistive drops
+     * Combines calibration gain, divider correction, and saturation voltage offset
      *
      * @param adcData The raw ADC measurement data from the uTracer
-     * @param averaging The averaging mode for computing current corrections
      * @returns Screen voltage in volts relative to cathode
      */
-    readScreenVoltage(adcData: AdcData, averaging: Averaging): number {
-        // screen current
-        const current = this.readScreenCurrent(adcData, averaging);
-        // voltage = (ADC voltage) - (power supply voltage) + (diode drop) - (darlington drop) - (current limiting drop) + (current sensing drop)
-        return adcData.screenVoltage * this.screenVoltageGain * 5 / (1023 * this.screenVoltageDivider) - this.readPowerSupplyVoltage(adcData) + diodeDropVoltage - darlingtonDropVoltage - current * this.currentLimitingResistor / 1000 + current * this.currentSensingResistor / 1000;
+    readScreenVoltage(adcData: AdcData): number {
+        // screen voltage
+        return adcData.screenVoltageValue * (this.screenVoltageGain * 5) / (this.screenVoltageDivider * 1023) - adcData.positivePowerSupplyVoltage + this.screenSaturationVoltage;
     }
 
     /**
@@ -1114,7 +1121,7 @@ export class UTracerService {
      * @returns Power supply voltage in volts
      */
     readPowerSupplyVoltage(adcData: AdcData): number {
-        return adcData.powerSupplyVoltage * this.powerSupplyVoltageGain * 5 / (1023 * this.powerSupplyVoltageDivider);
+        return adcData.positivePowerSupplyVoltageValue * this.powerSupplyVoltageGain * 5 / (1023 * this.powerSupplyVoltageDivider);
     }
 
     /**
@@ -1126,6 +1133,6 @@ export class UTracerService {
      * @returns Negative voltage in volts (typically around -40 V)
      */
     readNegativeVoltage(adcData: AdcData): number {
-        return (5 * (adcData.negativeVoltage / 1023 - 1) / this.negativeVoltageDivider + 5) * this.negativeVoltageGain;
+        return (5 * (adcData.negativePowerSupplyVoltageValue / 1023 - 1) / this.negativeVoltageDivider + 5);
     }
 }

@@ -1,4 +1,4 @@
-import { AdcData, Averaging, UTracerService } from '../services/utracer.service';
+import { AdcData, UTracerService } from '../services/utracer.service';
 import { CommonModule } from '@angular/common';
 import {
     Component,
@@ -8,61 +8,90 @@ import {
     Output
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ToastService } from '../services/toast.service';
 import { UTracerDebugComponent } from './utracer-debug.component';
+import { UTracerReaderService } from '../services/utracer-reader.service';
 
 @Component({
     selector: 'app-utracer-setup',
     templateUrl: './utracer-setup.component.html',
     styleUrl: './utracer-setup.component.scss',
-    imports: [CommonModule, FormsModule, UTracerDebugComponent]
+    imports: [CommonModule, FormsModule, UTracerDebugComponent],
+    providers: [UTracerReaderService]
 })
 export class UTracerSetupComponent implements OnInit {
 
     @Output() closed = new EventEmitter<void>();
 
     uTracerService = inject(UTracerService);
-
-    isReading = false;
+    uTracerReaderService = inject(UTracerReaderService);
+    private toastService = inject(ToastService);
 
     uTracerVersion!: string;
 
     powerSupplyVoltageGain!: number;
 
     plateVoltageGain!: number;
+    plateSaturationVoltage!: number;
     screenVoltageGain!: number;
+    screenSaturationVoltage!: number;
+
     plateCurrentGain!: number;
     screenCurrentGain!: number;
 
-    negativeVoltageGain!: number;
-    grid1VoltVoltageGain!: number;
+    gridSaturationVoltage!: number;
     grid4VoltVoltageGain!: number;
     grid40VoltVoltageGain!: number;
 
     // initial values for reset
     private initialPowerSupplyVoltageGain!: number;
     private initialPlateVoltageGain!: number;
+    private initialPlateSaturationVoltage!: number;
     private initialScreenVoltageGain!: number;
+    private initialScreenSaturationVoltage!: number;
     private initialPlateCurrentGain!: number;
     private initialScreenCurrentGain!: number;
-    private initialNegativeVoltageGain!: number;
-    private initialGrid1VoltVoltageGain!: number;
+    private initialGridSaturationVoltage!: number;
     private initialGrid4VoltVoltageGain!: number;
     private initialGrid40VoltVoltageGain!: number;
 
     adcData: AdcData | null = null;
-    averaging: Averaging = 0x40;
 
-    // Test voltage controls
+    // voltages
     testGridVoltage = 0;
     testPlateVoltage = 0;
     testScreenVoltage = 0;
     testHeaterVoltage = 0;
-    voltagesActive = false;
+
     autoReadEnabled = false;
-    autoReadInterval: ReturnType<typeof setInterval> | null = null;
-    safetyTimeout: ReturnType<typeof setTimeout> | null = null;
+
     heatingProgress = 0;
-    isHeating = false;
+    heaterVoltage = 0;
+
+    constructor() {
+        // listen to errors
+        this.uTracerReaderService.error$
+            .pipe(takeUntilDestroyed())
+            .subscribe(error => {
+                // log error
+                console.error('uTracer Reader Error:', error);
+                // show user message
+                this.toastService.error(error.message || 'An unknown error occurred in the uTracer Reader Service');
+            });
+        // listen to heater status updates
+        this.uTracerReaderService.heater$
+            .pipe(takeUntilDestroyed())
+            .subscribe(status => {
+                // heater voltage and progress
+                this.heaterVoltage = status.voltage;
+                this.heatingProgress = status.percentage;
+            });
+        // listen to adc data updates
+        this.uTracerReaderService.adcData$
+            .pipe(takeUntilDestroyed())
+            .subscribe(adcData => this.adcData = adcData);
+    }
 
     ngOnInit() {
         // initialize settings
@@ -70,47 +99,50 @@ export class UTracerSetupComponent implements OnInit {
         // voltage/current calibration
         this.powerSupplyVoltageGain = this.uTracerService.powerSupplyVoltageGain;
         this.plateVoltageGain = this.uTracerService.plateVoltageGain;
+        this.plateSaturationVoltage = this.uTracerService.plateSaturationVoltage;
         this.screenVoltageGain = this.uTracerService.screenVoltageGain;
+        this.screenSaturationVoltage = this.uTracerService.screenSaturationVoltage;
         this.plateCurrentGain = this.uTracerService.plateCurrentGain;
         this.screenCurrentGain = this.uTracerService.screenCurrentGain;
         // negative voltage calibration
-        this.negativeVoltageGain = this.uTracerService.negativeVoltageGain;
-        this.grid1VoltVoltageGain = this.uTracerService.grid1VoltVoltageGain;
-        this.grid4VoltVoltageGain = this.uTracerService.grid4VoltVoltageGain;
         this.grid40VoltVoltageGain = this.uTracerService.grid40VoltVoltageGain;
+        this.grid4VoltVoltageGain = this.uTracerService.grid4VoltVoltageGain;
+        this.gridSaturationVoltage = this.uTracerService.gridSaturationVoltage;
         // store initial values
         this.initialPowerSupplyVoltageGain = this.powerSupplyVoltageGain;
         this.initialPlateVoltageGain = this.plateVoltageGain;
+        this.initialPlateSaturationVoltage = this.plateSaturationVoltage;
         this.initialScreenVoltageGain = this.screenVoltageGain;
+        this.initialScreenSaturationVoltage = this.screenSaturationVoltage;
         this.initialPlateCurrentGain = this.plateCurrentGain;
         this.initialScreenCurrentGain = this.screenCurrentGain;
-        this.initialNegativeVoltageGain = this.negativeVoltageGain;
-        this.initialGrid1VoltVoltageGain = this.grid1VoltVoltageGain;
+        this.initialGridSaturationVoltage = this.gridSaturationVoltage;
         this.initialGrid4VoltVoltageGain = this.grid4VoltVoltageGain;
         this.initialGrid40VoltVoltageGain = this.grid40VoltVoltageGain;
-        // schedule initial read
-        setTimeout(async () => await this.read(), 100);
+        // schedule service initialization
+        setTimeout(async () => await this.uTracerReaderService.initialize(), 100);
     }
 
     onReset() {
         // reset all gains to initial values
         this.powerSupplyVoltageGain = this.initialPowerSupplyVoltageGain;
         this.plateVoltageGain = this.initialPlateVoltageGain;
+        this.plateSaturationVoltage = this.initialPlateSaturationVoltage;
         this.screenVoltageGain = this.initialScreenVoltageGain;
         this.plateCurrentGain = this.initialPlateCurrentGain;
         this.screenCurrentGain = this.initialScreenCurrentGain;
-        this.negativeVoltageGain = this.initialNegativeVoltageGain;
-        this.grid1VoltVoltageGain = this.initialGrid1VoltVoltageGain;
+        this.gridSaturationVoltage = this.initialGridSaturationVoltage;
         this.grid4VoltVoltageGain = this.initialGrid4VoltVoltageGain;
         this.grid40VoltVoltageGain = this.initialGrid40VoltVoltageGain;
         // apply changes
         this.onPowerSupplyVoltageGainChange();
         this.onPlateVoltageGainChange();
+        this.onPlateSaturationVoltageChange();
         this.onScreenVoltageGainChange();
+        this.onScreenSaturationVoltageChange();
         this.onPlateCurrentGainChange();
         this.onScreenCurrentGainChange();
-        this.onNegativeVoltageGainChange();
-        this.onGrid1VoltVoltageGainChange();
+        this.onGridSaturationVoltageChange();
         this.onGrid4VoltVoltageGainChange();
         this.onGrid40VoltVoltageGainChange();
     }
@@ -130,8 +162,16 @@ export class UTracerSetupComponent implements OnInit {
         this.uTracerService.plateVoltageGain = this.plateVoltageGain;
     }
 
+    onPlateSaturationVoltageChange() {
+        this.uTracerService.plateSaturationVoltage = this.plateSaturationVoltage;
+    }
+
     onScreenVoltageGainChange() {
         this.uTracerService.screenVoltageGain = this.screenVoltageGain;
+    }
+
+    onScreenSaturationVoltageChange() {
+        this.uTracerService.screenSaturationVoltage = this.screenSaturationVoltage;
     }
 
     onPlateCurrentGainChange() {
@@ -146,12 +186,8 @@ export class UTracerSetupComponent implements OnInit {
         this.uTracerService.powerSupplyVoltageGain = this.powerSupplyVoltageGain;
     }
 
-    onNegativeVoltageGainChange() {
-        this.uTracerService.negativeVoltageGain = this.negativeVoltageGain;
-    }
-
-    onGrid1VoltVoltageGainChange() {
-        this.uTracerService.grid1VoltVoltageGain = this.grid1VoltVoltageGain;
+    onGridSaturationVoltageChange() {
+        this.uTracerService.gridSaturationVoltage = this.gridSaturationVoltage;
     }
 
     onGrid4VoltVoltageGainChange() {
@@ -162,211 +198,47 @@ export class UTracerSetupComponent implements OnInit {
         this.uTracerService.grid40VoltVoltageGain = this.grid40VoltVoltageGain;
     }
 
-    get powerSupplyVoltage(): number {
-        return this.adcData ? this.uTracerService.readPowerSupplyVoltage(this.adcData) : 0;
-    }
-
-    get negativeVoltage(): number {
-        return this.adcData ? this.uTracerService.readNegativeVoltage(this.adcData) : 0;
-    }
-
     get maximumHighVoltage(): number {
         return this.uTracerService.maximumHighVoltage;
     }
 
-    async read() {
-        try {
-            // set reading state
-            this.isReading = true;
-            // reset uTracer
-            await this.uTracerService.start(0, 0x40, 0, 0);
-            // ping uTracer, read data
-            this.adcData = await this.uTracerService.ping();
-        }
-        catch (error) {
-            // log error
-            console.error('Failed to ping uTracer:', error);
-        }
-        finally {
-            // reset reading state
-            this.isReading = false;
-        }
-    }
-
-    /**
-     * Apply test voltages to the uTracer hardware for calibration purposes
-     * Heats the tube if heater voltage is set, then applies plate/screen/grid voltages
-     * Starts auto-read and safety timeout after voltages are applied
-     */
-    async applyTestVoltages() {
-        try {
-            // confirm high voltage application
-            if (this.testPlateVoltage > 100 || this.testScreenVoltage > 100) {
-                // show confirmation dialog
-                if (!confirm(`Warning: You are about to apply ${this.testPlateVoltage}V plate and ${this.testScreenVoltage}V screen voltage. Ensure tube can handle these voltages. Continue?`))
-                    return;
+    async onRead() {
+        // check we need to configure voltages
+        if (this.testGridVoltage !== 0 || this.testPlateVoltage !== 0 || this.testScreenVoltage !== 0 || this.testHeaterVoltage !== 0) {
+            // check state
+            if (this.uTracerReaderService.state === 'idle') {
+                // start heating tube
+                await this.uTracerReaderService.start(0, 0x40, 0x08, 0x08, this.testHeaterVoltage);
             }
-            // set reading state
-            this.isReading = true;
-            this.isHeating = true;
-            this.heatingProgress = 0;
-            // get utracer adc data
-            this.adcData = await this.uTracerService.ping();
-            // start uTracer
-            await this.uTracerService.start(0, 0x40, 0, 0);
-            // heat tube if heater voltage is set
-            if (this.testHeaterVoltage > 0) {
-                // use 15 steps in the heating process (10s ramp up + 5s hold)
-                for (let it = 1; it <= 15; it++) {
-                    // voltage at iteration
-                    const currentHeaterVoltage = Math.min((this.testHeaterVoltage * it) / 10, this.testHeaterVoltage);
-                    // send utracer command
-                    await this.uTracerService.setHeaterVoltage(this.powerSupplyVoltage, currentHeaterVoltage);
-                    // update progress
-                    this.heatingProgress = (it / 15) * 100;
-                    // wait 1 second between steps
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+            // check state is ready for measurements
+            if (this.uTracerReaderService.state === 'ready') {
+                // check we need to measure currents
+                if (this.testPlateVoltage !== 0 || this.testScreenVoltage !== 0 || this.testGridVoltage !== 0) {
+                    // perform measurement
+                    await this.uTracerReaderService.measure(0x40, this.testPlateVoltage, this.testScreenVoltage, this.testGridVoltage, this.testHeaterVoltage);
+                    // exit
+                    return;
                 }
             }
-            // heating complete
-            this.isHeating = false;
-            this.voltagesActive = true;
-            // apply test voltages
-            this.adcData = await this.uTracerService.measure(this.powerSupplyVoltage, this.negativeVoltage, this.testPlateVoltage, this.testScreenVoltage, this.testGridVoltage, this.testHeaterVoltage);
-            // start safety timeout (60 seconds)
-            this.resetSafetyTimeout();
-            // start auto-read if enabled
-            if (this.autoReadEnabled && !this.autoReadInterval)
-                this.autoReadInterval = setInterval(() => this.autoRead(), 2000);
         }
-        catch (error) {
-            // log error
-            console.error('Failed to apply test voltages:', error);
-            // reset state
-            this.voltagesActive = false;
-            this.isHeating = false;
-            try {
-                // shutdown heater on error
-                await this.uTracerService.setHeaterVoltage(0, 0);
-            }
-            catch (ex) {
-                // ignore errors, only log in console
-                console.error('Failed to shutdown heater:', ex);
-            }
-        }
-        finally {
-            // reset reading state
-            this.isReading = false;
-        }
+        // read adc data
+        await this.uTracerReaderService.read();
     }
 
-    /**
-     * Automatically read ADC values while voltages are active
-     * Called periodically when auto-read is enabled
-     */
-    async autoRead() {
-        // check state
-        if (!this.voltagesActive || this.isReading)
-            return;
-
-        try {
-            // set reading state
-            this.isReading = true;
-            // ping uTracer
-            this.adcData = await this.uTracerService.ping();
-            // measure with current test voltages
-            this.adcData = await this.uTracerService.measure(this.powerSupplyVoltage, this.negativeVoltage, this.testPlateVoltage, this.testScreenVoltage, this.testGridVoltage, 0);
-            // reset safety timeout
-            this.resetSafetyTimeout();
-        }
-        catch (error) {
-            // log error
-            console.error('Auto-read failed:', error);
-        }
-        finally {
-            // reset reading state
-            this.isReading = false;
-        }
+    onAbort() {
+        // abort current operation
+        this.uTracerReaderService.abort();
     }
 
-    /**
-     * Stop all voltages and shutdown heater
-     * Resets all test voltage values and clears timers
-     */
-    async stopAllVoltages() {
-        try {
-            // set reading state
-            this.isReading = true;
-            this.voltagesActive = false;
-            // stop auto-read
-            if (this.autoReadInterval) {
-                clearInterval(this.autoReadInterval);
-                this.autoReadInterval = null;
-            }
-            // clear safety timeout
-            if (this.safetyTimeout) {
-                clearTimeout(this.safetyTimeout);
-                this.safetyTimeout = null;
-            }
-            // start uTracer
-            await this.uTracerService.start(0, 0x40, 0, 0);
-            // get adc data
-            this.adcData = await this.uTracerService.ping();
-            // shutdown heater first
-            await this.uTracerService.setHeaterVoltage(this.powerSupplyVoltage, 0);
-            // set all voltages to 0
-            this.adcData = await this.uTracerService.measure(this.powerSupplyVoltage, this.negativeVoltage, 0, 0, 0, 0);
-            // reset test voltages
-            this.testPlateVoltage = 0;
-            this.testScreenVoltage = 0;
-            this.testGridVoltage = 0;
-            this.testHeaterVoltage = 0;
-            this.heatingProgress = 0;
-        }
-        catch (error) {
-            // log error
-            console.error('Failed to stop voltages:', error);
-        }
-        finally {
-            // reset reading state
-            this.isReading = false;
-        }
-    }
-
-    /**
-     * Reset the safety timeout that automatically stops voltages after 60 seconds of inactivity
-     * Called when voltages are applied or when auto-read updates measurements
-     */
-    resetSafetyTimeout() {
-        // clear existing timeout
-        if (this.safetyTimeout)
-            clearTimeout(this.safetyTimeout);
-        // set new timeout (60 seconds)
-        this.safetyTimeout = setTimeout(() => {
-            // log warning
-            console.warn('Safety timeout triggered - stopping all voltages');
-            // stop all voltages
-            this.stopAllVoltages();
-        }, 60000);
-    }
-
-    /**
-     * Validate and clamp grid voltage to acceptable range
-     */
     validateGridVoltage() {
         // clamp to negative voltage <= grid <= 0
         if (this.testGridVoltage > 0)
             this.testGridVoltage = 0;
-        // negative value
-        const negativeVoltage = this.uTracerService.readNegativeVoltage(this.adcData!);
         // it cannot go below this value
-        if (this.testGridVoltage < negativeVoltage)
-            this.testGridVoltage = Math.ceil(negativeVoltage);
+        if (!this.adcData || this.testGridVoltage < this.adcData.negativePowerSupplyVoltage)
+            this.testGridVoltage = Math.ceil(this.adcData?.negativePowerSupplyVoltage || 0);
     }
 
-    /**
-     * Validate and clamp plate voltage to acceptable range
-     */
     validatePlateVoltage() {
         // clamp to 0 <= plate <= max voltage
         if (this.testPlateVoltage < 0)
@@ -376,9 +248,6 @@ export class UTracerSetupComponent implements OnInit {
             this.testPlateVoltage = Math.floor(this.maximumHighVoltage);
     }
 
-    /**
-     * Validate and clamp screen voltage to acceptable range
-     */
     validateScreenVoltage() {
         // clamp to 0 <= screen <= max voltage
         if (this.testScreenVoltage < 0)
@@ -388,29 +257,18 @@ export class UTracerSetupComponent implements OnInit {
             this.testScreenVoltage = Math.floor(this.maximumHighVoltage);
     }
 
-    /**
-     * Validate and clamp heater voltage to acceptable range
-     */
     validateHeaterVoltage() {
         // clamp to 0 <= heater <= power supply voltage
         if (this.testHeaterVoltage < 0)
             this.testHeaterVoltage = 0;
         // it cannot go above power supply voltage
-        if (this.testHeaterVoltage > this.powerSupplyVoltage)
-            this.testHeaterVoltage = this.powerSupplyVoltage;
+        if (!this.adcData || this.testHeaterVoltage > this.adcData.positivePowerSupplyVoltage)
+            this.testHeaterVoltage = this.adcData?.positivePowerSupplyVoltage || 0;
     }
 
-    close() {
-        // stop auto-read if active
-        if (this.autoReadInterval) {
-            clearInterval(this.autoReadInterval);
-            this.autoReadInterval = null;
-        }
-        // clear safety timeout
-        if (this.safetyTimeout) {
-            clearTimeout(this.safetyTimeout);
-            this.safetyTimeout = null;
-        }
+    async onClose(): Promise<void> {
+        // stop reader service
+        await this.uTracerReaderService.stop();
         // close
         this.closed.emit();
     }
