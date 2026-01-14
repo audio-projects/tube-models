@@ -210,12 +210,12 @@ export class UTracerSetupComponent implements OnInit {
                 // start heating tube
                 await this.uTracerReaderService.start(0, 0x40, 0x08, 0x08, this.testHeaterVoltage);
             }
-            // check state is ready for measurements
-            if (this.uTracerReaderService.state === 'ready') {
+            // check state is ready for measurements, we should have adc data
+            if (this.uTracerReaderService.state === 'ready' && this.adcData) {
                 // check we need to measure currents
                 if (this.testPlateVoltage !== 0 || this.testScreenVoltage !== 0 || this.testGridVoltage !== 0) {
                     // perform measurement
-                    await this.uTracerReaderService.measure(0x40, this.testPlateVoltage, this.testScreenVoltage, this.testGridVoltage, this.testHeaterVoltage);
+                    await this.uTracerReaderService.measure(this.adcData.positivePowerSupplyVoltage, 0x40, this.testPlateVoltage, this.testScreenVoltage, this.testGridVoltage, this.testHeaterVoltage);
                     // exit
                     return;
                 }

@@ -112,6 +112,8 @@ export class UTracerReaderService {
                 // heater value & percentage
                 let eh = 0;
                 let percentage = 0;
+                // update flag
+                this._heaterOn = true;
                 // emit status
                 this.emitHeaterStatus(eh, percentage);
                 // use 15 steps in the heating process (10s ramp up + 5s hold)
@@ -131,8 +133,6 @@ export class UTracerReaderService {
                     // check progress
                     signal.throwIfAborted();
                 }
-                // update flag
-                this._heaterOn = true;
             }
             // initialize uTracer for reading
             await this.uTracerService.start(compliance, averaging, plateGain, screenGain);
@@ -149,15 +149,17 @@ export class UTracerReaderService {
                 if (this._state === 'heating' && heaterVoltage > 0) {
                     // shutdown heater
                     await this.uTracerService.setHeaterVoltage(0, 0);
-                    // emit status
-                    this.emitHeaterStatus(0, 0);
-                    // update flag
-                    this._heaterOn = false;
                 }
             }
             catch (ex) {
                 // ignore errors, only log in console
                 console.error('Failed to shut down heater: ', ex);
+            }
+            finally {
+                // emit status
+                this.emitHeaterStatus(0, 0);
+                // update flag
+                this._heaterOn = false;
             }
             // reset state
             this._state = 'idle';
@@ -168,36 +170,27 @@ export class UTracerReaderService {
         }
     }
 
-    async measure(averaging: Averaging = 0x40, plateVoltage: number, screenVoltage: number, gridVoltage: number, heaterVoltage: number): Promise<void> {
-        // create abort controller
-        this.abortController = new AbortController();
-        // signal
-        const signal = this.abortController.signal;
-
+    async measure(positivePowerSupplyVoltage: number, averaging: Averaging = 0x40, plateVoltage: number, screenVoltage: number, gridVoltage: number, heaterVoltage: number): Promise<AdcData | null> {
         try {
             // check state
             if (this._state !== 'ready')
-                return;
+                return null;
             // state
             this._state = 'reading';
-            // ping uTracer, read data
-            let adcData = await this.uTracerService.ping();
-            // check progress
-            signal.throwIfAborted();
             // perform measurement
-            adcData = await this.uTracerService.measure(adcData.positivePowerSupplyVoltage, averaging, plateVoltage, screenVoltage, gridVoltage, heaterVoltage);
+            const adcData = await this.uTracerService.measure(positivePowerSupplyVoltage, averaging, plateVoltage, screenVoltage, gridVoltage, heaterVoltage);
             // emit adc data
             this.emitAdcData(adcData);
-            // check progress
-            signal.throwIfAborted();
+            // return adc data
+            return adcData;
         }
         catch (error) {
             // emit error
-            this.emitError(signal.aborted ? new Error(signal.reason) : new Error('Failed to read measurement from uTracer', { cause: error instanceof Error ? error : undefined }));
+            this.emitError(new Error('Failed to read measurement from uTracer', { cause: error instanceof Error ? error : undefined }));
+            // no data
+            return null;
         }
         finally {
-            // reset abort controller
-            this.abortController = null;
             // update state
             this._state = 'ready';
         }

@@ -31,14 +31,8 @@
                     <i class="bi bi-info-circle ms-1 text-muted" 
                        title="Select the type of tube characteristic to measure"></i>
                   </label>
-                  <select 
-                    id="measurementType" 
-                    class="form-select"
-                    [(ngModel)]="selectedMeasurementType"
-                    (ngModelChange)="onMeasurementTypeChange()"
-                    [disabled]="state === 'measuring'">
+                  <select id="measurementType" class="form-select" [(ngModel)]="selectedMeasurementType"(ngModelChange)="onMeasurementTypeChange()" [disabled]="state !== 'idle' && state !=='ready'">
                     <option value="" disabled>-- Select Measurement Type --</option>
-                    
                     <!-- Triode Measurements -->
                     @if (triodeMeasurements.length > 0) {
                       <optgroup label="Triode Measurements">
@@ -49,7 +43,6 @@
                         }
                       </optgroup>
                     }
-
                     <!-- Pentode Measurements (with screen grid) -->
                     @if (pentodeMeasurements.length > 0) {
                       <optgroup label="Tetrode/Pentode Measurements">
@@ -60,7 +53,6 @@
                         }
                       </optgroup>
                     }
-
                     <!-- Special Measurements -->
                     @if (specialMeasurements.length > 0) {
                       <optgroup label="Triode Measurements">
@@ -80,238 +72,186 @@
                 <!-- Parameters Section -->
                 @if (currentConfig) {
                   <div class="parameters-container">
-                  <h6 class="parameters-title">
-                    <i class="bi bi-sliders me-2"></i>Measurement Parameters
-                  </h6>
-
-                  <!-- Swept Parameter (1st parameter) -->
-                  <div class="form-group parameter-group">
-                    <label class="form-label parameter-label">
-                      <span class="param-name">{{ currentConfig.sweptParam.symbol }}</span>
-                      <span class="param-description">{{ currentConfig.sweptParam.description }}</span>
-                      <span class="badge bg-primary ms-auto">Swept</span>
-                    </label>
-                    
-                    <div class="row g-2">
-                      <div class="col-md-4">
-                        <label for="sweptMin" class="form-label-sm">Minimum (V)</label>
-                        <div class="input-group input-group-sm">
-                          <input 
-                            type="number" 
-                            id="sweptMin" 
-                            class="form-control"
-                            [(ngModel)]="sweptMin"
-                            step="1"
-                            [disabled]="state === 'measuring'">
-                          <span class="input-group-text">V</span>
-                        </div>
-                      </div>
-                      <div class="col-md-4">
-                        <label for="sweptMax" class="form-label-sm">Maximum (V)</label>
-                        <div class="input-group input-group-sm">
-                          <input type="number" id="sweptMax" class="form-control" [(ngModel)]="sweptMax" step="1" [disabled]="state === 'measuring'">
-                          <span class="input-group-text">V</span>
-                        </div>
-                      </div>
-                      <div class="col-md-4">
-                        <label for="sweptSteps" class="form-label-sm">Steps</label>
-                        <input 
-                          type="number" 
-                          id="sweptSteps" 
-                          class="form-control form-control-sm"
-                          [(ngModel)]="sweptSteps"
-                          min="2"
-                          max="100"
-                          step="1"
-                          [disabled]="state === 'measuring'">
-                      </div>
-                    </div>
-
-                    <div class="form-check mt-2" [hidden]="!currentConfig.sweptParam.logarithmic">
-                      <input 
-                        class="form-check-input" 
-                        type="checkbox" 
-                        id="sweptLogarithmic"
-                        [(ngModel)]="sweptLogarithmic"
-                        [disabled]="state === 'measuring'">
-                      <label class="form-check-label" for="sweptLogarithmic">
-                        <i class="bi bi-graph-up me-1"></i>Use logarithmic spacing
-                        <i class="bi bi-info-circle ms-1 text-muted" 
-                           title="Logarithmic spacing provides more detail at lower voltages"></i>
-                      </label>
-                    </div>
-                  </div>
-
-                  <!-- Discrete Values Parameter (2nd parameter) -->
-                  <div class="form-group parameter-group">
-                    <label class="form-label parameter-label">
-                      <span class="param-name">{{ currentConfig.seriesParam.symbol }}</span>
-                      <span class="param-description">{{ currentConfig.seriesParam.description }}</span>
-                      <span class="badge bg-info ms-auto">Series</span>
-                    </label>
-                    
-                    <div class="discrete-values-input">
-                      <label for="discreteValues" class="form-label-sm">Values (comma-separated)</label>
-                      <input 
-                        type="text" 
-                        id="discreteValues" 
-                        class="form-control form-control-sm"
-                        [(ngModel)]="discreteValues"
-                        (ngModelChange)="onDiscreteValuesChange()"
-                        [disabled]="state === 'measuring'">
-                      <div class="form-text">
-                        Enter voltages separated by commas. Each value creates a new measurement curve.
-                      </div>
-                    </div>
-
-                    <!-- Value chips preview -->
-                    @if (discreteValuesArray.length > 0) {
-                      <div class="value-chips mt-2">
-                        @for (value of discreteValuesArray; track $index) {
-                          <span class="chip">{{ value }}V</span>
-                        }
-                      </div>
-                    }
-                  </div>
-
-                  <!-- Constant Values Section -->
-                  <div class="constants-section">
-                    <h6 class="subsection-title">
-                      <i class="bi bi-lock-fill me-2"></i>Constant Values
+                    <h6 class="parameters-title">
+                      <i class="bi bi-sliders me-2"></i>Measurement Parameters
                     </h6>
 
-                    <div class="form-group parameter-group constant-group">
+                    <!-- Swept Parameter (1st parameter) -->
+                    <div class="form-group parameter-group">
                       <label class="form-label parameter-label">
-                        <span class="param-name">Vh</span>
-                        <span class="param-description">Heater Voltage</span>
-                        <span class="badge bg-secondary ms-auto">Constant</span>
+                        <span class="param-name">{{ currentConfig.sweptParam.symbol }}</span>
+                        <span class="param-description">{{ currentConfig.sweptParam.description }}</span>
+                        <span class="badge bg-primary ms-auto">Swept</span>
                       </label>
-                    
+                      
                       <div class="row g-2">
-                        <div class="col-12">
-                          <label attr="const_eh" class="form-label-sm">Voltage (V)</label>
+                        <div class="col-md-4">
+                          <label for="sweptMin" class="form-label-sm">Minimum (V)</label>
                           <div class="input-group input-group-sm">
-                            <input 
-                              type="number" 
-                              id="const_eh"
-                              class="form-control"
-                              [(ngModel)]="constantValues['eh']"
-                              step="0.1"
-                              [disabled]="state !== 'idle'">
+                            <input type="number" id="sweptMin" class="form-control" [(ngModel)]="sweptMin" step="1" [disabled]="state !== 'idle' && state !=='ready'">
                             <span class="input-group-text">V</span>
                           </div>
                         </div>
+                        <div class="col-md-4">
+                          <label for="sweptMax" class="form-label-sm">Maximum (V)</label>
+                          <div class="input-group input-group-sm">
+                            <input type="number" id="sweptMax" class="form-control" [(ngModel)]="sweptMax" step="1" [disabled]="state !== 'idle' && state !=='ready'">
+                            <span class="input-group-text">V</span>
+                          </div>
+                        </div>
+                        <div class="col-md-4">
+                          <label for="sweptSteps" class="form-label-sm">Steps</label>
+                          <input type="number" id="sweptSteps" class="form-control form-control-sm" [(ngModel)]="sweptSteps" min="2" max="100" step="1" [disabled]="state !== 'idle' && state !=='ready'">
+                        </div>
+                      </div>
+
+                      <div class="form-check mt-2" [hidden]="!currentConfig.sweptParam.logarithmic">
+                        <input class="form-check-input" type="checkbox" id="sweptLogarithmic" [(ngModel)]="sweptLogarithmic" [disabled]="state !== 'idle' && state !=='ready'">
+                        <label class="form-check-label" for="sweptLogarithmic">
+                          <i class="bi bi-graph-up me-1"></i>Use logarithmic spacing
+                          <i class="bi bi-info-circle ms-1 text-muted" title="Logarithmic spacing provides more detail at lower voltages"></i>
+                        </label>
                       </div>
                     </div>
 
-                    <!-- Dynamic Constant Parameters -->
-                    @for (param of currentConfig.constantParams; track param.name) {
+                    <!-- Discrete Values Parameter (2nd parameter) -->
+                    <div class="form-group parameter-group">
+                      <label class="form-label parameter-label">
+                        <span class="param-name">{{ currentConfig.seriesParam.symbol }}</span>
+                        <span class="param-description">{{ currentConfig.seriesParam.description }}</span>
+                        <span class="badge bg-info ms-auto">Series</span>
+                      </label>
+                      
+                      <div class="discrete-values-input">
+                        <label for="discreteValues" class="form-label-sm">Values (comma-separated)</label>
+                        <input 
+                          type="text" 
+                          id="discreteValues" 
+                          class="form-control form-control-sm"
+                          [(ngModel)]="discreteValues"
+                          (ngModelChange)="onDiscreteValuesChange()"
+                          [disabled]="state !== 'idle' && state !=='ready'">
+                        <div class="form-text">
+                          Enter voltages separated by commas. Each value creates a new measurement curve.
+                        </div>
+                      </div>
+
+                      <!-- Value chips preview -->
+                      @if (discreteValuesArray.length > 0) {
+                        <div class="value-chips mt-2">
+                          @for (value of discreteValuesArray; track $index) {
+                            <span class="chip">{{ value }}V</span>
+                          }
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Constant Values Section -->
+                    <div class="constants-section">
+                      <h6 class="subsection-title">
+                        <i class="bi bi-lock-fill me-2"></i>Constant Values
+                      </h6>
+
                       <div class="form-group parameter-group constant-group">
                         <label class="form-label parameter-label">
-                          <span class="param-name">{{ param.symbol }}</span>
-                          <span class="param-description">{{ param.description }}</span>
+                          <span class="param-name">Vh</span>
+                          <span class="param-description">Heater Voltage</span>
                           <span class="badge bg-secondary ms-auto">Constant</span>
                         </label>
                       
                         <div class="row g-2">
                           <div class="col-12">
-                            <label [attr.for]="'const_' + param.name" class="form-label-sm">Voltage (V)</label>
+                            <label attr="const_eh" class="form-label-sm">Voltage (V)</label>
                             <div class="input-group input-group-sm">
-                              <input 
-                                type="number" 
-                                [id]="'const_' + param.name"
-                                class="form-control"
-                                [(ngModel)]="constantValues[param.name]"
-                                step="0.1"
-                                [disabled]="state === 'measuring'">
+                              <input type="number" id="const_eh" class="form-control" [(ngModel)]="constantValues['eh']" step="0.1" [disabled]="state !== 'idle' && state !=='ready'">
                               <span class="input-group-text">V</span>
                             </div>
                           </div>
                         </div>
                       </div>
-                    }
 
+                      <!-- Dynamic Constant Parameters -->
+                      @for (param of currentConfig.constantParams; track param.name) {
+                        <div class="form-group parameter-group constant-group">
+                          <label class="form-label parameter-label">
+                            <span class="param-name">{{ param.symbol }}</span>
+                            <span class="param-description">{{ param.description }}</span>
+                            <span class="badge bg-secondary ms-auto">Constant</span>
+                          </label>
+                        
+                          <div class="row g-2">
+                            <div class="col-12">
+                              <label [attr.for]="'const_' + param.name" class="form-label-sm">Voltage (V)</label>
+                              <div class="input-group input-group-sm">
+                                <input type="number" [id]="'const_' + param.name" class="form-control" [(ngModel)]="constantValues[param.name]" step="0.1" [disabled]="state !== 'idle' && state !=='ready'">
+                                <span class="input-group-text">V</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Measurement Settings Section -->
+                    <div class="settings-section">
+                      <h6 class="subsection-title">
+                        <i class="bi bi-gear-fill me-2"></i>Measurement Settings
+                      </h6>
+
+                      <!-- Compliance -->
+                      <div class="form-group parameter-group">
+                        <label for="compliance" class="form-label parameter-label">
+                          <span class="param-name">Compliance</span>
+                          <span class="param-description">Maximum allowed current</span>
+                        </label>
+                        <select id="compliance" class="form-select form-select-sm" [(ngModel)]="compliance" [disabled]="state !== 'idle' && state !=='ready'">
+                          @for (option of complianceOptions; track option.value) {
+                            <option [value]="option.value">{{ option.label }}</option>
+                          }
+                        </select>
+                      </div>
+
+                      <!-- Average -->
+                      <div class="form-group parameter-group">
+                        <label for="average" class="form-label parameter-label">
+                          <span class="param-name">Average</span>
+                          <span class="param-description">Number of measurements to average</span>
+                        </label>
+                        <select id="average" class="form-select form-select-sm" [(ngModel)]="averaging" [disabled]="state !== 'idle' && state !=='ready'">
+                          @for (option of averageOptions; track option.value) {
+                            <option [value]="option.value">{{ option.label }}</option>
+                          }
+                        </select>
+                      </div>
+
+                      <!-- Plate Current Gain -->
+                      <div class="form-group parameter-group">
+                        <label for="plateCurrentGain" class="form-label parameter-label">
+                          <span class="param-name">Plate Current Range</span>
+                          <span class="param-description">Plate current measurement range</span>
+                        </label>
+                        <select id="plateCurrentGain" class="form-select form-select-sm" [(ngModel)]="plateCurrentGain" [disabled]="state !== 'idle' && state !=='ready'">
+                          @for (option of currentGainOptions; track option.value) {
+                            <option [value]="option.value">{{ option.label }}</option>
+                          }
+                        </select>
+                      </div>
+
+                      <!-- Screen Current Gain -->
+                      <div class="form-group parameter-group" [hidden]="tube?.type === 'Triode'">
+                        <label for="screenCurrentGain" class="form-label parameter-label">
+                          <span class="param-name">Screen Current Range</span>
+                          <span class="param-description">Screen current measurement range</span>
+                        </label>
+                        <select id="screenCurrentGain" class="form-select form-select-sm" [(ngModel)]="screenCurrentGain" [disabled]="state !== 'idle' && state !=='ready'">
+                          @for (option of currentGainOptions; track option.value) {
+                            <option [value]="option.value">{{ option.label }}</option>
+                          }
+                        </select>
+                      </div>
+                    </div>
                   </div>
-
-                  <!-- Measurement Settings Section -->
-                  <div class="settings-section">
-                    <h6 class="subsection-title">
-                      <i class="bi bi-gear-fill me-2"></i>Measurement Settings
-                    </h6>
-
-                    <!-- Compliance -->
-                    <div class="form-group parameter-group">
-                      <label for="compliance" class="form-label parameter-label">
-                        <span class="param-name">Compliance</span>
-                        <span class="param-description">Maximum allowed current</span>
-                      </label>
-                      <select 
-                        id="compliance" 
-                        class="form-select form-select-sm"
-                        [(ngModel)]="compliance"
-                        [disabled]="state === 'measuring'">
-                        @for (option of complianceOptions; track option.value) {
-                          <option [value]="option.value">{{ option.label }}</option>
-                        }
-                      </select>
-                    </div>
-
-                    <!-- Average -->
-                    <div class="form-group parameter-group">
-                      <label for="average" class="form-label parameter-label">
-                        <span class="param-name">Average</span>
-                        <span class="param-description">Number of measurements to average</span>
-                      </label>
-                      <select 
-                        id="average" 
-                        class="form-select form-select-sm"
-                        [(ngModel)]="averaging"
-                        [disabled]="state === 'measuring'">
-                        @for (option of averageOptions; track option.value) {
-                          <option [value]="option.value">{{ option.label }}</option>
-                        }
-                      </select>
-                    </div>
-
-                    <!-- Plate Current Gain -->
-                    <div class="form-group parameter-group">
-                      <label for="plateCurrentGain" class="form-label parameter-label">
-                        <span class="param-name">Plate Current Range</span>
-                        <span class="param-description">Plate current measurement range</span>
-                      </label>
-                      <select 
-                        id="plateCurrentGain" 
-                        class="form-select form-select-sm"
-                        [(ngModel)]="plateCurrentGain"
-                        [disabled]="state === 'measuring'">
-                        @for (option of currentGainOptions; track option.value) {
-                          <option [value]="option.value">{{ option.label }}</option>
-                        }
-                      </select>
-                    </div>
-
-                    <!-- Screen Current Gain -->
-                    <div class="form-group parameter-group" [hidden]="tube?.type === 'Triode'">
-                      <label for="screenCurrentGain" class="form-label parameter-label">
-                        <span class="param-name">Screen Current Range</span>
-                        <span class="param-description">Screen current measurement range</span>
-                      </label>
-                      <select 
-                        id="screenCurrentGain" 
-                        class="form-select form-select-sm"
-                        [(ngModel)]="screenCurrentGain"
-                        [disabled]="state === 'measuring'">
-                        @for (option of currentGainOptions; track option.value) {
-                          <option [value]="option.value">{{ option.label }}</option>
-                        }
-                      </select>
-                    </div>
-
-                  </div>
-
-                </div>
                 }
-
               </div>
             </div>
           </div>
@@ -367,7 +307,7 @@
                 }
 
                 <!-- Measuring State -->
-                @if (state === 'measuring') {
+                @if (state === 'heating' || state === 'reading') {
                   <div class="measuring-state">
                     <div class="text-center">
                       <div class="spinner-border text-success mb-3" role="status" style="width: 3rem; height: 3rem;">
@@ -396,7 +336,7 @@
         </button>
 
         <!-- Abort button - shown during heating or measuring -->
-        @if (state === 'heating' || state === 'measuring') {
+        @if (state === 'heating' || state === 'reading') {
           <button type="button" class="btn btn-danger" (click)="abortMeasurement()">
             <i class="bi bi-x-circle me-1"></i>
             Abort

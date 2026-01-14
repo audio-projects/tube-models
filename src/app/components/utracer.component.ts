@@ -14,6 +14,7 @@ import { TubeInformation } from './tube-information';
 import { UTracerSetupComponent } from './utracer-setup.component';
 import { UTracerDebugComponent } from './utracer-debug.component';
 import { UTracerReaderService } from '../services/utracer-reader.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 interface MeasurementConfig {
     type: string;
@@ -57,12 +58,13 @@ export class UTracerComponent {
     @Input() tube: TubeInformation | null = null;
 
     private uTracerService = inject(UTracerService);
+    private uTracerReaderService = inject(UTracerReaderService);
     private toastService = inject(ToastService);
 
     showSetupModal = false;
 
     // measurement process state
-    state: 'idle' | 'heating' | 'ready' | 'measuring' = 'idle';
+    state1: 'idle' | 'heating' | 'ready' | 'measuring' = 'idle';
     heatingProgress = 0;
     abortController: AbortController | null = null;
 
@@ -125,6 +127,34 @@ export class UTracerComponent {
         { label: '0-1mA', value: 0x00 },
         { label: 'Automatic', value: 0x08 },
     ];
+
+    constructor() {
+        // listen to errors
+        this.uTracerReaderService.error$
+            .pipe(takeUntilDestroyed())
+            .subscribe(error => {
+                // log error
+                console.error('uTracer Reader Error:', error);
+                // show user message
+                this.toastService.error(error.message || 'An unknown error occurred in the uTracer Reader Service');
+            });
+        // listen to heater status updates
+        this.uTracerReaderService.heater$
+            .pipe(takeUntilDestroyed())
+            .subscribe(status => {
+                // heater voltage and progress
+                this.heaterVoltage = status.voltage;
+                this.heatingProgress = status.percentage;
+            });
+        // listen to adc data updates
+        this.uTracerReaderService.adcData$
+            .pipe(takeUntilDestroyed())
+            .subscribe(adcData => this.adcData = adcData);
+    }
+
+    get state() {
+        return this.uTracerReaderService.state;
+    }
 
     // Measurement type configurations
     private measurementConfigs: Record<string, MeasurementConfig> = {
@@ -381,66 +411,16 @@ export class UTracerComponent {
     }
 
     async startMeasurement(): Promise<void> {
-        try {
-            // validate that measurement type is selected
-            if (!this.currentConfig)
-                return;
-            // check state
-            if (this.state !== 'idle')
-                return;
-            // state
-            this.heatingProgress = 0;
-            this.state = 'heating';
-            this.abortController = new AbortController();
-            // signal
-            const signal = this.abortController.signal;
-            // reset uTracer
-            await this.uTracerService.start(0, 0, 0, 0);
-            // check progress
-            signal.throwIfAborted();
-            // ping uTracer, read data
-            this.adcData = await this.uTracerService.ping();
+        // validate that measurement type is selected
+        if (!this.currentConfig)
+            return;
+
+        // check reader service state
+        if (this.uTracerReaderService.state === 'idle') {
             // heater value
             const eh = this.constantValues['eh'] || 0;
-            // set initial heater voltage to 0
-            this.heaterVoltage = 0;
-            // use 15 steps in the heating process (10s ramp up + 5s hold)
-            for (let it = 1; it <= 15; it++) {
-                // check progress
-                signal.throwIfAborted();
-                // voltage at iteration
-                this.heaterVoltage = Math.min((eh * it) / 10, eh);
-                // send utracer command
-                await this.uTracerService.setHeaterVoltage(this.adcData.positivePowerSupplyVoltage, this.heaterVoltage);
-                // check progress
-                signal.throwIfAborted();
-                // update progress
-                this.heatingProgress = (it / 15) * 100;
-                // wait 1 second between steps
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-            // update state
-            this.state = 'ready';
-        }
-        catch (error) {
-            try {
-                // log error
-                console.error('Error heating up tube: ', error);
-                // shutdown heater
-                await this.uTracerService.setHeaterVoltage(0, 0);
-            }
-            catch (ex) {
-                // ignore errors, only log in console
-                console.error('Failed to shut down heater: ', ex);
-            }
-            // reset state
-            this.state = 'idle';
-            // show user message
-            this.toastService.warning(typeof error === 'string' ? error : 'Stopped');
-        }
-        finally {
-            // clear abort controller
-            this.abortController = null;
+            // start heating tube
+            await this.uTracerReaderService.start(0, 0x40, 0x08, 0x08, eh);
         }
     }
 
@@ -470,58 +450,44 @@ export class UTracerComponent {
             // validate that measurement type is selected
             if (!this.currentConfig)
                 return;
-            // check state
-            if (this.state !== 'ready')
-                return;
-            // state
-            this.state = 'measuring';
-            this.abortController = new AbortController();
-            // signal
-            const signal = this.abortController.signal;
-            // initialize uTracer
-            await this.uTracerService.start(this.compliance, this.averaging, this.plateCurrentGain, this.screenCurrentGain);
-            // check progress
-            signal.throwIfAborted();
-            // ping uTracer, read data
-            this.adcData = await this.uTracerService.ping();
-            // check progress
-            signal.throwIfAborted();
-            try {
-                // loop series
-                for (const seriesValue of this.discreteValuesArray) {
-                    // swept value
-                    let sweptValue = this.sweptMin;
-                    // loop swept
-                    for (let step = 0; step <= this.sweptSteps; step++) {
-                        // create measurement point
-                        const point = this.createMeasurementPoint(seriesValue, sweptValue);
-                        // measure currents at point
-                        this.adcData = await this.uTracerService.measure(this.adcData.positivePowerSupplyVoltage, this.averaging, point.ep, point.es, point.eg, point.eh);
-                        // check progress
-                        signal.throwIfAborted();
-                        // increase swept value
-                        if (this.sweptLogarithmic) {
-                            // logarithmic step
-                            const logMin = Math.log10(Math.max(this.sweptMin, 0.1));
-                            const logMax = Math.log10(this.sweptMax);
-                            // increment
-                            const logStep = (logMax - logMin) / this.sweptSteps;
-                            // value
-                            sweptValue = Math.min(Math.pow(10, logMin + logStep * step), this.sweptMax);
-                        }
-                        else {
-                            // linear step
-                            sweptValue = Math.min(this.sweptMin + ((this.sweptMax - this.sweptMin) / this.sweptSteps) * step, this.sweptMax);
+
+            // check reader service state and we have adc data
+            if (this.uTracerReaderService.state === 'ready' && this.adcData) {
+                try {
+                    // loop series
+                    for (const seriesValue of this.discreteValuesArray) {
+                        // swept value
+                        let sweptValue = this.sweptMin;
+                        // adc data
+                        let adcData: AdcData | null = this.adcData;
+                        // loop swept
+                        for (let step = 0; step <= this.sweptSteps && adcData; step++) {
+                            // create measurement point
+                            const point = this.createMeasurementPoint(seriesValue, sweptValue);
+                            // measure currents at point
+                            adcData = await this.uTracerReaderService.measure(adcData.positivePowerSupplyVoltage, this.averaging, point.ep, point.es, point.eg, point.eh);
+                            // increase swept value
+                            if (this.sweptLogarithmic) {
+                                // logarithmic step
+                                const logMin = Math.log10(Math.max(this.sweptMin, 0.1));
+                                const logMax = Math.log10(this.sweptMax);
+                                // increment
+                                const logStep = (logMax - logMin) / this.sweptSteps;
+                                // value
+                                sweptValue = Math.min(Math.pow(10, logMin + logStep * step), this.sweptMax);
+                            }
+                            else {
+                                // linear step
+                                sweptValue = Math.min(this.sweptMin + ((this.sweptMax - this.sweptMin) / this.sweptSteps) * step, this.sweptMax);
+                            }
                         }
                     }
                 }
+                finally {
+                    // end
+                    await this.uTracerService.end();
+                }
             }
-            finally {
-                // end
-                await this.uTracerService.end();
-            }
-            // update state
-            this.state = 'ready';
         }
         catch (error) {
             try {
@@ -534,8 +500,6 @@ export class UTracerComponent {
                 // show user message
                 this.toastService.error('Failed to shut down heater after error');
             }
-            // reset state
-            this.state = 'idle';
             // show user message
             this.toastService.warning(typeof error === 'string' ? error : 'Stopped');
         }
@@ -587,7 +551,6 @@ export class UTracerComponent {
         }
         finally {
             // nothing is running at the moment, just reset state
-            this.state = 'idle';
             this.abortController = null;
         }
     }
